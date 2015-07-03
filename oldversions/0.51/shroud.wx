@@ -1,0 +1,364 @@
+// shroud.wx
+// (c) 2002 David Cuny
+// make wxBasic source code unintelligible
+// usage: wxbasic shroud.wx <source> <dest>
+
+dim keyword[], func[], user[], token[]
+dim tNum = 0
+
+// the keywords
+    keyword["and"]          = 1
+    keyword["append"]       = 1
+    keyword["as"]           = 1
+    keyword["call"]         = 1
+    keyword["case"]         = 1
+    keyword["close"]        = 1
+    keyword["const"]        = 1
+    keyword["continue"]     = 1
+    keyword["common"]       = 1
+    keyword["data"]         = 1
+    keyword["declare"]      = 1
+    keyword["delete"]       = 1
+    keyword["dim"]          = 1
+    keyword["do"]           = 1
+    keyword["each"]         = 1
+    keyword["else"]         = 1
+    keyword["elseif"]       = 1
+    keyword["elsif"]        = 1
+    keyword["end"]          = 1
+    keyword["erase"]        = 1
+    keyword["error"]        = 1
+    keyword["exit"]         = 1
+    keyword["explicit"]     = 1
+    keyword["for"]          = 1
+    keyword["function"]     = 1
+    keyword["if"]           = 1
+    keyword["in"]           = 1
+    keyword["include"]      = 1
+    keyword["input"]        = 1
+    keyword["inv"]          = 1
+    keyword["is"]           = 1
+    keyword["let"]          = 1
+    keyword["line"]         = 1
+    keyword["loop"]         = 1
+    keyword["mod"]          = 1
+    keyword["new"]          = 1
+    keyword["next"]         = 1
+    keyword["noconsole"]    = 1
+    keyword["not"]          = 1
+    keyword["open"]         = 1
+    keyword["option"]       = 1
+    keyword["or"]           = 1
+    keyword["output"]       = 1
+    keyword["print"]        = 1
+    keyword["qbasic"]       = 1
+    keyword["redim"]        = 1
+    keyword["return"]       = 1
+    keyword["select"]       = 1
+    keyword["shared"]       = 1
+    keyword["shl"]          = 1
+    keyword["shr"]          = 1
+    keyword["static"]       = 1
+    keyword["step"]         = 1
+    keyword["sub"]          = 1
+    keyword["then"]         = 1
+    keyword["to"]           = 1
+    keyword["until"]        = 1
+    keyword["wend"]         = 1
+    keyword["while"]        = 1
+    keyword["xor"]          = 1
+
+// non-wx constants
+    keyword["true"]         = 1
+    keyword["false"]        = 1
+    keyword["null"]         = 1
+
+// the functions
+    keyword["printstack"]      = 1
+    keyword["abs"]             = 1       
+    keyword["acos"]            = 1      
+    keyword["argc"]            = 1      
+    keyword["argv"]            = 1      
+    keyword["asc"]             = 1       
+    keyword["asin"]            = 1      
+    keyword["atan"]            = 1      
+    keyword["chdir"]           = 1     
+    keyword["chr"]             = 1       
+    keyword["chr$"]            = 1      
+    keyword["command"]         = 1   
+    keyword["command$"]        = 1  
+    keyword["connect"]         = 1   
+    keyword["convbase"]        = 1  
+    keyword["convbase$"]       = 1 
+    keyword["cos"]             = 1       
+    keyword["date"]            = 1      
+    keyword["date$"]           = 1     
+    keyword["hasdir"]          = 1    
+    keyword["hasdir$"]         = 1   
+    keyword["direxists"]       = 1 
+    keyword["eof"]             = 1       
+    keyword["exp"]             = 1       
+    keyword["fileexists"]      = 1
+    keyword["fix"]             = 1       
+    keyword["floor"]           = 1     
+    keyword["format"]          = 1    
+    keyword["format$"]         = 1   
+    keyword["frac"]            = 1      
+    keyword["freefile"]        = 1  
+    keyword["getwxapp"]        = 1  
+    keyword["hex"]             = 1       
+    keyword["hex$"]            = 1      
+    keyword["indexes"]         = 1   
+    keyword["insert"]          = 1    
+    keyword["insert$"]         = 1   
+    keyword["instr"]           = 1     
+    keyword["int"]             = 1       
+    keyword["kill"]            = 1      
+    keyword["lcase"]           = 1     
+    keyword["lcase$"]          = 1    
+    keyword["left"]            = 1      
+    keyword["left$"]           = 1     
+    keyword["len"]             = 1       
+    keyword["length"]          = 1    
+    keyword["loc"]             = 1       
+    keyword["lof"]             = 1       
+    keyword["log"]             = 1       
+    keyword["lbound"]          = 1    
+    keyword["ltrim"]           = 1     
+    keyword["ltrim$"]          = 1    
+    keyword["mainloop"]        = 1  
+    keyword["mid"]             = 1       
+    keyword["mid$"]            = 1      
+    keyword["mkdir"]           = 1     
+    keyword["quicksort"]       = 1 
+    keyword["randomize"]       = 1 
+    keyword["readbyte"]        = 1  
+    keyword["rename"]          = 1    
+    keyword["replace"]         = 1   
+    keyword["replace$"]        = 1  
+    keyword["replacesubstr"]   = 1
+    keyword["replacesubstr$"]  = 1
+    keyword["reverse"]         = 1       
+    keyword["reverse$"]        = 1      
+    keyword["right"]           = 1         
+    keyword["right$"]          = 1        
+    keyword["rinstr"]          = 1        
+    keyword["rmdir"]           = 1         
+    keyword["rnd"]             = 1           
+    keyword["round"]           = 1         
+    keyword["rtrim"]           = 1         
+    keyword["rtrim$"]          = 1        
+    keyword["run"]             = 1           
+    keyword["seek"]            = 1          
+    keyword["sgn"]             = 1           
+    keyword["shell"]           = 1         
+    keyword["sin"]             = 1           
+    keyword["space"]           = 1         
+    keyword["space$"]          = 1        
+    keyword["sqr"]             = 1           
+    keyword["str"]             = 1           
+    keyword["str$"]            = 1          
+    keyword["strf"]            = 1          
+    keyword["strf$"]           = 1         
+    keyword["string"]          = 1        
+    keyword["string$"]         = 1       
+    keyword["tally"]           = 1         
+    keyword["tan"]             = 1           
+    keyword["ticks"]           = 1         
+    keyword["time"]            = 1          
+    keyword["time$"]           = 1         
+    keyword["typeof$"]         = 1       
+    keyword["typeof"]          = 1        
+    keyword["ubound"]          = 1        
+    keyword["ucase"]           = 1         
+    keyword["ucase$"]          = 1        
+    keyword["val"]             = 1           
+    keyword["writebyte"]       = 1     
+
+
+function breakingChar( c )
+    select case c
+    case "A" to "Z", "a" to "z", "0" to "9", "_", "."
+        return 0
+    case else
+        return 1
+    end select
+end function
+
+
+function tokenize( text, array[] )
+
+    dim i = 1, char, word = "", count = 0
+
+    erase array
+
+    for i = 1 to length( text )
+
+        char = mid( text, i, 1 )
+
+        if char = "\"" then
+            // add word?
+            if word <> "" then
+                count += 1
+                array[count] = word
+                word = ""
+            end if
+
+            word = char
+            while 1
+                i += 1
+                char = mid( text, i, 1 )
+                word &= char
+                if char = "\"" and mid( text, i-1, 1 ) != "\\" then
+                    exit while
+                end if
+            end while
+
+            count += 1
+            array[count] = word
+            word = ""
+
+        else
+
+            // comment?
+            if char = "'" or (char = "/" and mid(text,i+1,1) = "/") then
+                exit for
+            end if
+    
+            if breakingChar( char ) then
+                // add word?
+                if word <> "" then
+                    count += 1
+                    array[count] = word
+                    word = ""
+                end if
+    
+                // add breaking char?
+                if !instr( " \t\n\r", char ) then
+                    count += 1
+                    array[count] = char
+                end if
+            else
+                word = word & char
+            end if
+
+        end if
+
+    end for
+
+    // last word?
+    if word <> "" then
+        count += 1
+        array[count] = word
+        word = ""
+    end if
+
+    return count
+end function
+
+function replaceToken( theToken )
+
+    // convert to lower case
+    dim t = lcase( theToken )
+
+    // keyword?
+    if t in keyword then
+        return t
+    end if
+
+    // wxwindows class?
+    if mid( t, 1, 2 ) = "wx" then
+        return t
+    end if
+
+    // routine name?
+    if mid(t,1,1) = "\"" then
+        dim r = mid(t,2,len(t)-2)
+        if r in user then
+            // convert
+            return "\"" & user[r] & "\""
+        else
+            // leave alone
+            return theToken
+        end if
+    end if
+
+    dim char = mid(t,1,1)
+    if breakingChar( char ) then
+        // special char 
+        return t
+    end if
+
+    if (char >= "0" and char <= "9") or (char = ".") then
+        // number, leave it alone
+        return t
+    end if
+
+    dim at = instr( t, "." )
+    if at then
+        // replace class portion
+        return replaceToken( mid( t, 1, at-1 ) ) & mid( t, at, 100 )
+    end if
+
+    // already defined?
+    if t in user then
+        return user[t]
+    end if
+
+    tNum += 1
+    // user[t] = "_" & t
+    user[t] = "_" & tNum
+    return user[t]
+
+end function
+
+
+sub shroudLine( text )
+
+    l = ""
+
+    count = tokenize( text, token[] )
+    if count = 0 then
+        return
+    end if
+
+    for i = 1 to count
+        t = replaceToken( token[i] )
+
+        // need space between tokens?
+        if !breakingChar( mid( token[i-1], 1, 1 ) ) and
+           !breakingChar( mid( token[i], 1, 1 ) ) then
+            // add a space
+            l &= " "
+        end if
+
+        // print token
+        l &= t
+
+    end for
+    // to file
+    print #2, l
+
+    // echo
+    print "> " & l
+end sub
+
+if command(3) = "" then
+    print "Missing source file name"
+    end
+
+elseif command(4) = "" then
+    print "Missing target file name"
+    end
+
+end if
+
+open command(3) for input as #1
+open command(4) for output as #2
+
+while not eof(1)
+    line input #1, a
+    print a
+    shroudLine( a )
+end while
+close
