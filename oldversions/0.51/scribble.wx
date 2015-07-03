@@ -1,0 +1,236 @@
+' Scribble - Simple graphics demo
+' (c) 2002 David Cuny
+
+Dim progName = "Scribble Demo",
+    bmpX        = 600,
+    bmpY        = 600
+
+
+Const   ID_RED          = wxID_HIGHEST + 1,
+        ID_ORANGE       = wxID_HIGHEST + 2,
+        ID_YELLOW       = wxID_HIGHEST + 3,
+        ID_GREEN        = wxID_HIGHEST + 4,
+        ID_BLUE         = wxID_HIGHEST + 5,
+        ID_PURPLE       = wxID_HIGHEST + 6,
+        ID_BLACK        = wxID_HIGHEST + 7,
+        ID_WHITE        = wxID_HIGHEST + 8,
+        ID_COLOR_DIALOG = wxID_HIGHEST + 9
+
+' create the frame
+frame = New wxFrame( 0, -1, progName )
+frame.SetSize(400, 400)
+
+' create a bitmap for double buffering
+bmp = wxEmptyBitmap( bmpX, bmpY )
+
+' create a "File" menu
+mFile = New wxMenu()
+mFile.Append( wxID_NEW, "&New", "Erase the current drawing")
+mFile.AppendSeparator()
+mFile.Append( wxID_EXIT, "E&xit\tAlt-X", "Quit this program")
+
+' create a "Colors" menu
+mColor = New wxMenu()
+mColor.Append( ID_RED,    "Red",    "Make the brush red.", 1 )
+mColor.Append( ID_ORANGE, "Orange", "Make the brush orange.", 1 )
+mColor.Append( ID_YELLOW, "Yellow", "Make the brush yellow.", 1 )
+mColor.Append( ID_BLUE,   "Blue",   "Make the brush blue.", 1 )
+mColor.Append( ID_PURPLE, "Purple", "Make the brush purple.", 1 )
+mColor.Append( ID_BLACK,  "Black",  "Make the brush black.", 1 )
+mColor.Append( ID_WHITE,  "White",  "Make the brush white.", 1 )
+mColor.AppendSeparator()
+mColor.Append( ID_COLOR_DIALOG,  "Other...",  "Choose a color from the color dialog.", 1 )
+
+' create an "About" menu and append an item
+mHelp = New wxMenu()
+mHelp.Append( wxID_ABOUT, "&About...\tCtrl-A", "Show about dialog")
+
+' create a menubar for the menus
+menuBar = New wxMenuBar()
+menuBar.Append(mFile, "&File")
+menuBar.Append(mColor, "&Color")
+menuBar.Append(mHelp, "&Help")
+
+' attach the menubar to the frame
+frame.SetMenuBar(menuBar)
+
+
+' create pens
+Const   Red     = wxPenFromColorName( "Red", 3, wxSOLID ),
+        Orange  = wxPenFromColorName( "Orange", 3, wxSOLID ),
+        Yellow  = wxPenFromColorName( "Yellow", 3, wxSOLID ),
+        Green   = wxPenFromColorName( "Green", 3, wxSOLID ),
+        Blue    = wxPenFromColorName( "Blue", 3, wxSOLID ),
+        Purple  = wxPenFromColorName( "Purple", 3, wxSOLID ),
+        Black   = wxPenFromColorName( "Black", 3, wxSOLID ),
+        White   = wxPenFromColorName( "White", 3, wxSOLID )
+
+' create a store for the graphic
+bmpDC = wxMemoryDC()
+bmpDC.SelectObject( bmp )
+bmpDC.Clear()
+
+' set the pen
+bmpDC.SetPen( Black )
+mColor.Check( ID_BLACK, 1 )
+checkedColor = ID_BLACK
+
+lastX = 0
+lastY = 0
+mouseDown = 0
+
+sub onEvent( event )
+
+    ' This could have been split up into three seperate event
+    ' handlers, but this let me test the CASE statement
+
+    ' get event information
+    x = event.GetX()
+    y = event.GetY()
+    type = event.GetEventType()
+
+    ' what type of event?
+    Select Case type
+    Case wxEVT_LEFT_UP
+        If mouseDown Then
+            frame.ReleaseMouse()
+            mouseDown = 0
+            bmpDC.DrawLine( lastX, lastY, x, y )
+            dc = wxClientDC( frame )
+            dc.BeginDrawing()
+            dc.Blit( 0, 0, bmpX, bmpY, bmpDC, 0, 0 )
+            dc.EndDrawing()
+        End If
+
+    Case wxEVT_LEFT_DOWN
+        If !mouseDown Then
+            mouseDown = 1
+            frame.CaptureMouse()
+            lastX = x
+            lastY = y
+        End If
+
+    Case wxEVT_MOTION
+        If mouseDown Then
+            dc = wxClientDC( frame )
+            bmpDC.DrawLine( lastX, lastY, x, y )
+            dc.BeginDrawing()
+            dc.Blit( 0, 0, bmpX, bmpY, bmpDC, 0, 0 )
+            dc.EndDrawing()
+            lastX = x
+            lastY = y
+        End If
+
+    End Select
+
+End sub
+
+' attach callbacks
+Connect( frame, -1, wxEVT_LEFT_DOWN, "onEvent" )
+Connect( frame, -1, wxEVT_LEFT_UP,   "onEvent" )
+Connect( frame, -1, wxEVT_MOTION,    "onEvent" )
+
+Sub onPaint( event )
+    ' get the DC of the frame
+    dc = wxPaintDC( frame )
+    dc.BeginDrawing()
+
+    ' blit the bitmap
+    dc.Blit( 0, 0, bmpX, bmpY, bmpDC, 0, 0 )
+
+    dc.EndDrawing()
+End Sub
+Connect( frame, -1, wxEVT_PAINT, "onPaint" )
+
+
+' callback for the New menu option
+Sub OnNew( event )
+    bmpDC.Clear()
+    dc = wxClientDC( frame )
+    dc.Blit( 0, 0, bmpX, bmpY, bmpDC, 0, 0 )
+    lastX = 0
+    lastY = 0
+End Sub
+Connect( frame, wxID_NEW, wxEVT_COMMAND_MENU_SELECTED, "OnNew" )
+
+
+' callback for the Exit menu option
+Sub OnQuit( event )
+    frame.Close(True)
+End Sub
+Connect( frame, wxID_EXIT, wxEVT_COMMAND_MENU_SELECTED, "OnQuit" )
+
+' callback for the Colors menu option
+Sub OnColor( event )
+    id = event.GetId()
+
+    Select Case id
+    Case ID_RED:      bmpDC.SetPen( Red )
+    Case ID_ORANGE:   bmpDC.SetPen( Orange )
+    Case ID_YELLOW:   bmpDC.SetPen( Yellow )
+    Case ID_GREEN:    bmpDC.SetPen( Green )
+    Case ID_BLUE:     bmpDC.SetPen( Blue )
+    Case ID_PURPLE:   bmpDC.SetPen( Purple )
+    Case ID_BLACK:    bmpDC.SetPen( Black )
+    Case ID_WHITE:    bmpDC.SetPen( White )
+    End Select
+
+    ' check the menu
+    mColor.Check( checkedColor, 0 )
+    checkedColor = id
+    mColor.Check( checkedColor, 1 )
+
+End Sub
+
+Connect( frame, ID_RED, wxEVT_COMMAND_MENU_SELECTED, "OnColor" )
+Connect( frame, ID_ORANGE, wxEVT_COMMAND_MENU_SELECTED, "OnColor" )
+Connect( frame, ID_YELLOW, wxEVT_COMMAND_MENU_SELECTED, "OnColor" )
+Connect( frame, ID_GREEN, wxEVT_COMMAND_MENU_SELECTED, "OnColor" )
+Connect( frame, ID_BLUE, wxEVT_COMMAND_MENU_SELECTED, "OnColor" )
+Connect( frame, ID_PURPLE, wxEVT_COMMAND_MENU_SELECTED, "OnColor" )
+Connect( frame, ID_BLACK, wxEVT_COMMAND_MENU_SELECTED, "OnColor" )
+Connect( frame, ID_WHITE, wxEVT_COMMAND_MENU_SELECTED, "OnColor" )
+
+
+Sub OnColorDialog( event )
+
+    ' bring up the dialog
+    dialog = New wxColorDialog( frame )
+    If dialog.ShowModal() = wxID_OK Then
+
+        ' get the color data
+        colorData = dialog.GetColorData()
+        color = colorData.GetColor()
+
+        ' create the pen
+        customPen = wxPenFromColor( color, 3, wxSOLID )
+        bmpDC.SetPen( customPen )
+
+        ' check the menu
+        mColor.Check( checkedColor, 0 )
+        checkedColor = event.GetId()
+        mColor.Check( checkedColor, 1 )
+
+    Else
+        ' menu is auto checked - turn off and restore prior value
+        id = event.GetId()
+        mColor.Check( id, 0 )
+        mColor.Check( checkedColor, 1 )
+
+    End If
+End Sub
+
+Connect( frame, ID_COLOR_DIALOG, wxEVT_COMMAND_MENU_SELECTED, "OnColorDialog" )
+
+
+
+' callback for the About menu option
+Sub OnAbout( event )
+    msg =   "Simple Scribble program.\n" &
+            "Click on the window's client area, and drag the mouse\n" &
+            "around to draw a picture."
+    wxMessageBox( msg, "About Scribble", wxOK + wxICON_INFORMATION, frame )
+End Sub
+Connect( frame, wxID_ABOUT, wxEVT_COMMAND_MENU_SELECTED, "OnAbout" )
+
+frame.Show(True)
