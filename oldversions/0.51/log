@@ -1,0 +1,1486 @@
+to do:
+    - make sure wxGetEnvValue doesn't leak...
+    - make sure other string returning functions don't leak
+
+    - implement opInv
+    - add static. This is complex, because all locals are *automatically*
+      offset from the function. The best way to implement these would be
+      as some sort of shared variables, but this causes problems with
+      name collisions...
+
+    - add warning to code if there are any forward references that
+      are undeclared when the code runs?
+
+    - add fix for Number type... stupid Minwin compiler...
+
+    - add try/catch/else blocks. 
+
+    - Add ByVal. Possibly add a ByVal flag to symbols, so the routine
+      flags that ByVal is used, and then each arg can be checked. That
+      way, routines that don't use ByVal won't carry any overhead.
+
+    - Possible QuickBasic features to support:
+        ByVal       ex:    Sub foo( a, byval b )
+        Local
+        Shared
+
+    - add parse routine to convert string into tokens - Awk's scan())
+
+    - Source code should be stored in a dynamically resized array,
+      so trace routines can be added (for example, last 50 lines of
+      code executed, etc)
+
+    - Round should round, not just truncate
+
+    - next <var> should be valid
+
+    - Add bitwise and operator &... but what to do about concatenation?
+
+    - Delete WX.ERR when launching program
+
+    - Plotting stuff had to be commented out of CONNECT.CPP
+
+    - add mixed case names to classes and routines. non-keywords
+      should be case sensitive.
+
+    - finish rest of missing functions (ltrim, etc.)
+
+    - FOR statement should use lvar, so FOR/NEXT loop can use
+      any value, not just variables
+
+    - case statement broken: doesn't handle empty statement
+
+    - fetching undefined arrays should result in an error
+
+
+-- REMINDERS TO MYSELF --
+case statement not working?
+    probably forgot the 'case' in front of the label:
+        TYPE_FOO:
+    instead of
+        case TYPE_FOO:
+
+displaying zeros while debugging?
+    probably used %d instead of %Lf for Number
+
+added new opcode that's oddly buggy?
+    probably forgot 'break'
+
+-- CURRENT STATUS --
+March 12: v5.1 (Waltzing Inertia) released
+
+March 9:
+    Fixed bug in Mid(), should have been returning an empty string in cases
+    where the index was greater than the length of the string.
+
+Feb 27:
+    Added bitwise functions: AndBits(), NotBits(), OrBits(), XorBits().
+
+Feb 1:
+    Changed wFixEol() to accept buffer, so it can be used by
+    other routines.
+
+    Changed wFileLineInput to use wFixEol. Slightly messy, but
+    should be portable.
+
+    Added fOpen(), fClose(), fPuts() and fGets() for those people
+    like me who tend to type in the C versions of these routines.
+    Besides, the BASIC syntax for those things is pretty awful.
+
+    Added "global" as synonym for "common". I don't really like the
+    common keyword, so I should probably remove it at some point.
+
+Jan 31:
+    Commented out routines with errors, compiled successfully.
+
+    Changed copyright to 2002
+
+    Added builtin FileExists()
+
+    Added wFree() to wBasConcat(), wBasInstr(), wBasMid(), wBasRInstr()
+
+    Changed test for most return values in file.c routines to look for
+    0 as failed code, not EOF.
+
+Jan 30:
+    Attempted to compile under wxWindows 2.3.2, need to update class.i
+    The following methods need to be fixed:
+        wxPanel::GetDefaultItem
+        wxStatusBar::new
+        wxChoice::Number
+        wxComboBox::Number
+        wxListBox::Number
+        wxRadioBox::GetLabel
+        wxRadioBox::GetItemLabel
+        wxRadioBox::Number
+        wxRadioBox::SetLabel
+        wxEvent::new
+        wxListEvent::GetOldIndex
+        wxListEvent::Cancelled
+
+Jan 15:
+    Started writing PARSE.AWK. It takes a much more brute force
+    approach to parsing the file, but it should be more maintainable.
+
+Jan 15:
+    PARSE.AWK now handles quotes and casts in assigned values. Pattern
+    building is better.
+
+Jan 2:
+    Added check for undefined routines when the program exits:
+
+        wReportUndefinedRoutines() in symbol.c
+        wFatalFlag in shared.h
+        modified wShutdown in error.c to call wReportUndefinedRoutines
+
+    Close files opened by users. Added wFileCloseAll to wFatal()
+    and wShutdown. This should allow printing errors in cases where
+    the error is "too many files open" or some such.
+
+December 26: v.50 (Partially Hydrogenated) released
+    wPushString was doing a wCopyString instead of just assigning
+    the string, causing a memory leak.
+
+    Fixing wPushString revealed a bug somewhere - one of the routines
+    is using wPushString instead of pushStringCopy.
+
+    It looks like W_OP_CONST_GET relied on wPushString leaving a copy.
+    Changed the code, didn't see it anywhere else.
+
+December 21:
+    Added useCase flag to wSymbol
+
+    Added useCase parm to wCreateSymbol
+
+    Changed wFindSymbol to pay attention to useCase flag
+
+    Removed tolower in wxLexIdentifier
+
+    wReturnVar, wCreateConst, wInitBuiltin and wAddClass are
+    case-sensitive, wInitKeywords is not.
+
+    Changed wAddBuiltin to return symbol, so it's easy to change
+    the flag on builtin routines.
+
+    Added constants W_TRUE, W_FALSE
+
+    Fixed lexer, had been returning W_LT instead of W_TOKEN_LT
+    Removed Lt and Gt
+
+    Fixed range test in BasArgv
+
+    Added Option Explicit to editor.wx demo, and made lots of
+    corrections to the code.
+
+    Added constants for wxFileDialog
+
+December 20:
+    Working on creating wrappers that are independant of wxBasic.
+
+    Added wCreateNumericConst and wCreateStringConst to VAR.C,
+    changed CONST.C to use these.
+
+    Removed wPopStringList, wFreeStringList
+
+    Createed WXWRAP.CPP as main module for wrappers
+
+    Added wRemoveObject to remove object without running destructor.
+    This is for the callbacks.
+
+    Constants are now in mixed case
+
+    Changed console title to "Console", so wrappers don't display 'wxBasic'
+
+December 19:
+    Added the following builtins:
+        wxGetEnvValue( string )
+        wxSetEnv( string, value )
+        wxUnsetEnv( string )
+        
+December 17:
+    Finished renaming routines.
+
+    Renamed all opcodes from wOpXxxx to W_OP_XXX
+    removed OpCase
+
+December 14:
+    Began renaming all routines, variables and constants with
+    'w' or 'W_' prefix.
+
+    Fixed bug in wGetObject range test
+
+    wFreeAllDebug() is never called?
+    Changed free to wFree in DATA.C, VAR.C, NODE.C and EVAL.C
+    getIndexUpper/Lower print value of subscript if out of range
+    argv now checks range of arg
+
+December 13:
+    Added missing constants for wxSashWindow
+    (found by S. Williamson)
+
+December 12:
+    Fixed lexer to handle cases where line ends without '\n'
+    (found by S. Williamson)
+
+December 11:
+    Replaced stub wxColourData with class
+
+    Added alias wxPen::SetColor()
+
+    Changed __DEBUG__ to __DEBUG_MEMORY__
+
+    Added __DEBUG_TRACE__ for tracing opcodes
+
+    Changed malloc to eMalloc in popStringList() of CLASS.C
+
+    Added check to see if object is null (destroyed) before trying
+    to execute it.
+
+    Added color dialog support to Scribble demo.
+
+    Fixed garbage in message for Init error (missing file name, etc.)
+
+    Adjusted the order of args for bound files so they look the same
+    as interpreted files. So Command works properly for bound files.
+
+    Fixed ~destructor.
+
+    Fixed builtin functions Instr(), RInstr(), Round().
+
+    Fixed formatNumber() in DATA.C to remove trailing zeros.
+
+    Added ALLOWABLE_ERROR, set to FLT_EPSILON. Used in numeric
+    equality tests and loops to prevent rounding problems.
+
+December 10:
+    Fixed bug in reverse() routine.
+
+    Fixed bug in instr(). Searching for empty string returns 0.
+
+    Fixed bug in left() and right(). Index positions starting at
+    values less than 1 return empty strings.
+
+    Replaced lots of free() calls in BUILTIN.C with eFree().
+
+    Updated README file, fixed some problems with and old version of
+    PACKAGE.AWK to generate a bleeding edge release.
+
+    Fixed bug in builtin basWriteByte, fileNum was not explicitly
+    declared.
+
+    Fixes submitted by Roberto Artigas Jr. for MS VC++ compatibility:
+
+        Removed unused variables from routines in ARRAY.C, BUILTIN.C,
+        ERROR.C, EVAL.C, FILE.C, LEXER.C and WXBASIC.CPP.
+    
+        Added the enums:
+            wxTreeItemIcon
+            wxSashEdgePosition
+            wxLayoutAlignment
+            wxLayoutOrientation
+            wxEdge
+            wxRelationship
+            wxFontEncoding
+
+        Changed code generation so enums are cast as:
+
+           (enum)(int)popNumber();
+
+        instead of:
+
+           (enum)popNumber();
+
+December 5:
+    Added support for forward referenced Subs and Functions:
+
+        symbol.h        Added SYM_FORWARD_FUNCTION and SYM_FORWARD_SUB
+
+        lexer.c         SYM_FORWARD_FUNCTION and SYM_FORWARD_SUB
+                        return ForwardFunctionName and ForwardSubName
+
+        wxbasic.y       Added grammar, mainly modifications of existing
+                        Sub and Function grammars.
+
+    Common and Shared can now be written as Dim Common and Dim Shared.
+
+November ???:
+    The event handler classifyEvent() is now autogenerated with the
+    events.awk script. This should make it easier to maintain the
+    code.
+
+November 26:
+    In class.i, changed the following methods to use uchar instead of
+    unsigned char - scanner got confused and thought unsigned char*
+    was a string:
+
+        wxPalette::wxPalette
+        wxPalette::Create
+        wxImageFromData
+        wxImage::GetData
+        wxImage::SetData
+
+    Created new methods for routines that return values as pointers
+    (which wxBasic can't handle):
+
+        wxDC::GetClippingBox
+            wxDC::GetClippingBoxX
+            wxDC::GetClippingBoxY
+            wxDC::GetClippingBoxWidth
+            wxDC::GetClippingBoxHeight
+
+        wxDC::GetSize
+            wxDC::GetUserSizeX
+            wxDC::GetUserSizeY
+
+        wxDC::GetUserScale
+            wxDC::GetUserScaleX
+            wxDC::GetUserScaleY
+
+        wxWindow::GetClientSize()
+            wxWindow_GetClientSizeWidth()
+            wxWindow_GetClientSizeHeight()
+
+        wxWindow::GetPosition()
+            wxWindow::GetPositionX()
+            wxWindow::GetPositionY()
+
+        wxWindow::GetSize()
+            wxWindow_GetSizeWidth()
+            wxWindow_GetSizeHeight()
+
+        wxWindow::GetTextExtent()
+            wxWindow::GetTextExtentX( const wxString &string )
+            wxWindow::GetTextExtentY( const wxString &string )
+            wxWindow::GetTextExtentDescent( const wxString &string )
+            wxWindow::GetTextExtentExternalLeading( const wxString &string )
+
+        wxMDIParentFrame::GetClientSize()
+            wxMDIParentFrame_GetClientSizeWidth()
+            wxMDIParentFrame_GetClientSizeHeight()
+
+        wxScrolledWindow::GetScrollPixelsPerUnit()
+            wxScrolledWindow::GetScrollPixelsPerUnitX()
+            wxScrolledWindow::GetScrollPixelsPerUnitY()
+
+        wxScrolledWindow::GetVirtualSize()
+            wxScrolledWindow::GetVirtualSizeX()
+            wxScrolledWindow::GetVirtualSizeY()
+
+        wxScrolledWindow::GetViewStart()
+            wxScrolledWindow::GetViewStartX()
+            wxScrolledWindow::GetViewStartY()
+
+        wxTextCtrl::GetSelection()
+            wxTextCtrl_GetSelectionFrom()
+            wxTextCtrl_GetSelectionTo()
+
+        wxKeyEvent::GetPosition()
+            wxKeyEvent::GetPositionX()
+            wxKeyEvent::GetPositionY()
+
+        wxMouseEvent::GetPosition()
+            wxMouseEvent::GetPositionX()
+            wxMouseEvent::GetPositionY()
+
+    Fixed alias GetForegroundColor back to SetForegroundColor
+
+    Fixed wxPalette::GetPixel, args should not have been pointers.
+
+    Worked on wxGrid class, but documentation is old...
+
+    Fixed wrap.bas, readToken now allows "::". Now skips %{ and
+    %method if %skip is set
+
+    Added % for modulus
+
+    Added %= \=
+
+    Fixed bug in -=, was calling OpSub, which was undefined. Removed
+    OpSubtract, replaced with OpSub.
+
+    Fixed bug in +=, etc. Didn't work properly with arrays.
+
+November 24: v.41 (Green Aphid) released
+
+November 20:
+    Added addPtrConst to const.c to support constants that are pointers
+
+    Added constants to const.c from GDICMN.CPP
+
+    Fixed error in formatNumber() in data.c. Loop test/increment
+    were backwards.
+
+    Fixed error in printTos when data type can't be printed. Was
+    using uninitialized pointer in error message.
+
+    Corrected For loops. Index can now be modified while the
+    loop is running.
+
+    Changed precedence for operators (mainly !)
+
+    Added << (Shl) and >> (Shr) to lexer.c
+
+    Console now scrolls line off top when it's "full".
+
+November 19:
+    Added makelist.awk to automatically extract list of wxwindows
+    methods from class.i for documentation
+
+    Updated documentation
+
+    Started working on shroud routine
+
+    Added length(), synonym for len(). 
+
+    Added \r to list of control codes
+
+    Added memory tests to eval
+
+November 11:
+    Paul Winwood uses wxBasic code for wxLua (good) but there
+    are copyright issues (bad). Things are eventually resolved...
+
+November 9:
+    Fixed error in FreeFile, was returning zero offset value
+
+    Replaced getByte with readByte. Added writeByte. This is used
+    in cases where you might want to write an ASCII 0. This can't
+    be done with a normal string, because 0 marks the end of a
+    C string.
+
+    In Open, Line Input and Close, the '#' is optional
+
+November 8:
+    If the first line of the file begins with #, it is ignored.
+    This is useful in Linux, where you might want to specify
+    the location of the wxBasic executable:
+
+    #\user\bin\wxbasic
+
+November 7:
+    Added binary searches to dynamic arrays.
+
+    Implemented Erase array and Erase[...] for static and dynamic
+    arrays
+
+    Added In operator, returns true if key is in array
+
+    Plain print statement was having no effect. Added test
+    in OpPrint to handle as special case.
+
+    Added Command() and Command$(n). With no args, it returns the
+    count of args. With an arg, it returns that arg number. (Needs
+    to be checked against QuickBasic behavior).
+
+November 6:
+    Added Loc(file), returns position in file (like seek) and
+    Lof(file), returns length of file.
+
+    File routines involving position now use long instead of int.
+
+November 2:
+    Added += -= *= /= and &=
+
+October 30:
+    Added For Each <var> In <array> ... End For
+
+October 29:
+    Added eRealloc()
+
+    Added Dynamic array resizing via eRealloc().
+
+    Reactivated debugging code, looks like there are probably
+    a lot of things that might be not be set up right. I'm guessing
+    that there are just a lot of false triggers.
+
+    Changed calloc() to malloc(). No longer initializes data to
+    zeros, so may find additional bugs in code.
+
+    Dynamic arrays with multiple indexes now works.
+
+October 27:
+    Assignments to dynamic arrays work, except for resizing.
+
+    Re-assignments to dynamic arrays work.
+
+    Dynamic arrays properly garbage collected.
+
+October 26:
+    Started work on dynamic (associative) arrays.
+
+    Dynamic array is declared without any indexes:
+
+        Dim a[]
+
+October 19:
+    pushIncludeFile now takes offset as arguement, in preparation
+    of adding binding.
+
+    Added getByte( file ), reads byte from a file.
+
+    Added seek( file ) and seek( file, position ). The first returns
+    the position in the file, while the second moves to that position
+    in the file.
+
+October 18:
+    Fixed wxWindow::Center(/CenterOnParent/CenterOnScreen. Arg
+    is optional.
+
+    Started work on FreeCell demo.
+
+October 15:
+    Fixed Rnd() to return better random numbers.
+
+    Fixed Randomize() so seed is optional.
+
+    Added the %ctor methods to wxBrush:
+        wxBrushFromColour(const wxString& colourName, int style)
+        wxBrushFromColor(const wxString& colourName, int style)
+        wxBrushFromBitmap(const wxBitmap& stippleBitmap)
+        Copy(const wxBrush& brush)
+
+    Attempting to add wxDb class
+
+    Moved CONST.C after WRAP.CPP in load sequence of CORE.C
+
+October 14:
+    Added wxImage class
+
+October 10:
+    Added wxTimer, wxTimerEvent
+
+    Added Floor(), same as Fix()
+
+    Changed builtin function timer() to ticks()
+
+    Added ElsIf as synonym for ElseIf
+
+    Added escape code for \ (\\)
+
+    Set current working directory by calling wxSetCurrentDirectory()
+    in CORE.C. This gets rid of problems when wxBasic is launched by
+    dropping a program onto it rather than from the command line.
+
+    Added Option NoConsole, for suppressing output to the console.
+    This prevents the console from being created, in cases where the
+    user might close the application while a timer is still running,
+    or something dangerous like that.
+
+    Added Common statement. Equivalent to Dim, but declares as a
+    global variable.
+
+    Fixed 'x already exists as y' error to return symbol type, not datatype
+
+    Fixed error message 'the variable x is undefined' to read
+    'the value of x is undefined'
+
+October 9:
+    Added graphics constants from GDICMN.H to CONST.C.
+
+    Added more builtins to WRAP.CPP (class.i)
+
+    Added wxFont class
+
+    EDITOR.WX now sets the font to a monospaced font.
+
+    Added HScroll to editor, but now interferes with scrolling
+    in the text box - looks like a wxWindows bug.
+
+    Added 'Run' option to execute wxBasic code from editor
+
+    Found bug in Rnd(), occasionally returned value greater
+    than the limit.
+
+    And and Or short circuit. Need to add bitwise and and or functions,
+        '&&' and '||'
+
+    Fixed: Return/End Sub/End Function was not clearing flag at exit
+
+    Added %method for inserting user-defined methods into classes.
+
+October 8:
+    removed LFlush, ShowMessage
+
+    coded Round, StrF, LBound, UBound
+
+    Added builtin Indexes(), returns number of indexes in array.
+
+    Removed debugging code left in trace.
+
+
+October 7: Lightning Bug, 0.31 released
+    Changed trace tag to a single number.
+
+    Fixed includeFile list to properly store name.
+
+    Fixed bug in getChar in LEXER.C, introducted during rewrite of
+    EOL handling. This caused errors in included files.
+
+    Trace now displays file name.
+
+    Builtin constants fixed, were defined as TYPE_NUMBER instead
+    of TYPE_STRING
+
+October 6:
+    Found bug with program not closing; there was a change in
+    2.3.1 that set SetExitOnFrameDelete to FALSE for the
+    duration of wxApp::OnInit. Restored flag, made return value
+    of ::OnInit dependant on whether there was a TopWindow open.
+    No longer need to call MainLoop in code.
+
+    Compiled under wxGTK. Needed to change make files, but no
+    changes to source code.
+
+October 5:
+    ePrintf now creates an error file, wx.err
+
+    Error in shared, caused by stack. Rewrote stack routines to
+    start at -1, not 0. Added some additional safety checks. Found
+    bug in clearStack.
+
+    initConsts in CONST.C no longer uses data structure, since values of
+    events has not been assigned when the structure was built.
+
+    classifyEvent in CONNECT.C is now a bunch of if statements instead
+    of a search though a data structure
+
+    Runs using wxWindows 2.3.1, but applications doesn't shut down when
+    window is closed - it just hangs there.
+
+    It looks like the behavior changed from 2.2.7, adding
+        SetExitOnFrameDelete( TRUE );
+    to wxBasic::OnInit(void) in WXBASIC.CPP seems to take care of
+    the problem.
+
+    Moved declarations in preparation of displaying file name along
+    with errant line.
+October 4:
+    Fixed prototype error in fixEol()
+
+    Updated events in CONST.H
+
+    Changed classifyEvent in CONNECT.CPP to use lookup table instead
+    of case statement.
+
+    wxBitmapFromFile changed type from int to long
+
+    Compiles, but events aren't properly handled. There may be a casting
+    bug in classifyEvent.
+
+October 3: Purple Gloworm, 0.3 released
+
+    Added win: and gtk: tokens to wrapper generator, so parts currently
+    broken can be commented out.
+
+    Commented out wxEVT_COMMAND_TAB_SEL_CHANGING event in CONNECT.CPP,
+    and skipped wxTabCtrl in wrappers. It looks like wxTabCtrl doesn't
+    exist in wxGTK, although it looks like it's there in the documentation.
+    Perhaps it's been deprecated for the wxNotebook control?
+
+    Rewrote fixEof routine in LEXER.C. Compiled and runs under GTK+.
+    Hurrah!
+
+September 30
+    Attempted to compile under wxGTK. Lots of warnings, missing classes:
+
+        wxMetafile          wxBitmapHandler         wxGDIImageHandler
+        wxMetafileDC        wxPrinterDC             wxTabCtrl
+
+    Obviously, these need to be fixed.
+
+    Renamed WXBASIC.C to CORE.C. Changed WXBASIC.CPP, changed references
+    to wxScript.
+
+September 27
+    Minor changes to EDITOR.WX
+
+    Fixed ltrim.
+
+    Fixed bugs in stringCompare in EVAL.C. Individual comparison of
+    strings works now.
+
+    Fixed Space$(). Values less than zero are truncated to zero.
+
+    Found bug in popNumber. In cases where value was string reference,
+    the stack was not being decremented.
+
+    Added builtin constants
+
+September 26
+    Created TRACE.C file. Compiled code with wxWindows.
+
+September 25
+    Now tracks line number being executed
+
+    ePrintf has additional parm for Init/Syntax/Runtime error
+
+September 24
+    Updated to wxWindows 2.2.7
+
+September 7, 2001: Bacon and Eggs, 0.25
+    Replaced printf() calls with eConsole. It would probably be more
+    efficient to have used a macro instead.
+
+    Console is now implemented through a wxWindows class. Seems to work
+    ok - you can destroy (close) the console, and a new one will be created
+    when needed. This is nice, since it's much more portable than the
+    old version of just writing to the console.
+
+September 6, 2001
+    Added %new option
+
+    Removed %new, added %ctor. This allows alternate constructors for
+    a class by creating a new class that uses an alternate form of the
+    constructor.
+
+    Fix, fix, fix... %ctor finally works, yay. *whew*
+
+    Scribble demo works. Yay!
+
+    Changed test for class being safe on stack to being derived
+    from wxWindow. wxObject was too restrictive. Tested with
+    wxScribble - wxDC and wxPens created and destroyed on the stack.
+
+    Updated documentation to reflect %ctor changes
+
+    Changed y.tab.c back to y_tab.c, so I can Zip the files without
+    worrying about long file names.
+
+September 5, 2001
+    Added documentation for wrappers.
+
+    EDITOR.WX now handles window closing event
+
+    replaced %class none with %builtin
+
+September 4, 2001
+    Tracking down memory leak. The problem appears to stem from creating
+    objects derived from wxObject on the stack. Added test to check for
+    that.
+
+    ePrintf now prints messages correctly
+
+    Startup banner suppressed under wxWindows; most of the debugging
+    messages are removed
+
+    Test for creating objects derived from wxObject is not a compile-time
+    test, not runtime.
+
+    Const can now handle multiple assignments:
+        Const a = 1, b = 22
+
+    Worked on Edit.wx, demonstration editor. File functions work,
+    most of the edit functions work. Pretty slick, wxTextCtrl has a
+    lot of functionality.
+
+    Added Alt and Ctrl key shortcuts to menu. Neat!
+
+August 31, 2001: Spicy Cilantro, 0.2
+
+    Documentation more or less ready for release.
+
+    Hacked menu onto Scribble demo. Really should clean up the
+    code, it's pretty awful.
+
+    Commented out clearCreateStack() from shutdown routine, so
+    the code doesn't crash cleaning up.
+
+    posted update
+
+    Added wxFileDialog
+
+    Found bug: missing decrement operator caused some objects to
+    be Deleted twice, causing crashes.
+
+    Moved createStack marker to *before* the arguments are evaluated.
+    Parameters were not being Deleted.
+
+    Also found missing createStack marker in calls to runMethod
+
+August 29, 2001
+    Updated documentation. Grammar section gets it's own format.
+    Looking into other tools to replace Lout, but nothing so far.
+
+August 28, 2001
+    Found problem with wxScribble - mouse event needs parm number 2 to
+        be -1, I forget why exactly.
+    There's still an issue with cleanup, grrr...
+    Scribble program can now draw lines on the page! Hurrah. Stops after
+    Missing pushCreateStack, clearCreateStack in callback code
+
+August 8, 2001
+    Dim now allows assignment:
+        dim a=10, b="hello, world!"
+
+    Option QBasic defers execution of statements until program is
+    entirely parsed. Mainly, this allows the 'main' code to be
+    placed before the function declarations
+    Shared works, but Dim and Shared don't check to see if they
+        are stomping on each other...
+
+August 7, 2001
+    added keywords (but not functionality)
+        Option
+        Explicit
+        Shared
+        Static
+    Dim supports multiple declarations
+    Dim can now include normal variables
+    Dim adds allows optional line breaks after commas
+    Option Explicit works
+        - note that module variable are still visible without
+          having to be explicitly declared
+    added Sub back - basically just a restricted version of Function
+    added in support for traditional Basic function assignment:
+        <functionname> = <expression>
+    added test in basConnect to ensure that the routine name is
+    actually a function or a sub
+    added Declare Sub/Function
+    added test for calling undefined function or callback
+    rewrite of block code logic:
+        each statement outside a block is executed after parsing. this
+        takes care of code that is executed by the parser, instead
+        of bytecodes - Option, Define, Dim, etc.
+    added trace fields to nodes, but currently not filled in.
+        conflict in where to set value - can't do it interactively
+        in statement because block relies on statement falling through.
+
+August 6, 2001
+    Removed Callback linked list, as suggested by Mattia Barbon. Routine
+    handle is now placed in the wxObject data in Connect.
+
+August 4, 2001
+    Looks like crash is coming from is missing 'new' again... Need to
+    add some safety checks or something to code.
+
+August 2, 2001
+    Finally got wxMouseEvents to happen, thanks to Vadim Zeitlin. The
+    problem was that mouse and keyboard events don't have their owner
+    field set. Calling wxWindow::FindFocus takes care of that.
+
+    The code is working, although the stack cleanup code still causes
+    stuff to crash and burn at shutdown.
+
+August 1, 2001
+    rewrote fileEof() test, uses fread() instead of feof() - in
+    DOS, it returned one more line than was actually there. Grrr...
+    Solution based on code from Ioannis Vrano's Merlin library.
+
+July 31, 2001
+    bug in the wxRadioButton is that it's created 'on the stack':
+
+        b = wxRadioButton( p, -1, "Radio" )
+
+    instead of with New:
+
+        b = New wxRadioButton( p, -1, "Radio" )
+
+    Although why it would be deleted twice is a mystery to me...
+
+    Still trying to figure out why the window isn't seeing mouse
+    events.
+
+July 30, 2001
+    bug that is causing illegal instruction is the wxRadioButton control.
+    added code to wrap wxEvent in callback.
+    pass event as pointer instead of reference, since the pointer has to
+    be wrapped. the declaration used to be:
+            void runCallback(wxEvent event&)
+    
+July 27, 2001
+    Updated documentation
+    Changed headers to indicate LGPL license
+    fixed current working directory test - parses command
+        line correctly now.
+    more name changes in docs from wxScript to wxBasic
+    renamed wxApp.cpp to wxBasic.cpp
+
+July 26, 2001
+    Updated documentation
+
+July 23, 2001
+    wxSizer and wxConstraints classes added
+
+July 21, 2001
+    worked on documentation
+
+July 20, 2001
+    new file operations:
+        open <file> for input|output|append as # <filenum>
+        line input # <filenum>, <var>
+        print # <filenum> , <args>
+        close
+        close # <filenum>
+        eof()
+    != same as <>
+    ! same as Not
+    rewrote printing
+    renamed back to wxBasic
+
+July 19, 2001
+    worked on documentation using Lout
+
+July 18, 2001
+    removed test for frame in wxScriptApp::Init. user must call
+        theApp.MainLoop() if they want the program to enter the
+        event loop.
+    added builtin MainLoop() function, same as writing:
+        theApp = GetWxApp() : theApp.MainLoop()
+
+
+July 12, 2001
+    bug in return: didn't reset exitRoutineFlag, so the chaining of
+        code in the OpComma loop would fail. all sorts of wacky results.
+    bug in return: setReturn() set index at -2, not -1. how could this
+        be in the code for so long?
+    bug in calling methods and dropping result: result was not dropped.
+        fixed code in WXSCRIPT.Y and added test to CallFunction to make
+        sure stack is not stomped on.
+    bug in case: comma operator caused stack underflow. rewrote tests
+        so compare item properly duplicated.
+    optimized case so object to compare to is String or Number. reduces
+        number of times it has to be duplicated on the stack.
+    added test to OpAdd, now '+' will concatenate if left hand value
+        is a string.
+
+July 11, 2001
+    found bug in return
+
+July 10, 2001
+    more casts corrected - C++ is stricter than C!
+    fixed cast bug in For and For/Step, values were
+        being cast to integers.
+    error parsing large integers - they were being cast to (int).
+        all parsed numbers (other than hex) are now internally Float.
+    added formatNumber() to DATA.C, removes trailing zeros from numbers
+    added FLT_EPSILON to loop maximums, so floating numbers end
+    note: mingwin compiler builds much smaller exes:
+        69K vs 244K (Borland) - and that's *before* compression
+
+July 9, 2001
+    Updated NOTES
+    tried compiling under Dev-C++, lots of cast errors
+        - (int)popNumber in BUILTIN.C
+        - 0 instead of NULL in WRAP.CPP (fixed code generator)
+        added includes:
+            caret.h for wxCaret
+            dnd.h for wxDropTarget
+
+        added %struct
+     fixed BUILTIN.H, struct now has each data element bracketed.
+    changed "%lf" in DATA.C to "%Lf"
+
+July 6, 2001
+    fixed bug in array assignment - didn't handle REFs properly.
+    added getStackType() to hide redirection on stack.
+
+July 5, 2001
+    working on CASE statement
+    added test for empty SELECT block
+    changed grammar for SELECT, now matches other blocks
+    problem with CASE: ref remains unresolved, so fails it test.
+    class 'none' now adds builtins, no class prefix
+    added wxColour
+    fixed %rename option, lots of stuff broken now
+    check for null object in method call
+
+July 4, 2001
+    using undefined variables results in an error
+    added %typedef directive for wxNotebookPage
+    changed way '*' was being stripped off, typedef bug
+    fixed rename
+    removed ' comment from class.i
+    fixed alias, wasn't working at all
+
+July 2, 2001
+    class methods can be called directly via:
+        ClassName.method(...)
+    added %enum, to distinguish enums from classes
+    began work on callbacks
+    callbacks now trigger messagebox - routines not linked
+        in yet.
+    added missing break in case statement in copyStackItem;
+        it was causing the application to crash
+
+July 1, 2001
+    changed #define Number to typdef, fixed name conflicts
+    added c++ style comments // like this
+    ending line with operator or comma creates an implicit
+        line continuation
+    line continuation '_' is missing from lexer... odd.
+
+June 29, 2001
+    still working on rewrite of wrapper generator...
+    wrappers work, hurrah. callbacks not implemented, though
+    tested under Linux, lots of problems. :-(
+    fixed printlist grammar, the line:
+            print "this is"a"test"
+        no longer crashes the machine
+    fixed bug in include files, was executing code out of order
+
+June 28, 2001
+    removed builtins:
+        bin
+        bin$
+        bind
+        callFunc
+        varPtr
+
+    added builtin wxApp, returns handle to wxApp
+    fixed wxPanel so it inherits from wxWindow
+    found missing wxDefaultValidators
+    added test to wrapper generator ensure optional args are all there
+    cleaned up lots of missing default args
+    found (but didn't fix) source of illegal instruction. the code:
+        const wxValidator& validator = wxDefaultValidator
+    was generating:
+        wxValidator &validator = wxDefaultValidator;
+        foo( ... wxValidator ... )
+    it should have been:
+        const wxValidator *validator = &wxDefaultValidator;
+        foo( ... *wxValidator ... )
+    rewriting arg decoding section of wrapper generator
+
+June 27, 2001
+    added code to wrappers to suppress warnings, was halting compile
+    class.i finally runs
+    funky bug - arg count test should be n-1, not n
+    got rid of runConstructor, wrapped into runMethod
+    'new' method now checks for correct number of args
+
+June 26, 2001
+    incorporated popStringList code; doesn't fail, but doesn't
+        run as expected
+    non-constructors now wrap returned objects
+    added lots of classes for pointer type-checking
+    non-wxWindows pointers add (int) to cast
+    added pointer checks for wxClass objects
+
+June 25, 2001
+    slogging through the CLASS.I file, fixing stuff
+    added (but not tested) popStringList, which will convert a
+        pipe-delimited list into a string list. also coded freeStringList
+        for releasing. needs to be added to code for handling of
+        wxString **foo and wxString foo[]
+
+June 23, 2001
+    optional args created with if...else instead of ?(:)
+        borland compiler generated lots of warnings
+    wxString destroyed with delete instead of ~
+    commented out all 'OnAction' routines from class.i
+    function returning non-pointer objects now return pointers
+    string parameters now convert directly into wxString
+    delete on wxString parameter removed
+    compiles up to (but not including) wxGrid class
+
+June 22, 2001
+    two types of destructors now supported:
+        ~foo()
+        delete foo
+    method calls discarding values now works
+    corrected wrapping for parm form 'const <class> name = <expr>
+    can now create and display wxFrame - yay!
+
+June 21, 2001
+    used addClass to create new class, not #define
+    added extra paren on ((wxClass *)me)->method(...)
+    test for _wxFrame in objectList crashed, was missing test
+        for NULL.
+    in addClass, name must be in lower case
+    runConstructor was wrapping object twice - once in method, and once
+        in caller.
+    addObject started at zero, not 1.
+    getObject now treats zero as a special case.
+
+June 20, 2001
+    when compiling under linux, wxscript.y must have lines set
+        to linux type eol, or it generates errors
+    compiling under linux requires -lm (link to math library)
+        in order to get math functions
+    added eof test in getChar, was causing segfaults in Linux
+        when it tried to read from a closed file
+    added hack to getChar in lexer so that all lines are guaranteed
+        to end in a '\n'; this should fix things under linux
+    runConstructor was returning value - redundant
+
+June 19, 2001
+    added optional args to class.bas
+    removed and consolidated code in CLASS.BAS
+    wrappers now auto-generated: WRAP.CPP and WRAP.H
+
+June 18, 2001
+    changed arg order in class.c routines
+    fixed destructor in class.bas
+
+June 14, 2001
+    rewrite of wxWrap in process...
+    added classes to symbol table and lexer
+    removed TypeField and FieldName
+    syntax for New added
+    syntax for Destroy added
+    created class.c to handle class methods, but not callbacks
+    created MethodName
+
+June 1, 2001
+    added Continue statement
+    added missing tests for ExitFor when step is specified
+    added additional sanity tests
+    changed error message "X not inside Y" to "X outside Y"
+        ex: "Continue outside For or While"
+    
+May 31, 2001
+    worked on documentation
+    parameters now pass by reference
+    strings automatically converted to numbers by popNumber
+    addition no longer attempts to do concatenation
+    numbers automatically converted to strings by popString
+    argc works
+    variable number of parms works
+    fixed bug where locals were stepping on parms; now allocate
+        fixed space for variable args
+    removed PlayWave and RGB from builtins
+    added typeof to builtins
+
+May 30, 2001
+    fixed name conflicts in Dim
+    arrays symbols now created as TYPE_ARRAY
+    name conflict between type TYPE_ARRAY and symbol TYPE_ARRAY;
+        changed TYPE_ prefix to DATA_ and SYM
+    removed unsupported types from symbols.h
+    removed $ from builtin functions...
+    removed builtin Environ, Environ$ and ExtractResource
+    removed VarPtr$ from builtins
+    removed Resource and ResourceCount
+    added duplicate names with $ to builtin string functions
+    added printStack to builtins, for debugging
+
+
+May 29, 2001
+    Def renamed back to Function
+    restored arrays, cleanup code missing
+    fixed stack bug in opFunction, caused underflow
+    array assignment was leaving junk on stack
+    fixed bug in Mid$, underallocated string buffer
+
+
+May 24, 2001
+    createFrame now takes flags
+    fixed return with value, exits after statement
+    fixed storing return value, stack problem
+    added plain Return
+    changed DefName = <expr> to Return <expr>
+    removed native types from code
+    removed fields from code
+    removed datatype field from symbols
+    renamed files record.* back to array.*
+
+
+May 23, 2001
+    removed Sub
+    replaced Function with Def
+    removed Type
+
+May 22, 2001
+    wrote constant wrapper
+    defs.h now converted to defs.inc
+    fixed lexer, reads comments trailing code
+    added non-portable current working directory (cwd)
+        wxwindows version should use wxGetCWD
+    when controls are created, the WxWindowID is automatically generated
+    callbacks working
+
+May 21, 2001
+    wrote c prototype wrapper
+    added "include"; a bit of a hack, though...
+    reads hex numbers
+
+May 18, 2001
+    restored old ePrintf and startup messages
+    added __WXWIN__ so code can compile as dos or wxwindows
+    added Connect as keyword
+    fixed missing break in printStack
+    implemented Const
+
+May 17, 2001
+    hacking action code...
+    added test so if no window is visible, app shuts down
+        when exits basic. otherwise, it runs invisibly.
+    fixed problem with wxwindows version not printing on command
+        line. need to change /aa to /Tpe in /wx/src/makeprog.b32
+
+
+May 16, 2001
+    added prototypes to make bcc happy
+    changed code to conform with k&r
+    fixed bugs identified by bcc
+    added TYPE_ prefix to constants, conflicted with names in bcc
+    created wrapper for wxWindows
+    printf seems to choke wxWindows... grrr...
+    rewrite ePrintf to work with wxMessageBox
+    names in qwrapper should have been all lower case, fixed
+    fixed bug in ePrintf
+    creates frame
+    creates menubar and menus
+
+May 14, 2001
+    found the problem with returning variants. i had replaced the
+        code in OpReturnValue with a setvar() call, but it wasn't
+        evaluating the position of the functionname relative to the
+        stack. i've added special code to setvar to handle this, and
+        it runs fine.
+    added eShutdown for place to put graceful shutdown code
+    added End statement. there were issues with the parser, so i finally
+        just hacked the lexer to return an EndX token for the statement.
+    added Exit For and Exit Do/While
+    added tests for Exit For and Exit Do/While, can't call if not in loop
+    added Exit Sub (with proper tests)
+
+May 12, 2001
+    changed code in OpReturnVal to use setVar when setting
+        function return type
+    added additional parm to createVar, generates error if symbol
+        is already defined
+
+May 11, 2001
+    renamed pushVar and popVar to getVar and setVar
+    found missing break in initialization routine
+    was checking variable, not tos to determine type of tos
+    eCopyString wasn't adding string to memory track list
+    rewrite of error.c, use macros
+    error in eCopyString with blank string - added 1 to strlen
+
+May 10, 2001
+    renamed struct.* to record.*
+    hack, hack...
+    changed free() in eval to eFree()
+    created dummy record.z and type.z so code would compile
+    fix, fix, fix...
+    renamed nativetype to class, more general
+    added support for variant
+
+May 9, 2001
+    added Variant datatype
+    hack and slash...
+    removed datatype and stackDepth from Array struct
+
+May 8, 2001
+    removed \n from basStr format string
+    major rewrite: datatype is now pointer to type symbol
+    changed popNumber and popString
+    hack and slash...
+    renamed Array to Record
+
+
+May 7, 2001
+    Added test so UDTs aren't included in other UDTs
+    End Type was clearing currentType, causing crashes. it was being
+        executed *before* the types were defined. moved it to end of
+        main type definition
+    removed typelist from %types, not actually returning a value
+    eMalloc now does calloc
+    fixed args being passed to calloc
+    tested instr; reversed args
+    fixed left$ and right$
+    fixed mid$
+    all builtins return value, even if it's ignored
+    added rename()
+    changed test for functions/builtins with no args;
+        if args missing, message is now "expected '(', not ..."
+    added kill()
+    reads file name from command line
+    renamed currentType to currentTypeDef, added currentDef
+    lexer now aware of currentDef, tried to parse type fields accordingly
+    fixed linenumber to start at 1, not 2
+    added ungetChar() and return '.' for dot delimiter
+    addTypeField: changed currentType to currentTypeDef, added NULL test
+    added pushTypePtr, init now sets type to TYPEPTR
+    udts with numberic types working
+        -> need to add field for garbage collection
+    renamed symbol->offset symbol->stackPos
+    changed varOffset to varStackPos
+    added bytesOffset for types
+
+May 4, 2001
+    removed FIXEDSTRING type
+    added TYPEPTR type
+    added type to Value
+    added child and sibling to Symbol
+    added addChildSymbol
+    rewrote findChildSymbol
+
+
+May 3, 2001
+    rewrote error.c, eMalloc now tracks memory that is allocated
+    found bug in parameter passing; localstart was being moved
+        *before* args were evaluated. *nasty* bug.
+    array passing works. yay.
+    for... now accepts next <var>
+    '.' is now treated as a seperate symbol (except in numbers)
+    can now define simple types (no strings, can't use)
+
+May 2, 2001
+    renamed array functions
+    added freeArray() to release strings
+    added OpFunctionCall and OpBuiltinCall
+        functions can now be called like subs
+    added OpPrintTab, comma seperated print items add '\t'
+    moved structure declarations into include files
+    changed node name from 'data' to 'value' for consistancy
+    rewrote print logic, newline/tab flag; removed OpPrintLn and OpPrintTab
+    began typechecking args at compile time
+    added free() after all Undefined in parser (except when an error)
+    added missing comma to symbolName table
+    removed ARRAY as datatype, added 'array' attribute to Symbol
+    check to make sure an array is being passed in parm
+    fixed lexer, wasn't searching scope for words
+    moved printStack() into data.c
+    passing arrays now works
+
+May 1, 2001
+    added comma() function to wxbasic.y
+    added dim( expr To expr ...)
+    reversed order of args
+    multiple dimensions created
+    read/write of arrays working
+    global arrays working
+    empty print prints a blank line
+    added callDepth to keep track of calling depth
+    arrays now freed when returning from routines
+        - strings are not yet freed, though
+
+April 30, 2001
+    global variables are now stored on the stack
+    rewrote pushVar/popVar to be more general
+    can create and read arrays with single dimensions
+    fixed print to display blank if null string
+    added isNonBreakingChar; identifiers can now start with $, etc.
+    arrayGet works
+    arraySet works
+    fixed bug in pushStringCopy
+    print statement supports ';', but code could be cleaner -
+        perhaps place a OpPrintLn (which takes no args) as
+        last value?
+    bug in chr$; passing static buffer to eCopyString caused the
+        code to blow up... odd.
+    added arrayargs; simplified code.
+
+April 27, 2001
+    changed Stack to a structure
+    Stack now checks upper bounds
+    added dupStack and swapStack
+    name conflict with Type as keyword and datatype.
+        renamed the keyword to Type_
+    more conflicts: Sub, Function, Builtin, Variable and Type
+        renamed SubName, FunctionName, etc.
+    ever wonder why function calls *require* parens, but subs don't?
+        it's to distinguish between an assignment:
+            func = returnvalue
+        and a call with no parms:
+            func
+    functions work
+    basConcat unloaded args off stack backwards
+    lexer now buffers line
+    parse errors display errant line
+    builtins with no args no longer require parens
+    functions with no args no longer require parens
+    default variable type is now double, not integer
+    instr, rinstr names fixed, accept variable length args
+    added rnd (thanks to kevin diggins!)
+
+April 26, 2001
+    optimized OpComma to use loop instead of recursing
+    builtins with optional args leave value on tos
+    implemented Instr and RInstr
+    For... grammar, replaced '=' with Eq token
+    bug in createVar, should have initialize *s.
+        - this could easily be in other code!
+    split pushToVar into pushToLocal and pushToGlobal
+    popGlobal casting logic was wrong; used NUMBER instead of
+        more specific type
+    for loop (no step) now works
+    for loop with step now works
+    
+April 25, 2001
+    initialized new symbol default values to zero/null
+    user definitions with no args work
+    blank lines in code now work
+    working on arg list for sub
+    added types to types.c, support code in parser and lexer
+    fixed opVar to look at declared datatype
+    added initTypes() to main
+    createVar and createParm look at name to determine datatype if undefined
+    fixed offset to local variables
+    OpVar now corrects datatype when fetching
+    use localstart instead of bottom of stack (can remove bos)
+    move setting of localstart
+    args being initialized in reverse order, fixed yacc file
+    locals in subs now work
+    
+
+April 24, 2001
+    case statement in progress
+    lexer returns Eq for '='
+    added token Is
+    added currtok to lexer
+    added line number counter
+    changed '\n' to sep in grammar
+    changed '<' and '>' to return Lt and Gt in lexer
+    added eDebug and printStack for debugging (finally)
+    fixed caseStringCompare, was freeing wrong string
+    lexer looks in symbol table for type
+    removed Randomize as keyword
+    changed acos back to cos - typo
+    lexer was returning string instead of symbol for Variable and Builtin
+    added stacks
+    added arg count checking
+    missing 'sep' at end of End Sub
+
+April 23, 2001
+    fixed builtin numeric functions, removed (long) casts
+    fixed popString, wasn't returning pointer
+    bug in lexer: missing break after handling '$'
+    added eDebug() for testing
+    date$() and time$() now work
+
+April 22, 2001
+    support for blank lines
+    blank lines don't generate code
+    string comparisons tested
+    changed pushString to pushStringCopy, added pushString
+    added builtins
+    corrected debug: names off by 1
+    calls to builtins work, but buggy
+    corrected val(), was converting to long, not float
+    corrected / and \, operators were backwards
+    lexer now reads !@#$% as part of token
+
+April 21, 2001
+    started log
+    removed error checking in data stack routines
+    added bottom of stack variable
+    freed strings in popNumber
+    hacked yyerror return type so bison would stop complaining
+    added follows() function to parser
+    compiling again...
+    removed return value from yyerror
+    added standard operators and precedence to wxbasic.y
+    added missing parens to wxbasic.y
+    changed type to datatype and symboltype in most places
+    found missing -- in popstring
+    found missing break following case in OpAssign
+    added string concat operator
+    reversed order of assignments: lifo
+    strings are working
+    added Float to expressions
+    had been using long instead of double to store numbers
+    created constant Number to represent doubles
+    cast some operators down to long in eval
+    eval() wasn't checking for null nodes, so it was crashing
+    while ... wend is working
+    if...then...else...end if is working
+    fixed default type of global to INTEGER instead of UNDEFINED
+    comparison operators consolidated together
+    '+' behaves correctly
+
+april 16, 2001
+    started wxBasic, vbScript + wxWindows
