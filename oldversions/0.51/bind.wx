@@ -1,0 +1,70 @@
+// bind.wx 
+// Bind a source file to wxbasic executable
+// (c) 2002 David Cuny
+//
+// Usage:  bind <wxbasic binary> <sourcefile> <destfile>
+
+bin     = Command(3)
+source  = Command(4)
+dest    = Command(5)
+
+If dest = "" Then
+    Print "Usage:"
+    Print "bind <wxbasic binary> <sourcefile> <destfile>"
+
+Else
+
+    Print "Binding "; source
+
+    // open the source file
+    outFile = FreeFile()
+    
+    Open dest For Output As #outFile
+    
+    // first, copy wxbasic executable
+    Print "Copying "; bin; "..."
+    wxFile = freeFile()
+    Open bin For Input As #wxFile
+    
+    sizeof = Lof( wxFile )
+    
+    // add the file
+    For i = 1 To Lof( wxFile )
+        writeByte( outFile, readByte( wxFile ) )
+        if i % 10000 = 0 then
+            print ".";
+        End If
+    End For
+    Close #wxFile
+    print
+    
+    // next, copy destination file
+    Print "Copying "; source
+
+    inFile = FreeFile()
+    Open source For Input As #inFile
+    For i = 1 To Lof( inFile )
+        writeByte( outFile, readByte( inFile ) )
+    End For
+    Close inFile
+
+    Print "Attaching tag..."
+
+    // convert to string
+    sizeof = "" & sizeof
+    
+    // pad with zeros
+    While Len( sizeof ) < 8
+        sizeof = "0" & sizeof
+    End While
+    
+    // Write additional information
+    Print #outFile, "\n//"; sizeof; " wxbind"
+    
+    Close outFile
+
+    Print "Created "; dest
+
+    End
+
+End If
