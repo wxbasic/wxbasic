@@ -1,0 +1,100 @@
+// Test various controls for wxBasic
+
+function appendItems( a )
+    // append a list of items to a control
+    for i = 1 to 20
+        a.Append( "Item " & i )
+    end for
+end function
+
+
+// create the main application window
+frame = new wxFrame( 0, -1, "wxBasic Controls Demo", wxPoint(50, 50), wxSize(450, 340))
+panel = new wxPanel( frame, -1 )
+status = frame.CreateStatusBar()
+
+
+// notebook to hold controls
+n = new wxNotebook( panel, -1, wxPoint(10,10), wxSize(400,250) )
+
+
+// various types of controls
+p = new wxPanel(n, -1)
+n.AddPage( p, "wxButton" )
+b = new wxButton(p, -1, "wxButton" )
+
+p = new wxPanel(n, -1)
+n.AddPage( p, "wxCheckBox" )
+b = new wxCheckBox(p, -1, "wxCheckBox" )
+
+p = new wxPanel(n, -1)
+n.AddPage( p, "wxCalendarCtrl" )
+b = new wxCalendarCtrl(p, -1 )
+
+p = new wxPanel(n, -1)
+n.AddPage( p, "wxChoice" )
+b = new wxChoice( p, -1, wxPoint( 1, 1 ), wxSize( 40, 30 ), 0, "" )
+appendItems( b )
+
+p = new wxPanel(n, -1)
+n.AddPage( p, "wxComboBox" )
+b = new wxComboBox( p, -1 )
+appendItems( b )
+
+p = new wxPanel(n, -1)
+n.AddPage( p, "wxGauge" )
+b = new wxGauge( p, -1, 1 )
+
+p = new wxPanel(n, -1)
+n.AddPage( p, "wxStaticBox" )
+b = new wxStaticBox( p, -1, "wxStaticBox" )
+
+p = new wxPanel(n, -1)
+n.AddPage( p, "wxListBox" )
+b = new wxListBox( p, -1 )
+appendItems( b )
+
+p = new wxPanel(n, -1)
+n.AddPage( p, "wxCheckListBox" )
+b = new wxCheckListBox( p, -1 )
+appendItems( b )
+
+p = new wxPanel(n, -1)
+n.AddPage( p, "wxListCtrl" )
+b = new wxListCtrl( p, -1 )
+// appendItems( b )
+
+p = new wxPanel(n, -1)
+n.AddPage( p, "wxTextCtrl" )
+b = new wxTextCtrl( p, -1 )
+
+p = new wxPanel(n, -1)
+n.AddPage( p, "wxScrollBar" )
+b = new wxScrollBar( p, -1 )
+
+p = new wxPanel(n, -1)
+n.AddPage( p, "wxSpinButton" )
+b = new wxSpinButton( p )
+
+p = new wxPanel(n, -1)
+n.AddPage( p, "wxSpinCtrl" )
+b = new wxSpinCtrl( p )
+
+p = new wxPanel(n, -1)
+n.AddPage( p, "wxStaticText" )
+b = new wxStaticText( p, -1, "StaticText", wxPoint( 1, 1 ) )
+
+// This causes a crash on exit!
+p = new wxPanel(n, -1)
+n.AddPage( p, "wxRadioButton" )
+b = new wxRadioButton( p, -1, "Radio" )
+
+p = new wxPanel(n, -1)
+n.AddPage( p, "wxSlider" )
+b = new wxSlider( p, -1, 1 , 1, 100 )
+
+//p = new wxPanel(n, -1)
+//n.AddPage( p, "wxPlotWindow" )
+//b = new wxPlotWindow( p, -1, wxPoint(1,1), wxSize( 100, 32 ) )
+
+frame.Show(True)
