@@ -1,0 +1,120 @@
+// My first wxBasic demo...
+option explicit
+
+// create the window
+dim frame = new wxFrame( 0, -1, "wxBasic App", wxPoint( 10, 10 ), wxSize( 300, 200 ) )
+frame.Centre()
+
+// place a panel in the window
+dim panel = new wxPanel( frame, -1 )
+
+// add a status bar
+dim sBar = frame.CreateStatusBar( 1 )
+sBar.SetStatusText("wxBasic Frame Demo")
+
+// attach a menubar to the window
+dim mBar = new wxMenuBar()
+frame.SetMenuBar(mBar)
+
+// build the "File" dropdown menu
+dim mFile = new wxMenu()
+mBar.Append(mFile, "&File")
+
+// populate it
+mFile.Append( wxID_NEW, "&New", "Creates a new file" )
+mFile.Append( wxID_OPEN, "&Open", "Loads an existing file from disk" )
+mFile.Append( wxID_SAVE, "&Save", "Saves current file" )
+mFile.Append( wxID_SAVEAS, "Save &As", "Saves current file with new name" )
+mFile.AppendSeparator()
+mFile.Append( wxID_EXIT, "E&xit", "Exit Application" )
+
+// build the "Edit" dropdown menu
+dim mEdit = new wxMenu()
+mBar.Append(mEdit, "&Edit")
+mEdit.Append( wxID_CUT, "Cu&t", "Deletes selected text and copies it to buffer" )
+mEdit.Append( wxID_COPY, "&Copy", "Copies selected text to buffer" )
+mEdit.Append( wxID_PASTE, "&Paste", "Inserts buffer contents at current location" )
+mEdit.Append( wxID_CLEAR, "Cl&ear", "Deletes selected text without copying to buffer" )
+
+// event handlers for the menus
+Function MenuNew( event )
+    shared frame
+    wxMessageBox( "Menu: New Selected", "Menu Selection", wxOK + wxICON_INFORMATION, frame )
+End Function
+Connect( frame, wxID_NEW, wxEVT_COMMAND_MENU_SELECTED, "MenuNew" )
+
+Function MenuOpen( event )
+    shared frame
+    wxMessageBox( "Menu: Open Selected", "Menu Selection", wxOK + wxICON_INFORMATION, frame )
+End Function
+Connect( frame, wxID_OPEN, wxEVT_COMMAND_MENU_SELECTED, "MenuOpen" )
+
+Function MenuSave( event )
+    shared frame
+    wxMessageBox( "Menu: Save Selected", "Menu Selection", wxOK + wxICON_INFORMATION, frame )
+End Function
+Connect( frame, wxID_SAVE, wxEVT_COMMAND_MENU_SELECTED, "MenuSave" )
+
+Function MenuSaveAs( event )
+    shared frame
+    wxMessageBox( "Menu: Save As Selected", "Menu Selection", wxOK + wxICON_INFORMATION, frame )
+End Function
+Connect( frame, wxID_SAVEAS, wxEVT_COMMAND_MENU_SELECTED, "MenuSaveAs" )
+
+Function MenuExit( event )
+    shared frame
+    wxMessageBox( "Menu: Exit Selected", "Menu Selection", wxOK + wxICON_INFORMATION, frame )
+    frame.Close(True)
+End Function
+Connect( frame, wxID_EXIT, wxEVT_COMMAND_MENU_SELECTED, "MenuExit" )
+
+Function MenuCut( event )
+    shared frame
+    wxMessageBox( "Menu: Cut Selected", "Menu Selection", wxOK + wxICON_INFORMATION, frame )
+End Function
+Connect( frame, wxID_CUT, wxEVT_COMMAND_MENU_SELECTED, "MenuCut" )
+
+Function MenuCopy( event )
+    shared frame
+    wxMessageBox( "Menu: Copy Selected", "Menu Selection", wxOK + wxICON_INFORMATION, frame )
+End Function
+Connect( frame, wxID_COPY, wxEVT_COMMAND_MENU_SELECTED, "MenuCopy" )
+
+Function MenuPaste( event )
+    shared frame
+    wxMessageBox( "Menu: Paste Selected", "Menu Selection", wxOK + wxICON_INFORMATION, frame )
+End Function
+Connect( frame, wxID_PASTE, wxEVT_COMMAND_MENU_SELECTED, "MenuPaste" )
+
+Function MenuClear( event )
+    shared frame
+    wxMessageBox( "Menu: Clear Selected", "Menu Selection", wxOK + wxICON_INFORMATION, frame )
+End Function
+Connect( frame, wxID_CLEAR, wxEVT_COMMAND_MENU_SELECTED, "MenuClear" )
+
+
+Function ButtonPress( event )
+    shared frame
+    wxMessageBox( "Button Pressed", "Button Event", wxOK + wxICON_INFORMATION, frame )
+End Function
+
+// add a button
+dim button = new wxButton( panel, -1, "Button 1", wxPoint(10, 10) )
+Connect( button, wxEVT_COMMAND_BUTTON_CLICKED, "ButtonPress" )
+
+button = new wxButton( panel, -1, "Button 2", wxPoint(10, 40) )
+Connect( button, wxEVT_COMMAND_BUTTON_CLICKED, "ButtonPress" )
+
+Function CheckboxClicked( event )
+    shared frame
+    wxMessageBox( "Checkbox Clicked", "Checkbox event", wxOK + wxICON_INFORMATION, frame )
+End Function
+
+button = new wxCheckBox( panel, -1, "CheckBox 1", wxPoint(10, 70) )
+Connect( button, wxEVT_COMMAND_CHECKBOX_CLICKED, "CheckboxClicked" )
+
+button = new wxCheckBox( panel, -1, "CheckBox 2", wxPoint(10, 110) )
+Connect( button, wxEVT_COMMAND_CHECKBOX_CLICKED, "CheckboxClicked" )
+
+// show the window
+frame.Show(True)
