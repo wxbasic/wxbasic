@@ -1,0 +1,21 @@
+# Generated automatically from Makefile.in by configure.
+#
+# File:		makefile.unx
+# Author:	Julian Smart
+# Created:	1998
+# Updated:	
+# Copyright:	(c) 1998 Julian Smart
+#
+# "%W% %G%"
+#
+# Makefile for minimal example (UNIX).
+
+top_srcdir = ../..
+top_builddir = ../..
+program_dir = samples/wxbasic
+
+PROGRAM=wxbasic
+
+OBJECTS=$(PROGRAM).o
+
+include ../../src/makeprog.env
