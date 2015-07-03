@@ -1,0 +1,172 @@
+' Simple Editor written in wxBasic
+' (c) 2002 David Cuny
+Option Explicit
+
+Common  AppName         = "wxBasic Editor",     ' application name
+        wxID_RUN        = wxID_HIGHEST + 1,     ' custom event
+        fileName        = ""                    ' current file name
+
+' Main window
+Common frame = new wxFrame( 0, -1, AppName & " - Untitled Document" )
+
+' Text edit control
+    Common control = new wxTextCtrl( frame, -1, "", wxPoint( 0, 0 ),
+        wxSize( 100, 100 ), wxTE_MULTILINE | wxHSCROLL )
+
+' Font
+    control.SetFont( wxFont( 12, wxMODERN, wxNORMAL, wxNORMAL ) )
+
+' Fairly useless status bar
+    Common status = frame.CreateStatusBar( 1 )
+    frame.SetStatusText("Ready")
+
+' Dialog used for Open/Save/Save As
+    Common fileDialog = new wxFileDialog( frame )
+
+' add menubar to the frame
+    Common mBar = new wxMenuBar()
+    frame.SetMenuBar(mBar)
+
+' build the "File" dropdown menu
+    Common mFile = new wxMenu()
+    mBar.Append(mFile, "&File")
+
+' populate it
+    mFile.Append( wxID_NEW, "&New", "Creates a new file" )
+    mFile.Append( wxID_OPEN, "&Open...", "Loads an existing file from disk" )
+    mFile.Append( wxID_SAVE, "&Save", "Saves current file" )
+    mFile.Append( wxID_SAVEAS, "Save &As...", "Saves current file with new name" )
+    mFile.AppendSeparator()
+    mFile.Append( wxID_EXIT, "E&xit\tAlt-X", "Exit Application" )
+
+' Common routine
+Sub saveAs()
+    fileDialog.SetMessage("Save File As")
+    fileDialog.SetFilename( fileName )
+    fileDialog.SetStyle( wxSAVE )
+    If fileDialog.ShowModal() = wxID_OK Then
+        fileName = fileDialog.GetFilename()
+        control.SaveFile( fileName )
+        frame.SetTitle( AppName & " - " & fileName )
+    End If
+End Sub
+
+Sub onFileNew( event )
+    If control.IsModified() Then
+        Dim dialog = new wxMessageDialog( frame, "Save changes first?",
+            "Save Changes?", wxYES_NO + wxCENTRE + wxICON_QUESTION )
+        Dim result = dialog.ShowModal()
+        delete dialog
+
+        If result = wxID_YES Then
+            If fileName = "" Then
+                saveAs()
+            Else
+                control.SaveFile( fileName )
+            End If
+        End If
+    End If
+    control.Clear()
+    fileName = ""
+    frame.SetTitle( AppName & " - Untitled Document" )
+End Sub
+Connect( frame, wxID_NEW, wxEVT_COMMAND_MENU_SELECTED, "onFileNew" )
+
+
+Sub onFileOpen( event )
+    fileDialog.SetMessage("Open File")
+    fileDialog.SetStyle( wxOPEN )
+    If fileDialog.ShowModal() = wxID_OK Then
+        fileName = fileDialog.GetFilename()
+        control.Clear()
+        control.LoadFile( fileName )
+        frame.SetTitle( AppName & " - " & fileName )
+    End If
+End Sub
+Connect( frame, wxID_OPEN, wxEVT_COMMAND_MENU_SELECTED, "onFileOpen" )
+
+Sub onFileSaveAs( event )
+    saveAs()
+End Sub
+Connect( frame, wxID_SAVEAS, wxEVT_COMMAND_MENU_SELECTED, "onFileSaveAs" )
+
+Sub onFileSave( event )
+    If fileName = "" Then
+        onFileSaveAs( event )
+    Else
+        control.SaveFile( fileName )
+    End If
+End Sub
+Connect( frame, wxID_SAVE, wxEVT_COMMAND_MENU_SELECTED, "onFileSave" )
+
+
+Sub onFileExit( event )
+    If control.IsModified() Then
+        Dim dialog = new wxMessageDialog( frame, "Save changes before exiting?",
+            "Save Changes?", wxYES_NO + wxCENTRE + wxICON_QUESTION )
+        Dim result = dialog.ShowModal()
+        Delete dialog
+
+        If result = wxID_YES Then
+            If fileName = "" Then
+                saveAs()
+            Else
+                control.SaveFile( fileName )
+            End If
+        End If
+    End If
+    End
+End Sub
+Connect( frame, wxID_EXIT, wxEVT_COMMAND_MENU_SELECTED, "onFileExit" )
+Connect( frame, wxEVT_CLOSE_WINDOW, "onFileExit" )
+
+' build the "Edit" dropdown menu
+Common mEdit = new wxMenu()
+mBar.Append(mEdit, "&Edit")
+mEdit.Append( wxID_CUT, "Cu&t\tCtrl-X", "Deletes selected text and copies it to buffer" )
+mEdit.Append( wxID_COPY, "&Copy\tCtrl-C", "Copies selected text to buffer" )
+mEdit.Append( wxID_PASTE, "&Paste\tCtrl-V", "Inserts buffer contents at current location" )
+mEdit.Append( wxID_CLEAR, "Cl&ear", "Deletes selected text without copying to buffer" )
+
+Sub onEditCut( event )
+    control.Cut()
+End Sub
+Connect( frame, wxID_CUT, wxEVT_COMMAND_MENU_SELECTED, "onEditCut" )
+
+Sub onEditCopy( event )
+    control.Copy()
+End Sub
+Connect( frame, wxID_COPY, wxEVT_COMMAND_MENU_SELECTED, "onEditCopy" )
+
+Sub onEditPaste( event )
+    control.Paste()
+End Sub
+Connect( frame, wxID_PASTE, wxEVT_COMMAND_MENU_SELECTED, "onEditPaste" )
+
+
+' build the "Run" dropdown menu
+Common mRun = new wxMenu()
+mBar.Append(mRun, "&Run")
+mRun.Append( wxID_RUN, "&Run\tF5", "Run wxBasic program" )
+
+Sub onRunRun( event )
+    If Len( fileName ) Then
+        wxExecute( "wxbasic " & fileName )
+    End If
+End Sub
+Connect( frame, wxID_RUN, wxEVT_COMMAND_MENU_SELECTED, "onRunRun" )
+
+
+' build the "Help" dropdown menu
+Common mHelp = new wxMenu()
+mBar.Append(mHelp, "&Help")
+mHelp.Append( wxID_HELP, "&About\tF1", "About this program" )
+
+Sub onHelpAbout( event )
+    Dim msg = "Simple Editor written in wxBasic.\n" &
+            "(c) 2002 David Cuny"
+    wxMessageBox( msg, "About wxBasic Editor", wxOK + wxICON_INFORMATION, frame )
+End Sub
+Connect( frame, wxID_HELP, wxEVT_COMMAND_MENU_SELECTED, "onHelpAbout" )
+
+frame.Show(True)
