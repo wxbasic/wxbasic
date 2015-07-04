@@ -1,0 +1,32 @@
+There were a number of changes that had to be made to compile this for Linux.
+The changes are _not_ reflected in the source code:
+
+1. In main.c, the line
+
+        #include <dir.h>
+    
+    was changed to:
+    
+        #include <unistd.h>
+        
+2. The following routines in wrap.cpp had the body of the routines
+    commented out (so they were functionless stubs):
+    
+        wxFTP_SetTransferMode
+        wxDateTime_GetMonthName
+        wxImageList_Replace
+        wxInputStream_Eof
+        
+Hopefully these will be corrected in the next source release.
+
+
+The build flags I used when configuring wxWidgets were:
+
+    ./configure --with-gtk --disable-shared --enable-threads
+    
+You can also refer to this thread on the wxBasic board if you have
+questions of how to compile it:
+
+   http://wxbasic.sourceforge.net/phpBB2/viewtopic.php?t=408
+
+-- David Cuny
