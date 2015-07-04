@@ -1,0 +1,214 @@
+FIXME: add AS to For variable declarations
+
+FIXME: added check for acos() range, need to see if other math
+        functions need range checks
+
+FIXME: dimming multiple items and assigning to a function that
+        returns multiple values is not compatible:
+
+            dim a, b, c = 1, 2, 3
+
+        doesn't work as expected - a and b don't get assigned.
+
+FIXME: errors are being caught, but the program isn't shutting
+        down gracefully.
+
+FIXME: add a counter to keep track of the number of times a routine has
+        been executed. If it's the first time, initialize the STATIC
+        variables to their default values.
+
+FIXME:  It looks like there's a bug in how wxBasic searches for locals
+        vs. global variables. It looks like it will set up a local
+        without it needing to be explicity declared if it's found in a
+        prior function (not global space)
+
+FIXME: wxStaticBitmap is commented out
+       wxStaticLine doesn't exist
+
+FIXME: "Error in Include" error message doesn't show line number
+
+FIXME: Count and Insert don't work with strings anymore
+
+FIXME: recursion depth exceeded will crash without error
+
+FIXME: bug in IDE:
+    Conversion error: Can't perform inequality test on string against nothing
+    bubblesort() in file "ide.wxb", line 679:
+    >             if (theList[j] > theList[j+1] ) then
+     thelist = ["BraceHighlight(int pos1, int pos2)", "LineDuplicate()", "GetTwoPhaseDraw()", "ScrollToLine(int line)", "MarkerDeleteHandle(int handle)", "SetViewEOL(bool visible)", "GetEOLMode()", "SetSelection(int start, int end)", "SearchInTarget(wxString text)", "BraceMatch(int pos)", "EnsureCaretVisible()", "SetSavePoint()", "GetCaretWidth()", "ConvertEOLs(int eolMode)", "SetSelectionEnd(int pos)", "GetLength()", "GetCharAt(int pos)", "AddStyledText(wxMemoryBuffer data)", "SetWhitespaceBackground(bool useSetting, wxColour back)", "GetMouseDwellTime()", "MarkerDefineBitmap(int markerNumber, wxBitmap bmp)", "GetUseVerticalScrollBar()", "GetZoom()", "SetBackSpaceUnIndents(bool bsUnIndents)", "StyleSetEOLFilled(int style, bool filled)", "GetLexer()", "SetUndoCollection(bool collectUndo)", "GetWrapMode()", "GetPrintMagnification()", "GetXOffset()", "ReplaceSelection(wxString text)", "AddText(wxString text)",  ... ]
+     i = 331
+     j = 258
+     tmp = Nothing
+     inorderflag = 0
+
+
+FIXME: the following use int*, and need to be replaced with wrappers:
+
+%builtin void wxDisplaySize(int *width, int *height)
+%builtin int wxGetOsVersion(int *major = NULL, int *minor = NULL)
+virtual void SetStatusWidths(int n, int *widths)
+void CalcScrolledPosition( int x, int y, int *xx, int *yy) const
+void CalcUnscrolledPosition( int x, int y, int *xx, int *yy) const
+virtual void SetStatusWidths(int n, int *widths)
+
+
+
+FIXME: Need to add wxLocale, added wxGetTranslation
+       add _() or _T() for tranlated strings
+       finish work on trans.wxb, perhaps add built-in editor
+
+FIXME: FindFirstFile is broken
+
+FIXME: (Bruce Atkins): the CWD shouldn't be set for non-bound files.
+        Need to experiment with this. The problem is:
+            ..\wxbasic .\myfile.bas
+
+        vs.
+            ..\wxbasic myfile.bas
+
+        which simply fails...
+                        
+
+FIXME: add Disconnect for specific events, and all events. Call
+       the disconnect routine when destroying objects.
+
+FIXME: put back OpenGL support
+
+FIXME: check reading args after binding.
+
+FIXME: check reading from right directory after binding.
+
+FIXME: check rmdir routine.
+
+FIXME: wArray:ToChar should be fixed
+
+FIXME: Add support for additional args in hasKey
+
+FIXME: track IDs, so that it's possible to find the wxBasic
+       version of an object given the ID. One problem is making
+       the search quick, another is making sure the object is
+       removed from the table when it's destroyed.
+
+FIXME: add Try in wrapper calls, so they can be recovered from.
+
+FIXME: DateDiff is missing
+
+FIXME: Missing methods for hours, minutes, seconds, and so on.
+
+FIXME: wrap.lua errors on symbols if there are trailing spaces.
+       add trim function call, and convert to wxBasic.
+
+FIXME: Table[3] = Nothing can't remove the item, because by the
+    time the code's been exectuted, it's forgotten that it's a table.
+
+FIXME: this doesn't work:
+
+        print {1,2,3}[2]
+
+FIXME: The following wrapper fails under 2.4.2
+    // int GetCursor();
+    void wxStyledTextCtrl_GetCursor()
+    {
+        
+        int returns;
+        // call GetCursor
+        returns = ((wxStyledTextCtrl *)(wTheCall->self->ptr))->GetCursor();
+        wWrapDerefArgs();
+        wStackPushNumber( (wNumber)returns);
+    }
+
+FIXME: setpen( undefinedVar ) crashes the app.
+
+
+
+looks like the bug might be in PropByVal
+
+bug: add trim() command
+! add inTable() sort of operator for wTables
+
+
+bug: deref in CALLMETHOD is probably still not right
+
+
+Bugs:
+    Object deref not working. Or maybe it is. Verify status, and
+    fix if needed.
+
+    Date conversion is wrong. Converting the date "January 12" doesn't
+    work properly.
+
+    Most of the date stuff is messed up, not the least which
+    is the DateAdd function.
+
+    Apparently the date format %c displays differently on different
+    platforms. Fix.
+
+    Attributes from superclass can be redefined, and they don't
+    generate an error.
+
+    Because INDEX returns an lval, setting an indexed value to Nothing
+    will not remove the index. Instead, the Remove() routine has to be
+    called explicitly.
+
+To Do:
+    Add 'me' check to properties as well.
+
+    Add syntax:
+        Dim <var> As New <type>( ... )
+    Same as:
+        Dim <var> As <type> = New <type>( ... )
+
+    Add support for boxing constants, by creating a tmp variable to hold
+    the object:
+        "foo".length
+
+    Track the number of times that a variable is set. If it is zero,
+    issue a warning.
+
+    Warn if variable is assigned in a branch, but not set before hand/
+    set in each branch (probably too hard)
+
+    Dump of bytecodes in XML format:
+        <?xml version="1.0" ?>
+            ...
+
+    Add code to convert string to date/time
+
+    Add the following date functions:
+        DateAdd
+        DateDiff
+        DatePart
+        DateValue
+        TimeValue
+        TimeSerial
+        DateSerial
+
+
+    Move these "builtin" routines that deal with the date to
+    wTime.c
+
+    add wTheClassScopeSymbol so I don't have to keep looking it up...
+
+/* ASP Routines */
+The following should be probably be added for compatibility
+    Array       return an array
+    DateDiff    number of intervals between two dates
+    DatePart    part of a date
+    Eval        someday...
+    Filter      select subset of array, based on value. someday...
+    InputBox    probably too GUI dependant
+    IsArray     true if variant is an array
+    IsEmpty     Except that there is no Empty is wxb
+    IsNull      how about isNothing?
+    Join        create big string out of collection
+    LBound      hasn't this been coded yet?
+    MsgBox      also probably GUI dependant
+    ScriptEngine    hehehe. Don't think so.
+    Split       split string into an array
+    StrCmp      convert both to strings and compare.
+    StrReverse  Should add this.
+    TypeName    wxb has "typeOf"
+
+/* PENDING ROUTINES */
+wCode *wParseStatementDestroy()        { wParseError("Destroy not yet coded"); return NULL; }
+
