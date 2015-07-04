@@ -681,3 +681,4 @@ FUNCTION removeComma$ (text$)
 		removeComma$ = text$
 	END IF
 END FUNCTION
+

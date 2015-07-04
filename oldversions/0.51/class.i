@@ -3579,3 +3579,4 @@ void Notify()
 void SetOwner(wxEvtHandler *owner, int id = -1)
 bool Start(int milliseconds = -1, bool oneShot=FALSE)
 void Stop()
+

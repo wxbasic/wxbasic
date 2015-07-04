@@ -1,0 +1,20 @@
+--- LOADING THE SOURCE ---
+--- SCANNING THE SOURCE ---
+--- PARSING THE SOURCE ---
+after skip, token is "for" (FOR)
+after skip, token is "i" (UNDEFINED)
+after skip, token is "=" (EQ)
+token expect, expecting "="
+after expect, token is "1" (FLOAT)
+after skip, token is "to" (TO)
+token expect, expecting "to"
+after expect, token is "4" (FLOAT)
+after skip, token is "end-of-line" (ASCII)
+after skip, token is "print" (PRINT)
+after skip, token is "i" (VARIABLE_NAME)
+after skip, token is "end-of-line" (ASCII)
+after skip, token is "next" (NEXT)
+token expect, expecting "next"
+after expect, token is "end-of-line" (ASCII)
+after skip, token is "end-of-file" (EOF)
+--- RUNNING THE CODE ---

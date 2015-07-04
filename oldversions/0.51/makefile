@@ -19,3 +19,4 @@ PROGRAM=wxbasic
 OBJECTS=$(PROGRAM).o
 
 include ../../src/makeprog.env
+

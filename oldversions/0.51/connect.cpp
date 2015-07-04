@@ -144,3 +144,4 @@ void wRunCallback(wxEvent *event)
     wRemoveObject( e );
 
 }
+

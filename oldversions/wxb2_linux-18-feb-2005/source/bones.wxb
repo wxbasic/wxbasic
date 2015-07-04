@@ -1,0 +1,944 @@
+' FIXME: rotation needs to call Hinged children code as well
+' FIXME: still only works in clockwise order...
+' FIXME: root bone seems to be acquiring a rotation
+
+Option Explicit
+Option Explicit
+
+Dim toolBitmap		' holds the toolbar bitmap
+dim bmpX        = 600
+dim bmpY        = 600
+dim halfX = bmpX/2
+dim halfY = bmpY/2
+
+const MAX_BONES = 100
+
+' bone attributes
+dim boneAngle[MAX_BONES]
+dim boneLength[MAX_BONES]
+dim boneEndX[MAX_BONES]		' end x and y: dynamically calculated	
+dim boneEndY[MAX_BONES]
+dim boneParent[MAX_BONES]
+dim boneIsHinged[MAX_BONES]	' if bone is part of ik joint
+dim boneIkTarget[MAX_BONES]		' child of hinge
+dim boneIsLocked[MAX_BONES]	' if ik joint is locked
+
+' undo buffers
+dim oldAngle[MAX_BONES]
+dim oldX[MAX_BONES]
+dim oldY[MAX_BONES]
+
+
+const MoveBoneMode = 0
+const RotateBoneMode = 1
+
+const PoseButton = 0
+const EditButton = 1
+const MoveButton = 2
+const RotateButton = 3
+const Spacer1Button = 4
+const AddButton = 5
+const HingeButton = 6
+const UnhingeButton = 7
+const LockButton = 8
+const UnlockButton = 9
+const MultiLockButton = 10
+
+const buttonCount = 11
+
+dim buttonState[ buttonCount ]	' holds states of buttons in toolbar
+dim buttonHint[ buttonCount ] 	' hints for buttons
+
+' states for buttons
+const isActive = 0
+const isHover = 1
+const isPushed = 2
+const isDown = 3
+const isDimmed = 4
+
+' how close a bone can be to the mouse for a good pick
+const pickTolerance = 6
+
+' settings
+dim boneCount = 0
+dim mode = MoveBoneMode
+dim pickedBone = -1
+
+
+
+Dim ID_TOOLBAR      = wxID_HIGHEST + 1
+Dim ID_SPLITTER      = wxID_HIGHEST + 2
+
+
+Dim frame as wxFrame = new wxFrame(Nothing, 1, "IK Bones", wxPoint(-1, -1), wxSize(bmpX, bmpY))
+Dim splitter as wxSplitterWindow = new wxSplitterWindow(frame, ID_SPLITTER, wxPoint(-1,  -1), wxSize(-1, -1), wxSP_BORDER)
+dim Tool as wxWindow = new wxWindow(frame, ID_TOOLBAR, wxPoint(-1, -1), wxSize(640, 25))
+
+
+' create a status bar
+frame.CreateStatusBar(2)
+frame.SetStatusText("FK Test Program")
+
+Dim mFile = New wxMenu()
+    mFile.Append( wxID_NEW, "&New", "Erase the current drawing")
+    mFile.AppendSeparator()
+    mFile.Append( wxID_EXIT, "E&xit\tAlt-X", "Quit this program")
+
+Dim mHelp = New wxMenu()
+    mHelp.Append( wxID_ABOUT, "&About...\tCtrl-A", "Show \"About\" dialog")
+
+' create a menubar for the menus
+Dim menuBar = New wxMenuBar()
+    menuBar.Append(mFile,   "&File")
+    menuBar.Append(mHelp,   "&Help")
+
+' attach the menubar to the frame
+frame.SetMenuBar(menuBar)
+
+' create a bitmap for double buffering
+dim bmp = wxEmptyBitmap( bmpX, bmpY )
+
+' create a store for the graphic
+dim bmpDC = wxMemoryDC()
+bmpDC.SelectObject( bmp )
+bmpDC.Clear()
+
+' create pens
+Const   Red     = wxPenFromColorName( "Red", 3, wxSOLID ),
+        Orange  = wxPenFromColorName( "Orange", 3, wxSOLID ),
+        Yellow  = wxPenFromColorName( "Yellow", 3, wxSOLID ),
+        Green   = wxPenFromColorName( "Green", 3, wxSOLID ),
+        Blue    = wxPenFromColorName( "Blue", 3, wxSOLID ),
+        Purple  = wxPenFromColorName( "Purple", 3, wxSOLID ),
+        Black   = wxPenFromColorName( "Black", 3, wxSOLID ),
+        White   = wxPenFromColorName( "White", 3, wxSOLID )
+
+
+' set the pen color
+bmpDC.SetPen( Black )
+
+dim mouseIsDown = false
+
+function screenToX( x )
+	' convert to axis
+	return x - halfX
+end function
+
+function screenToY( y )
+	' convert to axis
+	return halfY - y
+end function
+
+
+function hitBone( x, y )
+	' return index of bone if hit
+	dim i
+
+	for i = 0 to boneCount
+		if (boneEndX[i]-pickTolerance < x) and (boneEndX[i]+pickTolerance > x) and 
+			(boneEndY[i]-pickTolerance < y) and (boneEndY[i]+pickTolerance > y) then
+			return i
+		end if
+	next
+	return -1
+end function
+
+function solveAngles( lenA, lenB, lenC )
+
+	' make sure lenC isn't too small
+	if lenC < 3 then
+		return 0
+	end if
+
+	' solve the angles
+	dim a2 = lenA * lenA
+	dim b2 = lenB * lenB
+	dim c2 = lenC * lenC
+
+	dim cosA = (b2 + c2 - a2) / ( 2 * lenB * lenC )
+	dim cosB = (a2 + c2 - b2) / ( 2 * lenA * lenC )
+	dim cosC = (a2 + b2 - c2) / ( 2 * lenA * lenB )
+
+	' check for range
+	if cosA > 1 or cosA < -1 then
+		return 0
+	end if
+	
+	return acos( cosA ), acos( cosB ), acos( cosC )
+
+end function
+
+
+
+function moveIkTarget( targetIndex, x, y )
+
+	dim i
+	dim angleA, angleB, angleC
+
+	' get the current orientation of the bone
+	dim initialTargetAngle = sumBoneAngles( targetIndex )
+
+	' get the index of the IK target
+	dim parentIndex = boneParent[ targetIndex ]
+
+	' get the index of the grandparent
+	dim grandparentIndex = boneParent[ parentIndex ]
+
+	' first point on the triangle
+	dim aX = boneEndX[ grandparentIndex ]
+	dim aY = boneEndY[ grandparentIndex ]
+
+	' base vector runs from grandparent to target
+	dim baseX = x - aX
+	dim baseY = y - aY
+
+	' length of the base
+	dim lenBase = sqr( (baseX * baseX) + (baseY * baseY) )
+
+	' angle from base to target
+	dim baseAngle = calcAngle( aX, aY, x, y )
+
+	' the other lengths are already known
+	dim lenA = boneLength[ parentIndex ]
+	dim lenB = boneLength[ targetIndex ]
+
+	' too long?
+	if lenBase >= lenA + lenB then
+		return false
+	end if
+
+	' solve the angles
+	angleA, angleB, angleC = solveAngles( lenA, lenB, lenBase )
+
+	if angleA = 0 then
+		return false
+	end if
+
+	' sum of prior angles
+	dim priorAngles = sumBoneAngles( grandparentIndex )
+
+	' apply, depending on which way the hinge bends
+	'if boneAngle[parentIndex] > 0 then
+		' set the new angles
+		boneAngle[ parentIndex ] = baseAngle - angleB - priorAngles
+		boneAngle[ targetIndex ] = -(angleC - PI)
+	'else
+		' set the new angles
+		'boneAngle[ parentIndex ] = baseAngle + angleB - priorAngles
+		'boneAngle[ targetIndex ] = angleC - PI
+	'end if
+
+	' how much of an angle has the target changed
+	dim diffTargetAngle = sumBoneAngles( targetIndex ) - initialTargetAngle
+
+	' does this IK target bone have children?
+	for i = 0 to boneCount
+		if boneParent[ i ] = targetIndex then
+			' fix the angle so the bone doesn't rotate
+			boneAngle[ i ] -= diffTargetAngle
+		end if
+	next
+
+	return true
+
+end function
+
+function findChild( boneIndex )
+	dim i
+	' FIXME: doesn't handle multiple children
+	for i = 0 to boneCount
+		if boneParent[ i ] = boneIndex then
+			return i
+		end if
+	next
+
+	return -1
+
+end function
+
+
+function fixLockedChildren( boneIndex )
+	dim i
+	for i = 1 to boneCount
+		' child?
+		if boneParent[ i ] = boneIndex then
+			' locked ik target?
+			if boneIsLocked[ i ] then
+				' aim at the old IK target's value
+				if not moveIkTarget( i, oldX[ i ], oldY[ i ] ) then					
+					return false
+				end if
+
+			' unlocked ik target?
+			elseif boneIsHinged[ boneParent[ i ] ] then
+				' don't recurse, at IK target
+			else
+				' recurse down children
+				if fixLockedChildren( i ) = false then
+					return false
+				end if
+			end if
+		end if
+	next
+
+	return true
+
+end function
+
+sub saveBones()
+	dim i
+	' store old values
+	for i = 0 to boneCount
+		oldX[ i ] = boneEndX[ i ]
+		oldY[ i ] = boneEndY[ i ]
+		oldAngle[ i ] = boneAngle[ i ]
+	next
+end sub
+
+sub restoreBones()
+	' undo the changes
+	dim i
+	for i = 0 to boneCount
+		boneAngle[ i ] = oldAngle[ i ]
+		boneEndX[ i ] = oldX[ i ]
+		boneEndY[ i ] = oldY[ i ]
+	next
+end sub
+
+
+sub moveBone( boneIndex, x, y )
+
+	dim i, result, diffX, diffY
+
+	' locked ik target?
+	if boneIsLocked[ boneIndex ] then
+		' move the bone directly
+		moveIkTarget( boneIndex, x, y )
+		return
+	end if
+
+	' save the current state
+	saveBones()
+
+	' root?
+	' get old angle
+	dim diffAngle = boneAngle[ boneIndex ]
+
+	' adjust picked bone relative to parent
+	dim parentIndex = boneParent[ boneIndex ]
+	recalcBone( boneIndex, x, y )
+
+	' calc diff
+	diffAngle -= boneAngle[ boneIndex ]
+
+	' apply to all children		
+	dim childIndex
+	for childIndex = 1 to boneCount
+		' child of this bone?
+		if boneParent[ childIndex ] = boneIndex and 
+			(not (boneIsHinged[ childIndex ] and boneIsLocked[ boneIkTarget[ childIndex ] ] )) then
+			' adjust angle
+			boneAngle[ childIndex ] += diffAngle
+		end if
+	end for
+
+	' update all the bones
+	recalcChildren( 0, 0 )
+
+	' if moving a hinged joint, skip this
+	if not boneIsHinged[ boneIndex ] then
+		' recursively fixed locked IK targets
+		if fixLockedChildren( 0 ) = false then
+			' undo the changes
+			restoreBones()
+		end if
+	end if
+
+end sub
+
+
+sub onMouse( event )
+
+    ' This could have been split up into three seperate event
+    ' handlers, but this let me test the CASE statement
+
+	dim parentIndex
+
+	static lastMouseX, lastMouseY
+	if lastMouseX = nothing then lastMouseX = 0
+	if lastMouseY = nothing then lastMouseY = 0
+
+    ' get event information
+    dim mouseX = event.GetX()
+    dim mouseY = event.GetY()
+    dim eventType = event.GetEventType()
+
+	' convert to cartesian coordinates
+	dim cartesianX = screenToX( mouseX )
+	dim cartesianY = screenToY( mouseY )
+
+
+    ' what type of event?
+    Select Case eventType
+    Case wxEVT_LEFT_UP
+        If mouseIsDown Then
+            ' frame.ReleaseMouse()
+            mouseIsDown = false						
+            updateScreen()
+        End If
+
+    Case wxEVT_LEFT_DOWN
+		mouseIsDown = true
+		pickedBone = hitBone( cartesianX, cartesianY )
+		updateScreen()
+
+    Case wxEVT_MOTION
+        If mouseIsDown Then
+			if mode = MoveBoneMode and pickedBone != -1 then
+				moveBone( pickedBone, cartesianX, cartesianY )
+				updateScreen()
+
+			elsif mode = RotateBoneMode and pickedBone != -1 then
+				' root?
+				if pickedBone = 0 then
+					boneAngle[ 0 ] = calcAngle( boneEndX[ 0 ], boneEndY[ 0 ], cartesianX, cartesianY )
+				else
+					parentIndex = boneParent[ pickedBone ]
+					' calculate new angle, subtract prior angle
+					dim angle = calcAngle( boneEndX[ parentIndex ], boneEndY[ parentIndex ], cartesianX, cartesianY )
+					angle -= sumBoneAngles( parentIndex )
+					boneAngle[ pickedBone ] = angle
+				end if
+				updateScreen()
+			end if
+
+            lastMouseX = mouseX
+            lastMouseY = mouseY
+        End If
+
+    End Select
+
+End sub
+
+' attach callbacks
+Connect( frame, -1, wxEVT_LEFT_DOWN, "onMouse" )
+Connect( frame, -1, wxEVT_LEFT_UP,   "onMouse" )
+Connect( frame, -1, wxEVT_MOTION,    "onMouse" )
+
+function calcAngle( x1, y1, x2, y2 )
+
+	' convert into a vector
+	dim x = x2 - x1
+	dim y = y2 - y1
+
+	' calculate length of vector
+	dim l = sqr( x*x + y*y )
+
+	' calculate absolute angle
+	dim angle = acos( y / l )
+	if (x > 0) then
+		angle = -angle
+	end if
+
+	return angle
+
+end function
+
+function sumBoneAngles( boneIndex )
+	' accumulate this and all prior angles
+	dim sumAngle = 0
+	while boneIndex > 0
+		' add this bone's angle
+		sumAngle += boneAngle[ boneIndex ]
+		' get the parent of this bone
+		boneIndex = boneParent[ boneIndex ]
+	end while
+	return sumAngle
+end function
+
+sub recalcBone( boneIndex, x, y )
+	' given a new x, y, recalculate the bone
+
+	' root bone doesn't rotate
+	if boneIndex = 0 then
+		boneEndX[ boneIndex ] = x
+		boneEndY[ boneIndex ] = y
+		return
+	end if
+
+	' get the index of the parent
+	dim parentIndex = boneParent[ boneIndex ]
+
+	' convert into a vector
+	x = x - boneEndX[ parentIndex ]
+	y = y - boneEndY[ parentIndex ]
+
+	' calculate length of vector
+	dim newLength = sqr( x*x + y*y )
+
+	' calculate absolute angle
+	dim angle = acos( y / newLength )
+	if (x > 0) then
+		angle = -angle
+	end if
+
+	' subtract prior angle to get relative angle
+	angle -= sumBoneAngles( parentIndex )
+
+	' set new values
+	boneAngle[ boneIndex ] = angle
+	boneLength[ boneIndex ] = newLength
+
+
+end sub
+
+sub recalcChildren( boneIndex, angle )
+	dim i
+
+	' get the parent
+	dim parent = boneParent[ boneIndex ]
+
+	' use the end of the parent as the start
+	dim startX = boneEndX[ parent ]
+	dim startY = boneEndY[ parent ]
+
+	' calculate the cumulative rotation
+	angle += boneAngle[ boneIndex ]
+
+	' calculate end of bone
+	dim myLen = boneLength[ boneIndex ]
+
+	' calculate end point on unit circle
+	dim endX = -sin( angle )
+	dim endY = cos( angle )
+
+	' scale by the bone length
+	endX *= myLen
+	endY *= myLen
+
+	' offset by parent's start position
+	endX += startX
+	endY += startY
+
+	' update end position
+	boneEndX[ boneIndex ] = endX
+	boneEndY[ boneIndex ] = endY
+
+	' find all children of this bone
+	for i = 1 to boneCount
+		if boneParent[i] = boneIndex then
+			' recurse
+			recalcChildren( i, angle )
+		end if
+	end for
+
+end sub
+
+
+Sub drawLine( x1, y1, x2, y2 )
+	' convert to screen coordiantes and draw
+	bmpDc.DrawLine( x1 + halfX, halfY-y1, x2+halfX, halfY-y2 )
+End Sub
+
+
+sub drawRectangle( x1, y1, wide, high )
+	bmpDc.DrawRectangle( x1 + halfX, halfY-y1, wide, high )
+end sub
+
+
+sub drawBones()
+	dim i, startX, startY, parent
+	
+	' draw lines for the bones
+	for i = 0 to boneCount
+		if i = pickedBone then
+			bmpDC.SetPen( Red )
+		else
+			bmpDC.SetPen( Purple )
+		end if
+
+		' get index of parent
+		parent = boneParent[ i ]
+
+		' start of bone is end of parent
+		startX = boneEndX[ parent ]
+		startY = boneEndY[ parent ]
+
+		' draw a line for the bone
+		drawLine( startX, startY, boneEndX[i], boneEndY[i] )
+	next
+
+	' draw the end points of the bones
+	bmpDC.SetPen( Red )
+
+	' draw the root
+	drawRectangle( boneEndX[ 0 ]-4, boneEndY[ 0 ]+4, 8, 8 )	
+
+	' draw the children
+	for i = 0 to boneCount
+		if i = pickedBone then
+			bmpDC.SetPen( Black )
+			drawRectangle( boneEndX[i]-4, boneEndY[i]+4, 8, 8 )
+		end if
+
+		if boneIsHinged[ i ] then
+			bmpDC.SetPen( Green )
+		elseif boneIsLocked[ i ] then
+			bmpDC.SetPen( Red )
+		else
+			bmpDC.SetPen( Blue )
+		end if
+
+		' draw a target around the bone end		
+		drawRectangle( boneEndX[i]-2, boneEndY[i]+2, 4, 4 )
+		
+	next
+
+end sub
+
+Sub updateScreen()
+	' erase the prior drawing
+	bmpDC.Clear()
+
+	' draw an axis
+	'bmpDC.SetPen( Green )
+	'drawLine( 0, -halfY, 0, halfY )
+	'drawLine( -halfY, 0, halfX, 0 )
+
+	' recalculate bones, starting from the root
+	recalcChildren( 0, 0 )
+	drawBones()
+
+    dim dc = wxClientDC( frame )
+    dc.BeginDrawing()
+    dc.Blit( 0, 0, bmpX, bmpY, bmpDC, 0, 0 )
+    dc.EndDrawing()
+
+End Sub
+
+Sub onPaint( event )
+    ' get the DC of the frame
+    dim dc = wxPaintDC( frame )
+    dc.BeginDrawing()
+
+    ' blit the bitmap
+    dc.Blit( 0, 0, bmpX, bmpY, bmpDC, 0, 0 )
+
+    dc.EndDrawing()
+
+End Sub
+Connect( frame, -1, wxEVT_PAINT, "onPaint" )
+
+
+' set the toolbar
+Function setToolBar()
+	' create a bitmap to hold the tools
+	dim tools = new wxEmptyBitmap(0, 0)
+	
+	' create a memory context 
+	dim toolsDC = wxMemoryDC()
+	
+	' create a bitmap to hold the tools
+	' FIXME: should this get the size of the tools from the graphic?
+	 dim tBitmap = new wxEmptyBitmap(600, 24*5)
+	
+	dim tDC = wxMemoryDC()
+	
+	' try to load the file
+	If !tools.LoadFile("am_toolbar.png", wxBITMAP_TYPE_PNG) then		
+		wxMessageBox("Cannot load Toolbar - Bitmap!\nEnding Program.")
+		End
+	End If
+
+	' select the toolbar into the toolbar device context
+	toolsDC.SelectObject(tools)  
+
+	tDC.SelectObject( tBitmap )
+	tDC.SetBackground(new wxBrush(Tool.GetBackgroundColour(), wxTRANSPARENT))
+	tDC.Clear()
+	tDC.BeginDrawing()
+ 
+	' copy all the tools into the toolbar
+	tDC.Blit( 0, 0, 600, 24*5, toolsDC, 0, 0, wxCOPY, 1)
+	tDC.EndDrawing()
+	return tDC
+ 
+End Function
+
+' change the state of the toggle buttons
+sub toggleButtons( buttonIndex )
+	' toggle prior buttons off
+	dim j
+	for j = 1 to buttonCount-1
+		if buttonState[j] = isDown then
+			buttonState[j] = isActive
+		end if
+	next
+	' toggle the selected button
+	buttonState[ buttonIndex ] = isDown
+end sub
+
+sub unhingeBone( boneIndex )
+
+	dim i
+
+	' clear hinged flag
+	boneIsHinged[ boneIndex ] = false
+
+	' clear any locked flags
+	for i = 0 to boneCount
+		if boneParent[ i ] = boneIndex then
+			' clear the lock
+			boneIsLocked[ i ] = false
+		end if
+	next
+
+end sub
+
+
+
+'Set Toolbar-Buttons
+Sub onToolBarEvent( event )
+
+	static priorIndex		
+
+	if priorIndex = Nothing then priorIndex = -1
+
+	' get the type of event
+	dim eventType = event.GetEventType()
+
+	' divide by width of icons to get icon index
+	dim index = fix(event.GetX() / 24)
+
+	' leaving window or past last toolbar button?
+	If eventType = wxEVT_LEAVE_WINDOW or index >= buttonCount then
+		index = - 1		
+	End If
+ 
+	If priorIndex >= 0 and index != priorIndex and eventType != - 1 then
+		if (buttonState[priorIndex] != isDimmed) and (buttonState[priorIndex] != isDown) then 
+			buttonState[priorIndex] = isActive			
+			repaintToolbar()
+		end if
+	End If
+   
+	If (eventType = wxEVT_MOTION and index != priorIndex) or (eventType = wxEVT_LEFT_UP) then
+		if (index > -1) and (buttonState[index] != isDimmed) then 
+			if buttonState[ index ] != isDown then
+				buttonState[index] = isHover
+			end if
+		end if		
+		repaintToolbar()
+
+	ElseIf eventType = wxEVT_LEFT_DOWN then
+		if (index > -1) and (buttonState[index] != isDimmed) then 
+			select case index
+			case editButton, moveButton, rotateButton
+				toggleButtons( index )
+			end select
+			repaintToolbar()
+		end if
+	End If
+
+	Select case eventType
+	case wxEVT_LEFT_DOWN
+		' perform action here
+        select case index
+        case PoseButton
+            frame.SetStatusText("Pose Mode")
+        case EditButton
+            frame.SetStatusText("Edit Bones Mode")
+		case AddButton
+			' use root if nothing picked
+			if pickedBone = -1 then
+				pickedBone = 0
+			end if
+
+			' attach a bone to the root
+			boneCount += 1
+			boneParent[boneCount] = pickedBone
+			boneAngle[boneCount] = 0
+			boneLength[boneCount] = 10
+			pickedBone = boneCount
+			updateScreen()
+
+		case RotateButton
+			if pickedBone != -1 then
+				frame.SetStatusText("Rotate Bone Mode")
+				mode = RotateBoneMode
+			end if
+
+		case MoveButton
+			if pickedBone != -1 then
+				frame.SetStatusText("Move Bone Mode")
+				mode = MoveBoneMode
+			end if
+
+		case HingeButton
+			if pickedBone > 0 then
+				' set bone as hinged
+				boneIsHinged[ pickedBone ] = true
+
+				' set child as target
+				boneIkTarget[ pickedBone ] = findChild( pickedBone )
+
+				' no child?
+				if boneIkTarget[ pickedBone ] = -1 then
+					unhingeBone( pickedBone )				
+				end if
+				updateScreen()
+			end if
+
+		case UnhingeButton
+			if pickedBone > 0 then
+				unhingeBone( pickedBone )
+				updateScreen()
+			end if
+
+		case LockButton
+			if pickedBone > 0 then
+				if boneIsHinged[ boneParent[ pickedBone ] ] then
+					boneIsLocked[ pickedBone ] = true
+					updateScreen()
+				end if
+			end if
+
+		case UnlockButton
+			if pickedBone > 0 then
+				boneIsLocked[ pickedBone ] = false
+				updateScreen()
+			end if
+
+        end select
+        
+	End Select
+
+	' set the hint text
+	if index = -1 then
+		Tool.SetToolTip("")
+	else
+		Tool.SetToolTip(buttonHint[index])
+	end if
+
+	' save the index
+	priorIndex = index
+
+End Sub
+
+Connect( Tool, -1, wxEVT_LEFT_DOWN, "onToolBarEvent")
+Connect( Tool, -1, wxEVT_LEFT_UP, "onToolBarEvent")
+Connect( Tool, -1, wxEVT_MOTION, "onToolBarEvent")
+Connect( Tool, -1, wxEVT_LEAVE_WINDOW, "onToolBarEvent")
+
+' set the toolbar
+toolBitmap = setToolBar()
+
+
+' Paint the ToolBar
+Sub paintToolBar(event)
+dim toolBarDC = wxPaintDC( Tool )
+	' pass the tool's dc
+	repaintToolbar( wxPaintDC( Tool ) )
+End Sub
+Connect( Tool, -1, wxEVT_PAINT, "paintToolBar" )
+
+' callback for the Exit menu option
+Sub OnQuit( event )
+    frame.Close(True)
+End Sub
+Connect( frame, wxID_EXIT, wxEVT_COMMAND_MENU_SELECTED, "OnQuit" )
+
+' callback for the About menu option
+Sub OnAbout( event )
+    Dim msg = "Simple 2D IK Bones\n" &
+    "Written by David Cuny"
+    wxMessageBox( msg, "About IK Bones", wxOK + wxICON_INFORMATION, frame )
+End Sub
+Connect( frame, wxID_ABOUT, wxEVT_COMMAND_MENU_SELECTED, "OnAbout" )
+
+function toRadians( degrees )
+	return degrees * ( PI / 180 )
+end function
+
+
+sub repaintToolbar( passedDC = nothing )
+	dim index
+	dim dc
+	
+	' no context passed?
+	if passedDC = nothing then	
+		' get the context
+		dc = wxClientDC(Tool)
+	else
+		dc = passedDC
+	end if
+	
+	dc.BeginDrawing()	
+	
+	' start drawing into it	
+	for index = 0 to buttonCount-1
+		' draw current state
+		dc.Blit( index*24, 0, 24, 24, toolBitmap, index * 24, buttonState[index]*24 )		
+	next
+
+	dc.EndDrawing()
+
+end sub
+
+sub setup( event )
+
+	' default settings
+	boneCount = 0
+	mode = MoveBoneMode
+	pickedBone = -1
+
+	' set the root
+	boneCount = 0
+	boneParent[0] = 0
+	boneAngle[0] = 0
+	boneEndX[0] = 0
+	boneEndY[0] = 0
+	boneLength[0] = 0
+
+	' attach a bone to the root
+	boneCount = 1
+	boneParent[1] = 0
+	boneAngle[1] = toRadians( 0 )
+	boneLength[1] = 10
+
+	' update the bones
+	recalcChildren( 0, 0 )
+
+	' set the initial buttonbar state
+	buttonState[ poseButton ] = isDimmed
+	buttonState[ editButton ] = isDimmed
+	buttonState[ addButton ] = isActive
+	buttonState[ moveButton ] = isActive
+	buttonState[ rotateButton ] = isActive
+	buttonState[ hingeButton ] = isActive
+	buttonState[ UnhingeButton ] = isActive
+	buttonState[ LockButton ] = isActive
+	buttonState[ UnlockButton ] = isActive
+	buttonState[ MultiLockButton ] = isDimmed
+	buttonState[ Spacer1Button ] = isDimmed
+
+	' set the hint text
+	buttonHint[ poseButton ] = "Pose mode"
+	buttonHint[ editButton ] = "Edit bones"
+	buttonHint[ addButton ] = "Add a bone to the selected bone"
+	buttonHint[ moveButton ] = "Move a bone"
+	buttonHint[ rotateButton ] = "Rotate a bone around its axis"
+	buttonHint[ hingeButton ] = "Make a joint an IK hinge"
+	buttonHint[ UnhingeButton ] = "Turn off an IK hinge"
+	buttonHint[ LockButton ] = "Lock the end of an IK hinge"
+	buttonHint[ UnlockButton ] = "Unlock the end of an IK hinge"
+	buttonHint[ MultiLockButton ] = "Doesn't do anything yet"
+	buttonHint[ Spacer1Button ] = ""
+
+	updateScreen()
+
+	
+end sub
+Connect( frame, wxID_NEW, wxEVT_COMMAND_MENU_SELECTED, "setup" )
+
+setup( nothing )

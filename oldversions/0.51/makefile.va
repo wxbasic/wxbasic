@@ -22,3 +22,4 @@ OBJECTS = $(PROGRAM).obj
 !endif
 
 !include $(WXDIR)\src\makeprog.va
+

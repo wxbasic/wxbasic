@@ -8,3 +8,4 @@
 
 void wConnect( int id, int useId, int handle, int theEvent, wSymbol *routine );
 void wRunCallback(wxEvent *event);
+

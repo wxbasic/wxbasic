@@ -190,3 +190,4 @@ void wGetVar( wSymbol *s )
 {
     wCopyStackItem( wVarStackPos( s ) );
 }
+

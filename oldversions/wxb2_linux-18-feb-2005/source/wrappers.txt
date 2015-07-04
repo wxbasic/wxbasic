@@ -1,0 +1,98 @@
+// TO DO:
+// add code so multiple values can be returned from functions
+
+
+
+// old method:
+int _wxClientDC = wAddClass( _wxWindowDC, "wxClientDC" );
+
+// pros: efficient
+// cons: classes must be in declaration order
+
+// new method:
+wSymbol *_wxClientDC = wAddClass( _wxWindowDC, "wxClientDC" );
+
+
+
+// an old delete method
+void wxCaret_del() {
+    delete (wxCaret *)wMe;
+}
+
+
+// a new delete method
+void wxCaret_del() {
+    delete (wxCaret *)wTheCall->self.ptr;
+}
+
+
+// an old constructor
+void wxPoint_new() {
+{
+    wxPoint *returns;
+
+    int y = (int)wPopNumber();
+    int x = (int)wPopNumber();
+    returns = new wPoint( x, y );
+    wPushPtrHandle( wAddObject( _wxPoint, (int)returns ) );
+}
+
+
+// a new constructor
+void wxPoint_new() {
+{
+    wxPoint *returns;
+
+    int y = (int)wPopNumber();
+    int x = (int)wPopNumber();
+    returns = new wPoint( x, y );
+    wStackPushObject( wObjectWrap( _wxPoint, ??ISTEMP??, (void *)returns ) );
+}
+
+
+
+
+
+// a method using a property
+void wxPoint_GetX() {
+    int x = ((wPoint *)wMe)->x;
+    wPushNumber( (wNumber)x );
+}
+
+
+// a new method using a property
+void wxPoint_GetX() {
+    int x = ((wPoint *)wTheCall->self.ptr)->x;
+    wPushNumber( (wNumber)x );
+}
+
+
+// an old method (pushes unused zero on stack)
+void wxSize_Set() {
+    int height = (int)wPopNumber();
+    int width = (int)wPopNumber();
+    ((wxSize *)wMe)->Set(width, height);
+    wPushNumber( (wNumber)0 );
+}
+
+
+// a new method (pushes unused zero on stack)
+void wxSize_Set() {
+    int height = (int)wPopNumber();
+    int width = (int)wPopNumber();
+    ((wxSize *)wTheCall->self.ptr)->Set(width, height);
+    wPushNumber( (wNumber)0 );
+}
+
+
+// the old destructor
+void wxPoint_dtor() {
+    ((wxPoint *)wMe)->~wxPoint();
+}
+
+
+// the new destructor
+void wxPoint_dtor() {
+    ((wxPoint *)wTheCall->self.ptr)->~wxPoint();
+}
+

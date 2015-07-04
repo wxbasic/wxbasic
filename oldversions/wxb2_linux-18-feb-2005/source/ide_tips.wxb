@@ -1,0 +1,125 @@
+' cleanup.wxb
+' process class.i so that the ide can use the calltips
+
+inFile = fopen( "class.i", "r" )
+outFile = fopen( "ide_tips.txt", "w" )
+while not eof( inFile )
+    text = trim(fgets( inFile ))
+
+	' look for an %alias
+	dim aliasStart = instr( text, "%alias " )
+	if aliasStart then
+		' get the alias
+		aliasStart += 7
+		dim aliasEnd as integer = instr( aliasStart, text, " " )
+		alias = text[aliasStart:aliasEnd-1]
+		' remove it from the text
+		text = text[1:aliasStart-8] & text[aliasEnd+1:]
+	else
+		alias = ""
+	end if
+
+	dim four as string = text[1:4]
+	if four = "%cla" then
+		' alias for class?
+		if alias <> "" then
+			' get the name
+			nameStart = instr( text, " " )
+			nameEnd = instr( text, "," )
+			if nameEnd then
+				name = text[nameStart+1:nameEnd-1]
+			else
+				name = text[nameStart+1:]
+			end if
+			' inherit from the real class
+			fputs( outFile, ucase( "%classalias " & alias & ", " & name ) & "\n" )
+		end if
+
+		' class definition
+		fputs( outFile, ucase(text) & "\n" )
+
+		' alias for class?
+		if alias <> "" then
+		end if
+	elseif text = "" or
+    text[1:2] = "//" or
+	four = "%inc" or
+	four = "%num" or
+	four = "%ptr" or
+	four = "win:" or
+	four = "gtk:" or
+	four = "%enu" or
+	four = "%typ" or
+	four = "%ski" then
+        ' ignore, comment
+    elseif text[1:2] = "%{" then
+		while text[1:2] <> "%}"
+			text = fGets( inFile )
+		end while
+
+	elseif instr( text, "(" ) = 0 then
+		' not a method, ignore
+
+	else
+        builtin = instr( text, "%builtin" )
+        if builtin then
+            text = replace( text, "%builtin", "" )
+        end if
+
+        ctor = instr( text, "%ctor" )
+        if ctor then
+            text = replace( text, "%ctor", "" )
+        end if
+
+		' clean up the declaration
+		text = replace( text, "const", "" )
+		text = replace( text, "*", "" )
+		text = replace( text, "&", "" )
+		text = replace( text, "virtual", "" )
+		text = replace( text, "uchar", "int" )
+		text = replace( text, "unsigned char", "int" )
+		text = replace( text, "( ", "(" )
+
+		' remove extra spaces
+		while instr( text, "  " )
+			text = replace( text, "  ", " " )
+		end while
+
+		' trim
+		text = trim( text )
+		
+		' extract the name
+		nameEnd = instr( text, "(" )
+		nameStart = rinstr( nameEnd, text, " " )		
+		name = text[nameStart+1:nameEnd-1]
+
+        ' add builtin tag?
+        if builtin then
+            builtin = "%BUILTIN "
+        elseif ctor then
+			builtin = "%CTOR "
+		else
+            builtin = ""
+        end if
+
+		' remove the returned datatype (for now)
+		text = text[nameStart+1:]
+
+		' alternate constructor?
+		if ctor then
+			fputs( outFile, builtin & ucase(name) & "|" & text & "\n" )
+		else
+			fputs( outFile, builtin & ucase(name) & "|" & text & "\n" )
+		end if
+
+		' alias?
+		if alias <> "" then					
+			text = replace( text, name, alias )
+		fputs( outFile, builtin & ucase(alias) & "|" & text & "\n" )
+		end if
+
+    end if
+end while
+fClose( inFile )
+fClose( outFile )
+? "Done"

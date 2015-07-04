@@ -1,0 +1,26 @@
+' fix the text so sentances end with periods
+open "emcty10.txt" for input as #1
+b = ""
+c = 0
+while not eof(1)
+    c += 1
+    line input #1, a
+    a = rtrim(a)
+    b = b & " " & a
+end while
+close #1
+
+d = ""
+for i = 1 to len( b )
+letter = mid( b, i, 1 )
+    if letter = "." or letter = "?" or letter = "!" then
+        if mid( b, i+1, 1 ) <> "\"" then
+            print ltrim( d & letter )
+            d = ""
+        else
+            d &= letter
+        end if
+    else
+        d &= letter
+    end if
+next

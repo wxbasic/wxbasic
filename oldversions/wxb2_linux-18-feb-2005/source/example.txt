@@ -1,0 +1,7 @@
+' creating an associative array
+a = {}
+print a
+
+' assigning a value
+a[1] = "cat"
+a["name"] = "chester"

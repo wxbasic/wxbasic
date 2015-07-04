@@ -1,0 +1,27 @@
+class point
+    dim x, y
+
+    sub new( theX, theY )
+        me.x = theX
+        me.y = theY
+    end sub
+
+    sub add( dx, dy )
+        me.x += dx
+        me.y += dy
+    end sub
+
+end class
+
+p1 = new point( 10, 20 )
+
+p2 = new point( 100, 200 )
+
+print p1.x, p1.y
+p1.add( 5, 5 )
+print p1.x, p1.y
+
+print p2.x, p2.y
+
+
+p1 = nothing

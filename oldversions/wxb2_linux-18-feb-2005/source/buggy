@@ -1,0 +1,12 @@
+a = []
+for i = 1 to 3
+    a.append("hello!")
+next
+
+for i = 1 to 20
+    b = clone( a )
+    b[1] = ["piggy"]
+next
+
+print a
+print b

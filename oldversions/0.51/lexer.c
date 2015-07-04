@@ -734,3 +734,4 @@ void yyerror( char *s )
     wErrFlag = 1;
     s = NULL;
 }
+

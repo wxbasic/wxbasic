@@ -1,0 +1,51 @@
+frame=new wxFrame (Nothing,-1,"drawtest")
+frame.SetSize(200, 100)
+
+result = 0
+
+bmp = New wxEmptyBitmap(200,100)
+
+myDC=new wxMemoryDC()
+myDC.SelectObject(bmp)
+
+Sub onPaint(event)
+    shared result
+    static counter
+
+    if counter = nothing then
+        counter = 0
+    end if
+
+    counter = counter + 1
+    if counter > 10 then
+        end
+    end if
+   dc=wxClientDC(frame)
+
+   myDC.SetTextForeground( wxBLUE )
+   myDC.SetTextBackground( wxWHITE )
+
+   myDC.DrawText("test", 10, 10)
+
+    dc.BeginDrawing()   
+    dc.Blit(0,0,200,100,myDC,0,0)
+
+    dc.EndDrawing()
+
+   //-----------------------
+  //-- this does not work --  
+  open "out.txt" for output as #1
+  print #1, "test is " & myDC.GetTextExtentWidth("test")
+    print #1, "testing is " & myDC.GetTextExtentWidth("testing")
+  close #1
+
+   // wrong: returns "0"
+ 
+End Sub 
+
+Connect(frame, wxEVT_PAINT, "onPaint")
+frame.Show(True)
+frame.Show(False)
+? result
+
+

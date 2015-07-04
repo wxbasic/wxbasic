@@ -33,3 +33,4 @@ clean:
 	-del *.rws
     -del sc32.def
     -del sc16.def
+

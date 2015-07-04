@@ -170,3 +170,4 @@ End Sub
 Connect( frame, wxID_HELP, wxEVT_COMMAND_MENU_SELECTED, "onHelpAbout" )
 
 frame.Show(True)
+

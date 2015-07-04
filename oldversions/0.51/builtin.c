@@ -1131,3 +1131,4 @@ void wInitBuiltins()
         s->useCase = W_FALSE;
     }
 }
+

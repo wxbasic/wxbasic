@@ -1,0 +1,154 @@
+Comparing files F:\WXBASIC\main.c and MAIN.C
+***** F:\WXBASIC\main.c
+    /* search for the last occurance of the delimiter */
+    for ( i = 0; fileName[i] != '\0'; i++ ) {
+        if (fileName[i] == DELIMITER) {
+***** MAIN.C
+    /* search for the last occurance of the delimiter */
+    for ( i = strlen(fileName); i > 0; i-- ) {
+        if (fileName[i] == DELIMITER) {
+*****
+
+***** F:\WXBASIC\main.c
+/* set current working directory based on command line */
+void wMainSetCwd( int argc, char *argv[], int argStart, int tagOffset )
+{
+***** MAIN.C
+/* set current working directory based on command line */
+void wMainSetCwd( int argc, char *argv[], int argStart, inttagOffset )
+{
+*****
+
+***** F:\WXBASIC\main.c
+    FILE *handle;
+
+    /* if bound, get cwd from arg 0 */
+    if (tagOffset != 0) {
+        /* look for path */
+        wTheCwd = wMainGetPath( argv[0] );
+
+        /* if none found, set to blank */
+        if (wTheCwd == NULL) {
+            wTheCwd = wCharCopy( "" );
+        }
+
+        return;
+    }
+
+***** MAIN.C
+    FILE *handle;
+wErrorMessagef( "wMainSetCwd", "in wMainCwd");
+
+//    rootPath = wCharMalloc( W_INBUFFER_MAX );
+//    getcwd( rootPath, W_INBUFFER_MAX );
+// wErrorMessagef( "wMainSetCwd", "getcwd is %s", rootPath);
+
+*****
+
+***** F:\WXBASIC\main.c
+    /* see if there is a path for the first arg */
+    argPath = wMainGetPath( argv[argStart] );
+***** MAIN.C
+    /* see if there is a path for the first arg */
+wErrorMessagef( "wMainSetCwd", "calling wMainGetPath with %s to get the path", argv[argStart]);
+
+    argPath = wMainGetPath( argv[argStart] );
+*****
+
+***** F:\WXBASIC\main.c
+    if (argPath == NULL) {
+        /* no path, use the one in arg 0 */
+***** MAIN.C
+    if (argPath == NULL) {
+wErrorMessagef( "wMainSetCwd", "path is null, using the one with arg[0] (%s)", argv[0]);
+
+        /* no path, use the one in arg 0 */
+*****
+
+***** F:\WXBASIC\main.c
+        if (wTheCwd == NULL) {
+            wTheCwd = wCharCopy( "" );
+***** MAIN.C
+        if (wTheCwd == NULL) {
+wErrorMessagef( "wMainSetCwd", "didn't find a path in %s, using NULL", argv[0]);
+            wTheCwd = wCharCopy( "" );
+*****
+
+***** F:\WXBASIC\main.c
+        }
+
+        return;
+***** MAIN.C
+        }
+wErrorMessagef( "wMainSetCwd", "path is %s", wTheCwd);
+        return;
+*****
+
+***** F:\WXBASIC\main.c
+    /* try opening it to see if it's a full path */
+    handle = fopen( argv[argStart], "rt" );
+***** MAIN.C
+    /* try opening it to see if it's a full path */
+wErrorMessagef( "wMainSetCwd", "trying to open %s", argv[argStart]);
+
+    handle = fopen( argv[argStart], "rt" );
+*****
+
+***** F:\WXBASIC\main.c
+    if (handle != NULL) {
+        /* close it */
+***** MAIN.C
+    if (handle != NULL) {
+wErrorMessagef( "wMainSetCwd", "file opened");
+
+        /* close it */
+*****
+
+***** F:\WXBASIC\main.c
+        wTheCwd = argPath;
+        return;
+***** MAIN.C
+        wTheCwd = argPath;
+wErrorMessagef( "wMainSetCwd", "using %s as the path", argPath);
+
+        return;
+*****
+
+***** F:\WXBASIC\main.c
+    wTheCwd = wMainGetPath( argv[0] );
+        // if none found, set to blank
+        if (wTheCwd == NULL) {
+            wTheCwd = wCharCopy( "" );
+        }
+
+***** MAIN.C
+    wTheCwd = wMainGetPath( argv[0] );
+wErrorMessagef( "wMainSetCwd", "trying to concat in case of partial path");
+    // if none found, set to blank
+    if (wTheCwd == NULL) {
+wErrorMessagef( "wMainSetCwd", "nothing to concat with...");
+        wTheCwd = wCharCopy( "" );
+    }
+
+*****
+
+***** F:\WXBASIC\main.c
+    wTheCwd = wCharConcat( wTheCwd, argPath );
+    wFree( argPath );
+***** MAIN.C
+    wTheCwd = wCharConcat( wTheCwd, argPath );
+wErrorMessagef( "wMainSetCwd", "using %s", wTheCwd);
+
+    wFree( argPath );
+*****
+
+***** F:\WXBASIC\main.c
+                strcat( fullFileName, fileName );
+printf("attempting to open %s\n", fullFileName );
+                /* try to open the file */
+***** MAIN.C
+                strcat( fullFileName, fileName );
+
+                /* try to open the file */
+*****
+

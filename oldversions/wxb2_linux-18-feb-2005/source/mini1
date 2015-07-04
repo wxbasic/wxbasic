@@ -1,0 +1,6 @@
+// create the main application window
+frame = New wxFrame( Nothing, -1, "Minimal wxBasic App" )
+frame = NOthing
+
+// frames, unlike simple controls, are not shown when created
+'frame.Show(True)

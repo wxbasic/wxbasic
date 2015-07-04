@@ -1,0 +1,279 @@
+// scanner.wx
+// scan wxwindows html files for names of methods
+// this crashes on exit...
+
+' FIXME: replacement code isn't working
+' check code isn't working
+' scan for constants in class.i and html
+' generate output
+
+const htmlDir = "\\wx2.4.2\\docs\\html\\wx\\"
+const wxBasDir = "\\wx2.4.2\\samples\\wxbasic\\"
+
+// because it's safer that way
+option explicit
+
+// the gui objects
+Dim frame = new wxFrame( Nothing, -1, "Class Scanner", wxPoint(50, 50), wxSize(620, 340))
+Dim panel = new wxPanel( frame, -1 )
+Dim classList = new wxCheckListBox( panel, -1, wxPoint( 5, 5 ), wxSize( 200, 300 ) )
+Dim methodsList = new wxListBox( panel, -1, wxPoint( 205, 5 ), wxSize( 400, 300 ) )
+Dim status = frame.CreateStatusBar( 1 )
+    status.SetStatusText("")
+
+// hold class information
+Dim className = {},
+    classFile = {},
+    classParent = {},
+    classInclude = {},
+    bas = {},
+    methods = {},
+    classCount = 0
+
+' replace() replaces this. why doesn't this work?
+'function replaceAll( text, oldText, newText )
+'    dim at = instr( text, oldText )
+'    dim l = length( oldText )
+'    if at then
+'        text = mid( text, 1, at-1 ) & newText & mid( text, at+l )
+'    end if
+'    return text
+'end function
+
+function stripTags( oldText )
+    dim newText = ""
+    dim flag = 0
+    dim char
+    dim i
+    dim at
+
+    // scan through text
+    for i = 1 to length( oldText )
+        // get char
+        char = mid( oldText, i, 1 )
+
+        // start of tag?
+        if char = "<" then
+            flag = 1
+
+        // end of tag?
+        elsif char = ">" then
+            flag = 0
+
+        // not in tag?
+        elsif flag = 0 then
+            newText = newText & char
+
+        end if
+    end for
+
+    // replace html encoded chars
+    replace( newText, "&amp;", "&" )
+    replace( newText, "&lt;", "<" )
+    replace( newText, "&gt;", ">" )
+
+    return newText
+
+end function
+
+sub scanForName( handle, fname )
+
+    dim tag, name, at
+
+    // first line should be an html tag
+    tag = fgets( handle )
+    if tag != "<HTML>" then
+        return
+    end if
+
+    tag = fgets( handle )
+    if left( tag, 13 ) != "<head><title>" then
+        exit sub
+    end if
+
+    name = mid( tag, 14, instr( tag, "</title>" ) - 14 )
+
+    // all classes start with wx
+    if mid( name, 1, 2 ) <> "wx" then
+        exit sub
+    end if
+
+    // only one word
+    name = rtrim( name )
+    if instr( name, " " ) then
+        exit sub
+    end if
+
+    // add to classes
+    classCount += 1
+    className[classCount] = name
+    classFile[name] = fname
+
+    // scan for parent
+    while not eof(handle)
+        tag = fgets(handle)
+        if instr( tag, ">Derived from<" ) then
+            tag = fgets(handle)
+            at = instr( tag, "<P>" )
+            tag = mid( tag, 1, at-1 )
+            tag = stripTags( tag )
+            classParent[name] = tag
+            exit while
+        end if
+    end while
+    if eof( handle) then
+        exit sub
+    end if
+
+    // scan for include file
+    while not eof(handle)
+        tag = fgets(handle)
+        if instr( tag, ">Include files<" ) then
+            tag = fgets(handle)
+            at = instr( tag, "<P>" )
+            tag = mid( tag, 1, at-1 )
+            tag = stripTags( tag )
+            classInclude[name] = tag
+            exit while
+        end if
+    end while
+
+end sub
+
+sub scanFiles()
+    dim i, fname, handle
+
+	// change this so that it uses wxDir
+    for i = 1 to 500
+        fname = htmlDir & "wx" & i & ".htm"
+        if fileExists( fname ) then
+            handle = fopen( fname, "r" )
+            scanForName( handle, fname )
+			fclose( handle )
+        end if
+    end for
+end sub
+
+
+sub scanBas()
+    // scan the class.i file to see what classes
+    dim text, handle, at
+    handle = fopen( wxBasDir & "class.i", "r" )
+    while not eof(handle)
+        // get a line of text
+        text = fgets(handle)
+        if mid( text, 1, 6 ) = "%class" then
+
+            // remove "%class"
+            text = mid( text, 8 )
+
+            // superclass?
+            at = instr( text, "," )
+            if at <> 0 then
+                text = mid( text, 1, at-1 )
+            else
+                text = rtrim( text )
+            end if
+
+            // add to list
+            bas[ text ] = 1
+
+        end if
+    end while
+    fclose( handle )
+end sub
+
+sub loadList()
+    dim i, theClass
+    scanFiles()
+    for i = 1 to classCount
+
+        // get name
+        theClass = className[i]
+
+        // add to list
+        classList.Append( theClass )
+
+        // check if already defined
+' FIXME: what is this???
+        // classList.Check( i-1, bas[theClass] )
+
+   end for
+end sub
+
+sub scanMethods( theClass )
+    dim handle, text, at, proto
+
+    // clear the methods array
+    methods = {}
+
+    // erase the methods from the listbox
+    methodsList.Clear()
+
+    handle = fopen( classFile[theClass], "r" )
+    if handle = 0 then
+        exit sub
+    end if
+
+    while not eof( handle )
+        // get a line of text
+        text = fgets(handle)
+
+        // method header?
+        if mid( text, 1, 4 ) = "<H3>" and instr( text, "::") then
+            // skip next line
+            text = fgets(handle)
+            // read until <P>
+            proto = ""
+            while not eof(handle)
+                text = fgets( handle )
+                text = ltrim( text )
+                if length( proto ) then
+                    proto = proto & " " & text
+                else
+                    proto = text
+                end if
+
+                if instr( proto, "<P>" ) then
+                    exit while
+                end if
+
+            end while
+
+            // remove html tags
+            proto = stripTags( proto )
+
+            methodsList.Append( proto )
+
+        end if
+    end while
+
+    fclose( handle )
+
+end sub
+
+
+Function listClick( event )
+    dim index, text
+
+    // get the index of the selected item
+    index = classList.GetSelection()
+
+    // get the name of the string
+    text = classList.GetString( index )
+
+    // show information in status bar
+    status.SetStatusText("Derived from: " & classParent[text] &
+        "    Include file: " & classInclude[text] )
+
+
+    // load the class methods listbox
+    scanMethods( text )
+
+End Function
+Connect( classList, wxEVT_COMMAND_LISTBOX_SELECTED, "listClick" )
+
+
+scanBas()
+loadList()
+frame.Show(TRUE)

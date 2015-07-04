@@ -1,0 +1,46 @@
+' splitterwindow.wxb
+'
+' Displays 2 panels in a Splitwinow, each containing a list
+' If you click on list1, its entry is added to list2
+'
+' you may resize the two panels by dragging the Line in the middle
+'
+' Mark Ulrich
+'
+'
+
+dim frame1 = new wxframe( Nothing, -1, "Split-Window-Example", wxPoint(200,200), wxSize(500,200))
+
+dim splitwin= new wxSplitterwindow(frame1,-1)
+
+
+dim leftpanel=new wxPanel(splitwin,-1)
+dim rightpanel=new wxPanel(splitwin,-1)
+
+splitwin.SplitVertically(leftpanel , rightpanel , 200)
+
+dim vsizer1 = new wxBoxSizer( wxVERTICAL )
+dim vsizer2 = new wxBoxSizer( wxVERTICAL )
+
+leftpanel.SetSizer( vsizer1 )
+rightpanel.SetSizer( vsizer2 )
+
+
+listbox1= new wxListBox(leftpanel,1,wxPoint(-1,-1),wxSize(-1,-1),0,0,wxLB_SINGLE)
+vsizer1.AddWindow( listbox1,1,wxEXPAND)
+listbox1.Append("Entry 1")
+listbox1.Append("Entry 2")
+connect(listbox1,wxEVT_COMMAND_LISTBOX_SELECTED,"klick")
+
+
+listbox2= new wxListBox(rightpanel,1,wxPoint(-1,-1),wxSize(-1,-1),0,0,wxLB_SINGLE)
+vsizer2.AddWindow( listbox2,1,wxEXPAND)
+
+
+sub klick ( event )
+  dim wahl=listbox1.GetStringSelection()
+  listbox2.Append(wahl)
+end sub
+
+
+frame1.Show( True ) 

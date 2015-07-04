@@ -348,3 +348,4 @@ void wClearCreateStack()
     }
     wCreateTos--;
 }
+

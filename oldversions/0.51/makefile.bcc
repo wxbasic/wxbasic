@@ -16,3 +16,4 @@ TARGET=wxapp
 OBJECTS=$(TARGET).obj
 
 !include $(WXDIR)\src\makeprog.bcc
+

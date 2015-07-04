@@ -10,3 +10,4 @@ rename y.tab.c y_tab.c
 
 redir -eo gcc core.c -owxbasic.exe > err
 edit err
+

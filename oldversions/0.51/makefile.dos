@@ -14,3 +14,4 @@ TARGET=minimal
 OBJECTS=$(TARGET).obj
 
 !include $(WXDIR)\src\makeprog.msc
+

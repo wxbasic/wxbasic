@@ -1,0 +1,5 @@
+x = {}
+for i = 1 to 2
+    print x["a"&i]
+next
+ 

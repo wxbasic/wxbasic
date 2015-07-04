@@ -13,3 +13,4 @@ TARGET=minimal
 OBJECTS = $(TARGET).o
 
 include $(WXDIR)/src/makeprog.g95
+

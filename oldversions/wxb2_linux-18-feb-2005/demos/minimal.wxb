@@ -1,0 +1,45 @@
+// minimal wxBasic sample
+// based on code by Julian Smart
+option explicit
+
+// create the main application window
+dim frame = new wxFrame( Nothing, -1, "Minimal wxBasic App", wxPoint(50, 50),
+                      wxSize(250, 140))
+
+// create a "File" menu and append an item
+dim mFile = new wxMenu()
+mFile.Append( wxID_EXIT, "E&xit\tAlt-X", "Quit this program")
+
+// create an "About" menu and append an item
+dim mHelp = new wxMenu()
+mHelp.Append( wxID_ABOUT, "&About...\tCtrl-A", "Show about dialog")
+
+// now append the freshly created menu to the menu bar...
+dim menuBar = new wxMenuBar()
+menuBar.Append(mFile, "&File")
+menuBar.Append(mHelp, "&Help")
+
+// ... and attach this menu bar to the frame
+frame.SetMenuBar(menuBar)
+
+// create a status bar
+frame.CreateStatusBar(2)
+frame.SetStatusText("Welcome to wxBasic!")
+
+// callback for the Quit menu option
+function OnQuit( event )
+    // TRUE is to force the frame to close
+    frame.Close(True)
+end function
+connect( frame, wxID_EXIT, wxEVT_COMMAND_MENU_SELECTED, "OnQuit" )
+
+// callback for the About menu option
+function OnAbout( event )
+    dim msg = "This is the \"About\" dialog of the Minimal sample.\n" &
+            "Welcome to wxBasic!"
+    wxMessageBox( msg, "About Minimal", wxOK + wxICON_INFORMATION, frame )
+end function
+connect( frame, wxID_ABOUT, wxEVT_COMMAND_MENU_SELECTED, "OnAbout" )
+
+// frames, unlike simple controls, are not shown when created
+frame.Show(1)

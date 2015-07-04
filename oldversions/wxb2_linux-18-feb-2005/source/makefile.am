@@ -1,0 +1,18 @@
+####### kdevelop will overwrite this part!!! (begin)##########
+bin_PROGRAMS = wxbasic
+
+## INCLUDES were found outside kdevelop specific part
+
+wxbasic_SOURCES = main.c 
+wxbasic_LDADD   =  -lm
+
+
+EXTRA_DIST = assoc.c assoc.h call.c code.c code.h data.c data.h encode.c encode.h error.c error.h eval.c eval.h grow.c grow.h lexer.c lexer.h main.c main.o memory.c memory.h notes.txt number.c number.h opcode.h opcodes.h parse.c parse.h source.c source.h stack.c stack.h state.c state.h symbol.c symbol.h token.c token.h typedef.h wxbasic.y test.wxb test 
+
+####### kdevelop will overwrite this part!!! (end)############
+# set the include path found by configure
+INCLUDES= $(all_includes)
+
+# the library search path.
+wxbasic_LDFLAGS = $(all_libraries) 
+                                                                                

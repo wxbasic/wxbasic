@@ -62,3 +62,4 @@ wStack *wBlockStack;                /* block type */
 wStack *wLineStack;                 /* line number */
 wStack *wSharedStack;               /* shared symbols */
 wNode *wDeferredCode = NULL;        /* deferred code */
+

@@ -1,0 +1,787 @@
+' wxMines: An implementation of LandMines in wxBasic
+' (c) 2003 David Cuny and Brian Broker
+' Based on Minesweeper by Robert Donner and Curt Johnson
+' Face Graphics from GNU's Gnome Mines
+
+
+'Option Explicit     ' all variables must be declared
+'Option NoConsole    ' don't create a console
+
+Randomize()
+
+
+Const   TileSize    = 20,
+        FaceSize    = 32,
+        TheSeconds  = 1,
+        TheFlags    = 2
+
+Dim     progName    = "wxMines",    ' program name
+        bmpX        = 700,          ' max width of window
+        bmpY        = 400,          ' max height of window
+        GameOver    = True,         ' if true, current game is over
+        uncovered   = 0,            ' number of mines uncovered
+        unflagged   = 0,            ' number of mines unflagged
+        seconds     = 0,            ' number of seconds
+        firstClick  = False,        ' true if timer has started
+        armedX      = -1,           ' x position of tile that is armed
+        armedY      = -1,           ' y position of tile that is armed
+        level       = 1,            ' current level
+        TilesX      = 16,           ' width of board
+        TilesY      = 16,           ' height of board
+        Mines       = 10,           ' number of hidden mines
+        Face,                       ' displayed face
+        FaceX,                      ' position of face
+        TimerX,                     ' position of timer
+        isMine[30,16],              ' if true, holds a mine
+        shows[30,16]                ' image to display
+
+
+
+' Custom events
+Const   wxID_LEVEL1 = wxID_HIGHEST + 1,
+        wxID_LEVEL2 = wxID_HIGHEST + 2,
+        wxID_LEVEL3 = wxID_HIGHEST + 3
+
+' Pens
+Const   WhitePen   = wxPenFromColorName( "White", 1, wxSOLID ),
+        GreyPen    = wxPenFromColorName( "Grey", 1, wxSOLID )
+
+' Brushes
+Const   GreyBrush = wxBrushFromColorName( "Light Grey", wxSOLID )
+
+
+' The GUI elements
+
+' create the frame
+Dim frame = New wxFrame( Null, -1, progName )
+    frame.SetSize( 900, 600 )
+
+' create the timer
+Dim timer = new wxTimer( frame )
+
+Dim mFile = New wxMenu()
+    mFile.Append( wxID_NEW, "&New", "Erase the current drawing")
+    mFile.AppendSeparator()
+    mFile.Append( wxID_LEVEL1, "Beginner",     "Beginner level", 1 )
+    mFile.Append( wxID_LEVEL2, "Intermediate", "Intermediate level", 1 )
+    mFile.Append( wxID_LEVEL3, "Expert",       "Expert Level", 1 )
+    mFile.AppendSeparator()
+    mFile.Append( wxID_EXIT, "E&xit\tAlt-X", "Quit this program")
+
+Dim mHelp = New wxMenu()
+    mHelp.Append( wxID_ABOUT, "&About...\tCtrl-A", "Show about dialog")
+
+' create a menubar for the menus
+Dim menuBar = New wxMenuBar()
+    menuBar.Append(mFile,   "&File")
+    menuBar.Append(mHelp,   "&Help")
+
+' attach the menubar to the frame
+frame.SetMenuBar(menuBar)
+
+
+' Graphics
+
+' load the pixmaps, return device context
+Function loadPNG( name )
+    Dim myXPM = new wxEmptyBitmap( 0, 0 )
+    If !myXPM.LoadFile( name, wxBITMAP_TYPE_PNG ) Then
+        wxMessageBox( "Can't find file " & name, "Missing File", wxOK + wxICON_INFORMATION, frame )
+        frame.Close()
+    End If
+    ' create a store for the graphic
+    Dim myDC = new wxMemoryDC()
+    myDC.SelectObject( myXPM )
+    Return myDC
+End Function
+
+' main graphic
+Const sourceGraphic = loadPNG("mines.png")
+
+' indexes
+Const   Up          = 0,
+        Empty       = 1,
+        Mine        = 2,
+        MineRed     = 3,
+        Flag        = 4,
+        Question    = 5,
+        Mark        = 6,
+        Digit1      = 7,
+        Digit2      = 8,
+        Digit3      = 9,
+        Digit4      = 10,
+        Digit5      = 11,
+        Digit6      = 12,
+        Digit7      = 13,
+        Digit8      = 14,
+        Start       = 0,
+        Uncertain   = 1,
+        Idle        = 2,
+        Winner      = 3,
+        Loser       = 4
+
+' create a bitmap for double buffering
+Dim bmp = New wxEmptyBitmap( bmpX, bmpY )
+
+' create a store for the graphic
+Dim buffer = wxMemoryDC()
+    buffer.SelectObject( bmp )
+
+' Support Routines
+
+Sub copyBlit( dest, x, y, source )
+    ' blit the entire source to the destination
+    Dim cx = source.GetSizeX()
+    Dim cy = source.GetSizeY()
+    dest.Blit( x, y, cx, cy, source, 0, 0 )
+End Sub
+
+
+Sub blitTile( dest, x, y, index )
+    ' blit the tile to the destination
+    dest.Blit( x, y, 20, 20, sourceGraphic, 20*index, 0 )
+End Sub
+
+Sub blitDigit( dest, x, y, index )
+    ' blit the digit graphic to the destination
+    dest.Blit( x, y, 16, 20, sourceGraphic, 16*index, 20 )
+End Sub
+
+Sub blitFace( dest, x, y, index )
+    ' blit the face graphic to the destination
+    dest.Blit( x, y, 32, 32, sourceGraphic, 32*index, 41 )
+End Sub
+
+
+Sub setFace( newFace )
+  ' change the sun's face
+
+  ' new face  
+  Face = newFace
+
+  ' update that portion of the window
+  blitFace( buffer, FaceX, 5, newFace )
+
+end Sub
+
+
+Sub drawBorder( dest, x1, y1, x2, y2 )
+
+    Dim i
+
+    dest.SetPen( WhitePen )
+    for i = 0 to 2
+        dest.DrawLine( x2+i, y1-i, x2+i, y2+i+1 )
+        dest.DrawLine( x1-i, y2+i, x2+i+1, y2+i )
+    end for
+
+    dest.SetPen( GreyPen )
+    for i = 1 to 3
+        dest.DrawLine( x1-i, y1-i, x1-i, y2+i-1 )
+        dest.DrawLine( x1-i, y1-i, x2+i-1, y1-i )
+    end for
+
+End Sub
+
+Sub updateWindow()
+
+    ' update
+    Dim dc = wxClientDC( frame )
+    dc.BeginDrawing()
+    copyBlit( dc, 0, 0, buffer )
+    dc.EndDrawing()
+
+End Sub
+
+Sub drawDigits( id, n )
+
+    Dim d[3],       ' digit
+        num,        ' displayed number
+        nFlag = 0,  ' negative flag
+        x,          ' x position of digit
+        i           ' loop
+
+    if n < 0 then
+        ' make number positive
+        num = -n
+        nFlag = 1
+    else
+        num = n
+    end if
+
+    ' break into digits
+    d[1] = floor( num/100 )
+    d[2] = floor((num - (d[1]*100))/10)
+    d[3] = num - ((d[1]*100) + (d[2]*10))
+
+    if id = TheFlags then
+        if nFlag then
+            ' make first digit negative sign
+            d[1] = 10
+        end if
+        x = 4
+    else
+        x = TimerX - 64
+    end if
+
+    ' blit the digits
+    for i = 1 to 3
+        blitDigit( buffer, i*16+x, 10, d[i] )
+    end for
+
+    updateWindow()
+
+End Sub
+
+
+Sub initBuffer()
+    ' initialize the buffer that gets blitted onPaint
+
+    buffer.BeginDrawing()
+
+    ' erase background    
+    buffer.SetBackground( GreyBrush )
+    buffer.Clear()    
+
+    ' draw border around tiles
+    Dim bdr_x = 20 + TilesX*TileSize
+    Dim bdr_y = 50 + TilesY*TileSize
+    drawBorder( buffer, 20, 50, bdr_x, bdr_y )
+
+    ' draw border around 'unflagged' value
+    drawBorder( buffer, 20, 10, 68, 31 )
+
+    ' draw border around 'timer' value
+    drawBorder( buffer, TimerX-48, 10, TimerX, 31 )
+
+    ' show the face
+    setFace( Start )
+    blitFace( buffer, FaceX, 5, Face )
+
+	' draw the number of flagged tiles
+    drawDigits( TheFlags, unflagged )
+
+	' draw the number of seconds
+    drawDigits( TheSeconds, seconds )
+
+    buffer.EndDrawing()
+
+End Sub
+
+
+
+Function touchingMines( x, y )
+    ' Return number of mines touching space
+
+    Dim theCount = 0
+
+    ' upper left
+    If x > 1 And y > 1 And isMine[x-1,y-1] Then
+        theCount = theCount + 1
+    End If
+
+    ' upper
+    If y > 1 And isMine[x,y-1] Then
+        theCount = theCount + 1
+    End If
+
+    ' upper right
+    If x < TilesX And y > 1 And isMine[x+1,y-1] Then
+        theCount = theCount + 1
+    End If
+
+    ' left
+    If x > 1 And isMine[x-1,y] Then
+        theCount = theCount + 1
+    End If
+
+    ' right
+    If x < TilesX And isMine[x+1,y] Then
+        theCount = theCount + 1
+    End If
+
+    ' bottom left
+    If x > 1 And y < TilesY And isMine[x-1,y+1] Then
+        theCount = theCount + 1
+    End If
+
+    ' bottom
+    If y < TilesY And isMine[x,y+1] Then
+        theCount = theCount + 1
+    End If
+
+    ' bottom right
+    If x < TilesX And y < TilesY And isMine[x+1,y+1] Then
+        theCount = theCount + 1
+    End If
+
+    Return theCount
+
+End Function
+
+
+Sub setTile( x, y, image )
+    shows[x,y] = image
+    blitTile( buffer, x*TileSize, (y*TileSize)+30, image )
+End Sub
+
+Sub uncover( x, y )
+    ' Update cell and touched Tiles
+
+    if shows[x,y] != Up Or isMine[x,y] then
+        return
+    End if
+
+    ' increment uncovered count
+    uncovered = uncovered + 1
+
+    Select Case touchingMines( x, y )
+    Case 0 : setTile( x, y, Empty )
+    Case 1 : setTile( x, y, Digit1 )
+    Case 2 : setTile( x, y, Digit2 )
+    Case 3 : setTile( x, y, Digit3 )
+    Case 4 : setTile( x, y, Digit4 )
+    Case 5 : setTile( x, y, Digit5 )
+    Case 6 : setTile( x, y, Digit6 )
+    Case 7 : setTile( x, y, Digit7 )
+    Case 8 : setTile( x, y, Digit8 )
+    End Select       
+
+    ' only recurse if empty
+    If shows[x,y] != Empty Then
+        return
+    End If
+
+    ' upper left
+    If x > 1 And y > 1 and shows[x-1,y-1] = Up Then
+        uncover( x-1, y-1 )
+    End If
+
+    ' upper
+    If y > 1 and shows[x,y-1] = Up Then
+        uncover(x,y-1)
+    End If
+
+    ' upper right
+    If x <> TilesX And y > 1 and shows[x+1,y-1] = Up Then
+        uncover(x+1,y-1)
+    End If
+
+    ' left
+    If x > 1 and shows[x-1,y] = Up Then
+        uncover(x-1,y)
+    End If
+
+    ' right
+    If x <> TilesX and shows[x+1,y] = Up Then
+        uncover(x+1,y)
+    End If
+
+    ' bottom left
+    If x > 1 And y <> TilesY and shows[x-1,y+1] = Up Then
+        uncover(x-1,y+1)
+    End If
+
+    ' bottom
+    If y <> TilesY and shows[x,y+1] = Up Then
+        uncover(x,y+1)
+    End If
+
+    ' upper right
+    If x < TilesX And y <> TilesY and shows[x+1,y+1] = Up Then
+        uncover(x+1,y+1)
+    End If
+
+End Sub
+
+Sub uncoverAll( x, y )
+    Dim blit
+
+    setTile( x, y, MineRed )
+
+    For x = 1 to TilesX
+        For y = 1 to TilesY
+            if shows[x,y] = Flag and !isMine[x,y] Then
+                setTile( x, y, Mark )
+
+            elseif shows[x,y] = Up and isMine[x,y] Then
+                setTile( x, y, Mine )
+
+            end if
+
+        End For
+    End For
+End Sub
+
+Sub setupBoard()
+
+    Dim i, x, y, theCount
+
+    ' number of unflagged mines
+    unflagged = Mines
+
+    ' set face
+    setFace( Start )
+
+    ' count of uncovered
+    uncovered = 0
+
+    ' set number of unflagged mines
+    unflagged = Mines
+
+    ' reset timer
+    timer.Stop()
+    seconds = 0
+
+    ' reset firstClick flag
+    firstClick = True
+
+    ' no armed tile
+    armedX = 0
+    armedY = 0
+
+    initBuffer()
+
+    'Create the minefield
+    for x = 1 to TilesX
+        for y = 1 to TilesY
+            isMine[x,y] = 0
+            setTile( x, y, Up )
+        end for
+    end for
+
+    'scatter mines
+    For i = 1 to Mines
+        While True
+            x = rnd(TilesX)
+            y = rnd(TilesY)
+            If !isMine[x,y] Then
+                isMine[x,y] = 1
+                Exit While
+            End If
+        End While
+    End For
+
+    GameOver = False
+
+End Sub
+
+Sub pickTile( x, y )
+    ' turn over a tile
+    Dim i, j
+
+    ' start timer?
+    if firstClick then
+        timer.Start( 1000 )
+        firstClick = False
+    end if     
+
+    ' is it a mine?
+    if isMine[x, y] then
+        timer.Stop()        ' kill the timer
+        uncoverAll( x, y )  ' show the board
+        setFace( Loser )    ' change the face
+
+    else
+        shows[x,y] = Up     ' make it uncoverable
+        uncover( x, y )     ' uncover it
+
+        ' finished?
+        if uncovered = (TilesX * TilesY) - Mines then
+
+            timer.Stop()
+            setFace( Winner )
+
+            ' mark any remaining bombs
+            for j = 1 to TilesY
+                for i = 1 to TilesX
+                    if shows[i, j] = Up or shows[i, j] = Question then
+                        ' flag unmarked or questioned tile
+                        setTile( i, j, Flag )
+                    end if
+                end for
+            end for
+
+        end if
+    
+    end if
+
+End Sub
+
+
+
+Sub onMouse( event )
+
+    Dim tileX, tileY
+    Dim update = False
+
+    ' get event information
+    Dim x = event.GetX()
+    Dim y = event.GetY()
+
+    ' convert to a tile?
+    if y >= 50 and Face != Loser and Face != Winner then
+
+        ' convert to tiles
+        tileX = floor( x / TileSize )
+        tileY = floor( (y - 30)/TileSize )
+
+        ' too far?                
+        if tileX > TilesX or tileY > TilesY then
+            tileX = 0
+            tileY = 0
+        end if
+
+    else
+        tileX = 0
+        tileY = 0
+
+    end if
+
+    Select Case event.GetEventType()    
+    Case wxEVT_LEFT_DOWN  
+
+        ' clicked a tile?    
+        if tileX then
+        
+            ' is the tile hidden?
+            if shows[tileX, tileY] = Up then
+            
+                ' uncertain face
+                setFace( Uncertain )
+                
+                ' save the armed tile
+                armedX = tileX
+                armedY = tileY
+                
+                ' set the tile
+                setTile( tileX, tileY, Empty )
+
+                ' need to update window
+                update = True
+
+            end if
+        
+        ' clicked the face?        
+        elsif x >= FaceX  and
+              y >= 5 and
+              x <= FaceX+FaceSize and
+              y <= 5+FaceSize then
+
+              ' start new game
+              setupBoard()
+              updateWindow()
+        end if
+        
+    Case wxEVT_LEFT_UP
+
+        ' on a tile?
+        if armedX then
+
+            ' over same tile?               
+            if  armedX = tileX and armedY = tileY then
+
+                ' pick the tile                
+                pickTile( tileX, tileY )
+    
+                ' need to update window
+                update = True
+
+            end if
+
+        end if            
+
+        ' disarm the tile
+        armedX = 0
+        armedY = 0
+
+        ' need to update face?        
+        if Face = Uncertain then
+            setFace( Idle )
+
+            ' need to update window
+            update = True
+
+        end if
+
+    Case wxEVT_MOTION
+    
+        ' is there an armed tile?
+        if armedX then
+
+            ' are we over the tile?
+            if  armedX = tileX and armedY = tileY then
+
+                ' need to push down again?
+                if shows[armedX, armedY] != Empty then
+                    setTile( armedX, armedY, Empty )
+                    setFace( Uncertain )
+                    update = True
+                end if
+    
+            else
+                ' need to raise tile?
+                if shows[armedX, armedY] = Empty then
+                    setTile( armedX, armedY, Up )
+                    setFace( Idle )
+                    update = True
+                end if                         
+
+        end if
+
+      end if
+
+    Case wxEVT_RIGHT_DOWN
+
+        ' clicked a tile?    
+        if tileX then     
+
+            ' toggle flag on?
+            if shows[tileX, tileY] = Up then
+                ' flag on
+                setTile( tileX, tileY, Flag )
+                unflagged = unflagged - 1
+                drawDigits( TheFlags, unflagged )
+                update = True
+                
+            elsif shows[tileX, tileY] = Flag then
+                ' question
+                setTile( tileX, tileY, Question )
+                update = True
+
+            elsif shows[tileX, tileY] = Question then
+                ' nothing
+                setTile( tileX, tileY, Up )
+                unflagged = unflagged + 1
+                drawDigits( TheFlags, unflagged )
+                update = True
+                            
+            end if
+
+        end if
+       
+    End Select
+
+    if update then
+        updateWindow()
+    end if
+
+End Sub
+
+' attach callbacks
+Connect( frame, -1, wxEVT_LEFT_DOWN,    "onMouse" )
+Connect( frame, -1, wxEVT_LEFT_UP,      "onMouse" )
+Connect( frame, -1, wxEVT_RIGHT_DOWN,   "onMouse" )
+Connect( frame, -1, wxEVT_MOTION,       "onMouse" )
+
+
+
+Sub onPaint( event )
+
+    ' get the DC of the frame
+
+    Dim dc = wxPaintDC( frame )
+    dc.BeginDrawing()
+
+    ' blit the bitmap
+    copyBlit( dc, 0, 0, buffer )
+
+    dc.EndDrawing()
+End Sub
+Connect( frame, -1, wxEVT_PAINT, "onPaint" )
+
+
+' callback for the New menu option
+Sub OnNew( event )
+    setupBoard()
+    updateWindow()
+End Sub
+Connect( frame, wxID_NEW, wxEVT_COMMAND_MENU_SELECTED, "OnNew" )
+
+
+' callback for the Exit menu option
+Sub OnQuit( event )
+    frame.Close(True)
+End Sub
+Connect( frame, wxID_EXIT, wxEVT_COMMAND_MENU_SELECTED, "OnQuit" )
+
+' callback for the About menu option
+Sub OnAbout( event )
+    Dim msg = "wxMines 0.2\n" &
+    "Minesweeper clone written in wxBasic\n\n" &
+    "Written by David Cuny and Brian Broker\n\n" &
+    "Based on Minesweeper\n" &
+    "by Robert Donner and Curt Johnson\n\n" &
+    "Face Graphics from GNU's Gnome Mines"
+    wxMessageBox( msg, "About wxMines", wxOK + wxICON_INFORMATION, frame )
+End Sub
+Connect( frame, wxID_ABOUT, wxEVT_COMMAND_MENU_SELECTED, "OnAbout" )
+
+
+Sub setLevel( newLevel )
+
+    level = newLevel
+
+    mFile.Check( wxID_LEVEL1,  newLevel = 1 )
+    mFile.Check( wxID_LEVEL2,  newLevel = 2 )
+    mFile.Check( wxID_LEVEL3,  newLevel = 3 )
+
+    select case newLevel
+    case 1:
+        TilesX  = 8
+        TilesY  = 8
+        Mines   = 10
+
+    case 2:
+        TilesX  = 16
+        TilesY  = 16
+        Mines   = 40
+
+    case 3:
+        TilesX  = 30
+        TilesY  = 16
+        Mines   = 99
+
+    end select
+
+    ' resize Window
+    Dim x = (TilesX + 2) * TileSize + 8
+    Dim y = ((TilesY + 2) * TileSize) + 75
+    frame.SetSize( x, y )
+
+    ' set x coordinate for face
+    FaceX = (x - FaceSize)/2
+
+    ' set x coordinate for timer
+    TimerX = x - TileSize
+
+    ' start new game
+    setupBoard()
+    
+end sub
+
+Sub OnLevel1( event )
+    setLevel( 1 )
+End Sub
+Connect( frame, wxID_LEVEL1, wxEVT_COMMAND_MENU_SELECTED, "OnLevel1" )
+
+Sub OnLevel2( event )
+    setLevel( 2 )
+End Sub
+Connect( frame, wxID_LEVEL2, wxEVT_COMMAND_MENU_SELECTED, "OnLevel2" )
+
+Sub OnLevel3( event )
+    setLevel( 3 )
+End Sub
+Connect( frame, wxID_LEVEL3, wxEVT_COMMAND_MENU_SELECTED, "OnLevel3" )
+
+
+Sub onTick( event )
+    seconds = seconds + 1
+    drawDigits( TheSeconds, seconds )
+End Sub
+Connect( frame, -1, wxEVT_TIMER, "onTick" )
+
+
+setLevel( 1 )
+frame.Show(True)

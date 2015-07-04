@@ -1,0 +1,1097 @@
+' wrap.wxb
+' convert wrappers to C++ format
+' (c) 2002 David Cuny
+
+option explicit
+
+
+' set one of these for the platforms
+dim win = false
+dim gtk = true
+dim unicode = false
+
+if win = gtk then
+	print( "win/gtk flags not set correctly" )
+    end
+end if
+
+
+' TO DO:
+'  code the destructors so they remove references to 
+'      objects in the lookup table
+'
+'  method for passing back values by referece?
+
+dim classList = {}
+dim enum = {}
+dim typedefOld = {}
+dim typedefNew = {}
+dim includeList = {}
+
+dim classCount = 0
+dim enumCount = 0
+dim includeCount = 0
+dim typedefCount = 0
+dim lineNum = 0
+dim skipFlag = 0
+dim builtin = ""
+dim ctor = ""
+dim a = ""
+dim b = ""
+dim c = ""
+dim i = 0
+dim j = 0
+dim tmp = ""
+dim theClass = ""
+dim argName = ""
+dim isConst = false
+dim argType = ""
+dim isWx = false
+dim isRef = false
+dim ptrs = 0
+dim isArray = false
+dim args = 0
+dim opts = 0
+dim declare = ""
+dim parm = ""
+dim pop = ""
+dim infile, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6
+dim stopFlag = false
+dim theLine = ""
+dim argList = ""
+dim opt, optFlag
+dim arg = ""
+dim popCode = ""
+dim returns = ""
+
+function decodeArg()
+	dim orig = arg
+
+    ' default value
+	if instr(arg, "=") != 0 then
+		arg, tmp = myRemove(arg, "=")
+		opt = arg
+		arg = tmp
+		optFlag = true
+	else
+		if optFlag then
+            print( "Error:"  &  argName  &  " should be optional" )
+			end
+        end if
+		opt = ""
+    end if
+
+    ' const?
+	if instr(arg, "const ") != 0 then
+		isConst = true
+		arg, tmp = myRemove(arg, "const")
+	else
+		isConst = false
+    end if
+
+    ' get theType
+	arg, argType = readToken(arg)
+	argType = fixType(argType)
+	isWx = false
+	if len(argType) > 2 then
+		if isNative(argType) then
+			isWx = true
+        end if
+    end if
+
+    ' ref?
+	if instr(arg, "&") != 0 then
+		isRef = true
+		arg, tmp = myRemove(arg, "&")
+	else
+		isRef = false
+    end if
+
+    ' pointers
+	ptrs = 0
+	while instr( arg, "*" ) != 0
+		ptrs = ptrs + 1
+		arg, tmp = myRemove(arg, "*")
+    end while
+
+	arg, argName = readToken(arg)
+
+    ' array?
+	if instr(arg, "[]") != 0 then
+		isArray = true
+		arg, tmp = myRemove(arg, "[]")
+	else
+		isArray = false
+    end if
+
+    ' handle the arg
+	if isArray then
+        ' drop the value, and set it to null
+        declare = "if (wTheCall->parmCount > "  &  (args + opts - 1)  &  ") wStackPopNumber();"
+        declare = declare & "\n    " & argType & " " & argName & "[1];"
+		parm = argName
+	
+    elseif ptrs = 1 then
+        if argType = "wxString" then
+            pop = "wStackPopChar()"
+            declare = argType  &  " "  &  argName
+	
+		else
+            declare = argType  &  " *"  &  argName
+			if isWx then
+                pop = "("  &  argType  &  " *)wStackPopObjectPtr( _"  &  argType  &  ")"
+			else
+                pop = "("  &  argType  &  " *)wStackPopObjectPtr( NULL )"
+            end if
+        end if
+	
+		parm = argName
+	
+    elseif ptrs = 2 then
+		if isWx then
+            pop = "("  &  argType  &  " **)wStackPopObjectPtr( _"  &  argType  &  ")"
+		else
+            pop = "("  &  argType  &  " **)wStackPopObjectPtr( NULL )"
+        end if
+        declare = argType  &  " **"  &  argName
+		parm = argName
+	
+	elseif isRef then
+        if argType = "wxString" then
+            pop = "wStackPopChar()"
+			parm = argName
+            declare = argType  &  " "  &  argName
+			
+		else
+            declare = argType  &  " *"  &  argName
+            parm = "*"  &  argName
+	
+			if isWx then
+                pop = "("  &  argType  &  " *)wStackPopObjectPtr( _"  &  argType  &  ")"
+			else
+                pop = "("  &  argType  &  " *)wStackPopObjectPtr( 0 )"
+            end if
+        end if
+	
+	else
+        if argType = "wxString" then
+            pop = "wStackPopChar()"
+			
+		elseif isEnum(argType) then
+            pop = "("  &  argType  &  ")(int)wStackPopNumber()"
+		else
+            pop = "("  &  argType  &  ")wStackPopNumber()"
+        end if
+        declare = argType  &  " "  &  argName
+		parm = argName
+
+    end if
+
+    if isArray = False then
+        if opt = "" then
+            declare = declare  &  " = "  &  pop  &  ";"
+		else
+			if isRef and argType != "wxString" then
+                opt = "&"  &  opt
+            end if
+            declare = declare  &  " = (wTheCall->parmCount > "  &  (args + opts)  &  " ? "  &  pop  &  " : "  &  opt  &  ");"
+        end if
+    end if
+	
+    ' properly cast the enum
+	if isEnum(argType) then
+        parm = "("  &  argType  &  ")"  &  parm
+    end if
+	
+	if isConst then
+        if argType != "wxString" and isArray = False then
+            ' only need const if assigning constant
+			if opt != "" then
+                declare = "const "  &  declare
+            end if
+        end if
+    end if
+
+    ' FIX?
+    popCode = "\n    " & declare & popCode
+	if argList != "" then
+        argList = argList  &  ", "  &  parm
+	else
+        argList = argList  &  parm
+    end if
+
+end function
+
+function alternateCtor( a )
+ 
+	dim name = ""
+
+    ' build an alternate constructor for a class
+	a, b = myRemove(a, "%ctor")
+
+    ' get function name
+	a, name = myRemove(a, "(")    
+    fputs( tmp3, "wSymbol* _" & name & ";\n" )
+    fputs( tmp4, "    _" & name & " = wWrapClass( 0, _" & theClass & ", \"" & lcase(name) & "\" );\n" )
+
+end function
+
+
+function fixType(theType)
+    ' if typedef is found, replace theType with typedef
+    ' if enum is found, replace theType with int
+    ' SHARED typedef$(), typedefCount, enum$(), enumCount
+
+    ' look in typedefs
+	dim fixed = theType
+	for i = 1 to typedefCount
+        if typedefOld[i] = theType then
+            ' change theType
+			return typedefNew[i]
+        end if
+    end for
+	return fixed
+end function
+
+function isEnum(name)
+
+    ' early out test
+	if mid(name, 1, 2) != "wx" then		
+		return false
+    end if
+
+    ' true if enumerated value
+	for i = 1 to enumCount
+        if name = enum[i] then
+			return true			
+        end if
+    end for
+
+	return false
+	
+end function
+
+
+function isNative( name )
+    ' return true if starts with 'wx' and is not enumerated
+
+	if mid( name, 1, 2 ) != "wx" then
+		return false
+    end if
+
+    ' false if enumerated value
+	for i = 1 to enumCount
+        if name = enum[i] then
+			return false			
+        end if
+    end for
+	
+	return true
+end function
+
+	
+function readLine( infile )
+    if eof( infile ) then
+        return 0
+    end if
+
+	dim text = fgets( infile )
+	
+	dim char
+    ' remove cr/lf
+	while 1
+        char = mid( text, len(text), 1 )
+        if char = "\n" or char = "\r" then
+			text = mid( text, 1, len(text)-1 )
+		else
+			break
+        end if
+    end while
+	return trim( text )
+end function
+
+function readToken( arg )
+	dim char, r, a, at
+
+	arg = trim( arg )
+	at = len( arg )
+	for i = 1 to at
+		at = i
+		char = mid( arg, i, 1 )
+		select case char
+		case "a" to "z", "A" to "Z", "0" to "9", "_", ":"
+            ' ignore, part of token
+		case else
+			r = mid( arg, 1, i-1 )
+			if r != "signed" and r != "unsigned" then
+				at = i-1
+				break
+            end if
+        end select
+    end for
+
+	r = mid( arg, 1, at )
+	a = mid( arg, at+1 )
+	return a, r
+
+end function
+
+function myRemove( source, instring )
+    dim at = instr( source, instring )
+    if at = 0 then  
+		return source, ""
+    end if
+		
+	dim result = trim(mid( source, 1, at-1 ))
+    source = trim( mid( source, at + len( instring ) ) )
+	return source, result
+end function
+
+infile = fopen( "class.i", "r" )
+tmp1 = fopen( "tmp.1", "w" )
+tmp2 = fopen( "tmp.2", "w" )
+tmp3 = fopen( "tmp.3", "w" )
+tmp4 = fopen( "tmp.4", "w" )
+tmp5 = fopen( "tmp.5", "w" )
+tmp6 = fopen( "tmp.6", "w" )
+
+
+fputs( tmp1, "/*************************************************************\n")
+fputs( tmp1, "    Name:       wrap.cpp\n")
+fputs( tmp1, "    Purpose:    Wrap wxWindows classes and methods for wxBasic\n")
+fputs( tmp1, "    Author:     David Cuny\n")
+fputs( tmp1, "    Copyright:  (c) 2003 David Cuny <dcuny@lanset.com>\n")
+fputs( tmp1, "    Licence:    LGPL\n")
+fputs( tmp1, "*************************************************************/\n")
+fputs( tmp1, "\n")
+fputs( tmp1, "#ifdef __BORLANDC__\n" )
+fputs( tmp1, "    #pragma warn -8028\n" )
+fputs( tmp1, "    #pragma warn -8006\n" )
+fputs( tmp1, "#endif\n" )
+
+fputs( tmp4, "// wInitWrappers: link methods to classes\n" )
+fputs( tmp4, "void wInitWrappers()\n" )
+fputs( tmp4, "{" )
+
+stopFlag = 0
+
+while 1
+
+    ' read a line
+    if eof( infile ) then
+        break
+    else
+        theLine = readLine( infile )
+    end if
+
+	a = theLine
+	lineNum = lineNum + 1	
+	print lineNum, a
+
+    ' prevent code in comments from being interpreted
+	if instr( a, "//" ) != 0 then
+        ' comment
+		a = ""
+    end if
+
+' win:
+	if instr( a, "win:" ) != 0 then	
+		if win then		
+			a = mid( a, 6 )
+		else
+			a = ""
+        end if
+    end if
+
+' gtk:
+	if instr( a, "gtk:" ) != 0 then	
+		if gtk then
+			a = mid( a, 6 )
+		else
+			a = ""
+        end if
+    end if
+
+' %method <alias> <method> (args)
+    ' %method
+
+	if instr( a, "%method") != 0 then
+		if skipFlag != 0 then
+            ' ignore
+			a = ""
+		else
+            ' extract the parts
+			a, b = myRemove(a, "%method")
+			a, b = myRemove(a, " ")
+			a, c = myRemove(a, "(")
+			args = 0
+            opts = 0
+            if len( a ) = 1 then
+                ' no args
+			else
+                ' count the commas to figure the arg count
+                ' cound the equal signs for the optional arg count
+				args = 1
+                opts = 0
+				for i = 1 to len( a )
+                    ' required arg
+                    if mid( a, i, 1 ) = "," then
+						args = args + 1
+                    end if
+
+                    ' change to optional arg
+                    if mid( a, i, 1 ) = "=" then
+                        args = args - 1
+                        opts = opts + 1
+                    end if
+
+                end for
+            end if
+				
+			a = ""
+            ' add the method
+            fputs( tmp5, "    wWrapMethod( 0, _"  &  theClass  &  ", "  & 
+                "\""  &  lcase(b)  &  "\", "  &  c  &  ", " & args & ", " & opts & " );\n" )
+        end if
+    end if
+
+' %skip
+    ' %skip
+	if instr( a, "%skip" ) != 0 then
+		a = ""
+		skipFlag = -1
+    end if
+
+' %stop
+    ' %stop
+	if instr( a, "%stop" ) != 0 then
+		a = ""
+		break		
+    end  if
+
+' %str - string literal
+    ' not struct & .
+    if instr( a, "%str " ) != 0 then
+        a, b = myRemove(a, "%str")
+
+		dim alias = ""
+        if instr(a, "%alias") != 0 then
+            a, b = myRemove(a, "%alias")
+            a, alias = myRemove(a, " ")
+        else
+            alias = ""
+        end if
+
+        fputs( tmp6, "\n\twLiteralAddStr( \"" & a & "\", " & a & " );" )
+
+        if alias != "" then
+            fputs( tmp6, "\n\twLiteralAddStr( \"" & alias & "\", " & a & " );" )
+            alias = ""
+        end if
+        a = ""
+    end if
+
+' %num - numeric literal
+    if instr( a, "%num " ) != 0 then
+        a, b = myRemove(a, "%num")
+
+        ' %rename <new name>  & .
+		dim renamed = ""
+        if instr(a, "%rename") != 0 then
+            a, b = myRemove(a, "%rename")
+            a, renamed = myRemove(a, " ")
+        else
+            renamed = ""
+        end if
+
+        if instr(a, "%alias") != 0 then
+            a, b = myRemove(a, "%alias")
+            a, alias = myRemove(a, " ")
+        else
+            alias = ""
+        end if
+
+        if renamed != "" then
+            fputs( tmp6, "\n\twLiteralAddNum( \"" & renamed & "\", " & a & " );" )
+        else
+            fputs( tmp6, "\n\twLiteralAddNum( \"" & a & "\", " & a & " );" )
+        end if
+
+        if alias != "" then
+            fputs( tmp6, "\n\twLiteralAddNum( \"" & alias & "\", " & a & " );" )
+            alias = ""
+        end if
+
+        a = ""
+    end if
+
+' %ptr - pointer literal
+    if instr( a, "%ptr " ) != 0 then
+        a, b = myRemove(a, "%ptr")
+
+        if instr(a, "%alias") != 0 then
+            a, b = myRemove(a, "%alias")
+            a, alias = myRemove(a, " ")
+        else
+            alias = ""
+        end if
+
+        ' null pointer?
+        if instr( a, "wxNull" ) != 0 then
+            ' get the name without "null"
+            b = "wx" & mid(a,7)
+            fputs( tmp6, "\n\twLiteralAddPtr( \"" & a & "\", _" & theClass & ", (void *) new " & b & "(" & a & "));" )
+        else
+            fputs( tmp6, "\n\twLiteralAddPtr( \"" & a & "\", _" & theClass & ", (void *)" & a & " );" )
+
+            if alias != "" then
+                fputs( tmp6, "\n\twLiteralAddPtr( \"" & alias & "\", _" & theClass & ", (void *)" & a & " );" )
+                alias = ""
+            end if
+
+        end if
+        a = ""
+    end if
+
+
+' %builtin - for creating direct access to methods
+    if instr( a, "%builtin " ) != 0 then
+		a, b = myRemove(a, "%builtin")
+        ' there could be two in a row
+        if builtin = "" then
+			builtin = theClass
+			theClass = "builtin"
+        end if
+	elseif builtin != "" then
+		theClass = builtin
+		builtin = ""
+    end if
+	
+
+' clear prior ctor?
+	if ctor != "" then
+		theClass = ctor
+		ctor = ""
+    end if
+
+' %ctor - for alternate constructors
+	if instr(a, "%ctor") != 0 then
+		alternateCtor(a)
+		a, b = myRemove(a, "%ctor")
+		ctor = theClass
+		c = a
+		c, theClass = myRemove(c, "(")
+    end if
+
+' %rename
+    ' %rename <new name>  & .
+	if instr(a, "%rename") != 0 then
+		a, b = myRemove(a, "%rename")
+		a, renamed = myRemove(a, " ")
+	else
+		renamed = ""
+    end if
+
+
+' %alias
+    ' %alias <alias>  & .
+    if instr(a, "%alias") = 1 then
+		a, b = myRemove(a, "%alias")
+		a, alias = myRemove(a, " ")
+	else
+		alias = ""
+    end if
+
+' %rename - in case order is %alias %rename
+    ' %rename <new name>  & .
+	if instr(a, "%rename") != 0 then
+		a, b = myRemove(a, "%rename")
+		a, renamed = myRemove(a, " ")
+    end if
+
+' %enum
+    ' %enum <name>
+	if instr(a, "%enum") != 0 then
+		a, b = myRemove(a, "%enum ")
+		enumCount = enumCount + 1
+		enum[enumCount] = a
+		a = ""
+    end if
+
+' %typedef
+    ' %typedef <name> <name>
+	if instr(a, "%typedef") != 0 then
+		a, b = myRemove(a, "%typedef ")
+		typedefCount = typedefCount + 1
+		a, b = myRemove(a, " ")
+		typedefOld[typedefCount] = b
+		typedefNew[typedefCount] = a
+		a = ""
+    end if
+
+' %struct
+    ' %struct <name>
+	if instr(a, "%struct") != 0 then
+		a, b = myRemove(a, "%struct ")
+		typedefCount = typedefCount + 1
+
+        ' treat as class
+		classCount = classCount + 1
+		classList[classCount] = a
+        fputs( tmp3, "wSymbol* _"  &  a  &  ";\n" )
+        fputs( tmp4, "    _"  &  a  &  " = wWrapClass( 0, 0, \""  &  lcase(a)  &  "\" );\n" )
+
+		a = ""
+    end if
+
+
+' %class
+    if instr(a, "%class") = 1 then
+        if skipFlag = -1 then
+			skipFlag = -2
+		else
+			skipFlag = 0
+			a, b = myRemove(a, "%class")
+
+			if instr(a, "%alias") != 0 then
+				a, b = myRemove(a, "%alias")
+				a, alias = myRemove(a, " ")
+			else
+				alias = ""
+            end if
+
+			dim super = ""
+			if instr(a, ",") != 0 then
+                ' %class <CLASS>, <SUPER>
+				a, theClass = myRemove(a, ",")
+                super = "_"  &  a
+			else
+                ' %class <CLASS>
+				theClass = a
+				super = "0"
+            end if
+
+			classCount = classCount + 1
+			classList[classCount] = theClass
+			a = ""
+					
+            fputs( tmp3, "wSymbol* "  &  "_"  &  theClass  &  ";\n" )
+            fputs( tmp4, "    _" & theClass & " = wWrapClass( 0, "  &  super  &  ", \"" &
+			  lcase(theClass)  &  "\" );\n" )
+		   
+			if alias != "" then				
+                fputs( tmp3, "wSymbol* _" & alias & ";\n" )
+                fputs( tmp4, "    _" & alias & " = wWrapClass( 0, _" & theClass & ", \"" & lcase(alias) & "\" );\n" )
+				alias = ""
+            end if
+		
+            ' skip if builtin
+            if theClass != "builtin" and ctor = "" then
+		
+                ' the delete routine
+                dim delName = theClass & "_del"           
+                fputs( tmp2, "\nvoid " & delName & "()\n{" )
+                fputs( tmp2, "\n    delete (" & theClass & " *)(wTheCall->self->ptr);" )
+                fputs( tmp2, "\n}\n\n" )
+		  
+                ' ' link delete routine
+                fputs( tmp5, "    wWrapMethod( 0, _" & theClass & ", \"del\", " & delName & ", 0, 0 );\n" )
+
+            end if
+        end if
+
+' %include file
+    elseif instr(a, "%include") = 1 and skipFlag = 0 then
+		a, b = myRemove(a, "%include")
+
+        ' don't include multiple times
+		for i = 1 to includeCount
+            if a = includeList[i] then
+				a = ""
+				break
+            end if
+        end for
+		if a != "" then
+            fputs( tmp1, "#include " & a & "\n" )
+			includeCount = includeCount + 1
+			includeList[includeCount] = a
+        end if
+		a = ""
+
+    end if
+
+' %{
+    if a = "%{" then
+        ' echo until "%}"
+		while 1
+		
+            ' get an untrimmed line
+			a = fgets( infile )
+			if instr(a, "%}") != 0 then
+				break
+			else
+                if skipFlag = 0 then
+                    ' if has leading tab, remove
+                    if mid(a,1,4) = "    " then
+                        a = mid( a, 5 )
+                    end if
+
+                    ' write to file
+                    fputs( tmp2, "\n" & a )
+                end if
+            end if
+        end while
+		a = ""
+    end if
+	
+    if instr(a, "(") = 0 then
+        ' ignore, not a method
+		a = ""
+    end if
+
+' virtual
+    if instr(a, "virtual") = 1 then
+		a, b = myRemove(a, "virtual")
+    end if
+
+' static
+    if instr(a, "static") = 1 then
+		a, b = myRemove(a, "static")
+    end if
+
+    if a != "" and skipFlag = 0 then
+
+'---------------------------------------
+' function theType
+'---------------------------------------
+
+		dim deref = false
+		dim funcConst = false
+
+        ' remove const
+		dim ignore = ""
+        if instr(a, "const") = 1 then
+			a, ignore = myRemove(a, "const")
+			funcConst = true
+		else
+			funcConst = false
+        end if
+
+        ' constructor?
+		dim theType = ""
+        if instr(a, theClass & "(") != 0 then
+			theType = "void"
+
+		else
+            ' theType should follow & .
+			a, theType = myRemove(a, " ")
+
+            ' signed/unsigned?
+            if theType = "unsigned" or theType = "signed" then
+				a, tmp = myRemove( a, " " )
+                theType = theType  &  " "  &  tmp
+            end if
+
+        end if
+
+        ' remove the pointer (if any)
+		dim ptr = ""
+        while instr( a, "*" ) = 1
+			a, b = myRemove(a, "*")
+            ptr = ptr  &  "*"
+        end while
+
+        ' this handles the case where there was no space between the type and pointer
+        ' ie:  wxFoo*  & .
+		dim at = instr(theType, "*")
+		if at != 0 then
+			ptr = mid(theType, at, len(theType) )
+			theType = mid(theType, 1, at - 1)
+        end if
+		
+		if instr(theType, "&") != 0 then
+			tmp, theType = myRemove(theType, "&")
+			ptr = "*"
+			deref = true
+		else
+			deref = false
+        end if
+		   
+        ' check for typedef
+		theType = fixType(theType)		
+
+'---------------------------------------
+' function name
+'---------------------------------------
+
+		dim func = ""
+		a, func = myRemove(a, "(")
+        returns = ""
+		argList = ""
+		popCode = ""
+		dim hasOptional = false
+
+		dim moreArgs = true
+		optFlag = false
+		args = 0
+		opts = 0
+
+        ' read the args
+		while moreArgs
+
+'---------------------------------------
+' process args
+'---------------------------------------
+
+            ' end of line?
+            if a = "" then
+                ' read a new line
+				a = readLine( infile )
+            end if
+
+			arg = ""
+			if instr(a, ",") != 0 then				
+				a, arg = myRemove(a, ",")				
+				
+			elseif instr(a, ")") != 0 then				
+				a, arg = myRemove(a, ")")
+				moreArgs = false				
+
+			else
+				print "Error parsing args: "
+                print a
+				end				
+
+            end if
+
+            ' decode the args
+			if arg != "" then
+
+				decodeArg()
+
+                if optFlag = true then
+					opts = opts + 1
+				else
+					args = args + 1
+                end if
+            end if
+			
+        end while
+
+		if theType != "void" then
+
+            if theType = "wxString" and ptr = "" then
+                returns = "wxString returns"
+
+            elseif isNative(theType) and ptr = "" then
+                ' raw object, make it a pointer
+				if funcConst then
+                    returns = "const "  &  theType  &  " *returns"
+				else
+                    returns = theType  &  " *returns"
+                end if
+
+			else
+				if funcConst then
+                    returns = "const "  &  theType  &  " "  &  ptr  &  "returns"
+				else
+                    returns = theType  &  " "  &  ptr  &  "returns"
+                end if
+		   
+            end if
+
+		elseif ctor != "" then
+            returns = ctor  &  " *returns"
+
+
+        elseif func = theClass then
+            returns = theClass  &  " *returns"
+			
+        end if
+
+
+'---------------------------------------
+' PRINT THE PROTOTYPE
+'---------------------------------------
+
+
+        fputs( tmp2, "\n// " & theLine )
+
+'---------------------------------------
+' PRINT THE HEADER
+'---------------------------------------
+
+        fputs( tmp2, "\nvoid " )
+		dim funcName = ""
+        if theClass = func then
+            funcName = theClass & "_new"
+
+        elseif func = "~"  &  theClass then
+            funcName = theClass & "_finalize"
+	   
+		elseif renamed != "" then
+            funcName = theClass  &  "_"  &  renamed
+	   
+		else
+            funcName = theClass  &  "_"  &  func
+	   
+        end if
+		
+        fputs( tmp2, funcName & "() {" )
+
+        ' args to pop from list?
+		if len(popCode) != 0 then
+            fputs( tmp2, popCode )
+        end if
+
+		if ctor != "" then
+            ' call alternate constructor
+            fputs( tmp2, "\n    " & returns & " = new " & ctor & "(" & argList & ");" )
+
+        elseif theClass = func then
+            fputs( tmp2, "\n    " & returns & " = new " & theClass & "("  &  argList  &  ");" )
+			
+		else
+			dim head = ""
+            if theClass = "builtin" then
+                ' not really a class
+				head = func
+
+			else
+                ' reference class
+                head = "(("  &  theClass  &  " *)(wTheCall->self->ptr))->"  &  func
+            end if
+
+            if theType = "void" then
+                fputs( tmp2, "\n    " & head & "(" & argList & ");" )
+
+            elseif theType = "wxString" and ptr = "" then
+                fputs( tmp2, "\n    " & returns & " = " & head & "(" & argList & ");" )
+
+            elseif isNative(theType) and ptr = "" then
+                ' make it a pointer
+                fputs( tmp2, "\n    // make a pointer via copy constructor" )
+                fputs( tmp2, "\n    " & returns & " = new " & theType & "(" & head & "(" & argList & "));" )
+
+			elseif deref then
+                ' make it a pointer
+                fputs( tmp2, "\n    " & returns & " = &" & head & "(" & argList & ");" )
+
+			else
+                fputs( tmp2, "\n    " & returns & " = " & head & "(" & argList & ");" )
+				
+            end if
+        end if
+				
+        ' dereference any args on the stack
+        if args or opts then
+            fputs( tmp2, "\n    wWrapDerefArgs();" )
+        end if
+
+        ' return value of routine
+        if theType = "void" then
+            ' constructor leaves something on the stack
+            if func = theClass then
+                ' constructor
+                fputs( tmp2, "\n    wWrapSetThis( _" & theClass & ", (void *)returns );" )
+            end if
+
+        elseif theType = "time_t" then
+            fputs( tmp2, "\n    wStackPushDateTime( returns );" )
+
+        elseif theType = "wxString" and ptr = "" then
+            fputs( tmp2, "\n    wStackPushChar( (char *)(returns.c_str()), W_TRUE );" )
+
+        elseif theType = "wxString" and ptr = "*" then
+            fputs( tmp2, "\n    wStackPushChar( (char *)(returns->c_str()), W_TRUE );" )
+
+		elseif isNative(theType) then
+            ' wrap pointer
+            fputs( tmp2, "\n    wWrapPushObject( _" & theType & ", W_TRUE, (void *)returns );" )
+
+			
+		else
+			if ptr != "" then
+                ' generic pointer of some sort
+                ' FIXME!
+                ' fputs( tmp2, "\n    wPushPtrHandle( (wNumber)(int)returns);" )
+                fputs( tmp2, "\n    wWrapPushObject( _" & theClass & ", W_TRUE, (void *)returns );" )
+			else
+                ' plain number
+                fputs( tmp2, "\n    wStackPushNumber( (wNumber)returns);" )
+            end if
+        end if
+
+        fputs( tmp2, "\n}\n" )
+
+        ' remove class from name
+		dim shortName = funcName
+		shortName, ignore = myRemove(shortName, "_")
+
+        ' link
+        if theClass = "builtin" then
+            fputs( tmp5, "    wBuiltinNew( " )
+		else
+            fputs( tmp5, "    wWrapMethod( 0, _"  &  theClass  &  ", " )
+        end if
+				
+        fputs( tmp5, "\""  &  lcase(shortName)  &  "\", " )
+        fputs( tmp5, funcName  &  ", "  &  args  &  ", "  &  (args + opts)  &  " );\n" )
+
+        ' alias?
+		if alias != "" then
+            if theClass = "builtin" then
+                fputs( tmp5, "    wBuiltinNew( " )
+			else
+                fputs( tmp5, "    wWrapMethod( 0, _"  &  theClass  &  ", " )
+            end if
+			
+            ' FIX?
+            fputs( tmp5, "\"" & lcase(alias) & "\", " & funcName & ", " & args & ", "  &  (args + opts)  &  " );\n" )
+        end if
+
+    end if
+
+end while
+
+fputs( tmp1, "\n\n" )
+fputs( tmp6, "\n}\n" )
+
+fclose( infile )
+fclose( tmp1 )
+fclose( tmp2 )
+fclose( tmp3 )
+fclose( tmp4 )
+fclose( tmp5 )
+fclose( tmp6 )
+
+function appendFile( dest, name )
+    dim handle = fopen( name, "r" )
+    dim text = ""
+    while not eof( handle )
+        text = fgets( handle )
+        fputs( dest, text & "\n" )
+    end while
+    fclose( handle )
+end function
+
+' append the files together
+dim handle = fopen( "wrap.cpp", "w" )
+appendFile( handle, "tmp.1")    ' include files
+appendFile( handle, "tmp.3" )   ' class constants
+appendFile( handle, "tmp.2" )   ' wrappers
+appendFile( handle, "tmp.4" )   ' initialize classes
+appendFile( handle, "tmp.5" )   ' initialize class methods
+appendFile( handle, "tmp.6" )   ' initialize constants
+
+fclose( handle )
+
+' remove the temp files
+kill( "tmp.1" )
+kill( "tmp.2" )
+kill( "tmp.3" )
+kill( "tmp.4" )
+kill( "tmp.5" )
+kill( "tmp.6" )
+
+print "Finished!"

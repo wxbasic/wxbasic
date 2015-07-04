@@ -212,3 +212,4 @@ The following should be probably be added for compatibility
 /* PENDING ROUTINES */
 wCode *wParseStatementDestroy()        { wParseError("Destroy not yet coded"); return NULL; }
 
+

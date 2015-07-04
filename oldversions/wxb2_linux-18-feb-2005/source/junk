@@ -1,0 +1,3 @@
+if not fileexists("ide_tips.txt") then
+    print "file does not exist!"
+end if
