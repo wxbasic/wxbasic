@@ -1,0 +1,1566 @@
+{\rtf1\ansi\ansicpg1252\deff0{\fonttbl{\f0\fswiss\fprq2\fcharset0 Verdana;}{\f1\froman\fprq2\fcharset0 Times New Roman;}{\f2\fmodern\fprq1\fcharset0 Courier New;}{\f3\fnil\fcharset0 Courier New;}{\f4\fnil\fcharset2 Symbol;}}
+{\*\generator Msftedit 5.41.15.1503;}\viewkind4\uc1\pard\sl240\slmult1\lang1033\b\f0\fs24 Introducing wxBasic\b0\par
+\f1 wxb is a cross-platform BASIC interpreter licensed under the LGPL. While not complying with the ANSI BASIC standard, wxBasic provides much of the functionality associated with modern structured BASIC, along with a number of extentions borrowed from languages such as Python, Lua and Java.\f0\par
+\f1\par
+At its core, wxBasic is a fairly small language, weighing in at under 300K (less than 80K when compressed via UPX). However, wxBasic gains much of its functionality by using the wxWidgets library, which provides a cross-platform GUI and non-GUI functionality. The wxWidgets-enabled version of wxBasic is far more capable, but quite a bit heftier.\f0\par
+\f1\par
+\par
+\b\f0 How wxBasic Differs from Other Basics\b0\par
+\f1 wxb has a mixed parentage, deriving mostly from QBasic, but pilfering from C, Lua, Python, and VB.NET. The result is a language with a lot of 'C-isms'. The main points where wxBasic differs from 'classic' BASICs is:\f0\par
+\b\par
+Simple Datatypes Not Passed by Reference\b0\par
+\f1 Some datatypes (like \b Arrays\b0  and \b Objects\b0 ) are passed to routines by reference, but the "simple" datatypes (such as \b Number\b0  and \b String\b0 ) are not. This means that if you change the parameter for simple datatypes, you won't change the parameter in the caller. For example:\par
+\par
+   Sub foo( a )\par
+      a = a + 10\par
+      Print "In foo(), a ="; a\par
+   End Sub\par
+\par
+   b = 100\par
+   Print "Before calling foo(), b ="; b\par
+   foo( b )\par
+   Print "After calling foo(), b ="; b\par
+\par
+In some versions of Basic, changing the value of \b a\b0  would change the value of \b b\b0 . This isn't the case in wxb. If you want to change the value of \b b\b0 , you need to assign the value back:\par
+\par
+   Function foo( a )\par
+      a = a + 10\par
+      Print "In foo(), a ="; a\par
+   End Function\par
+\par
+   b = 100\par
+   Print "Before calling foo(), b ="; b\par
+   b = foo( b )\par
+   Print "After calling foo(), b ="; b\par
+\par
+\b\f0 Functions Return Values via the RETURN Keyword\par
+\b0\f1 To return a value from a function in wxb, you need to use the \b Return\b0  keyword. It works the same way \b return\b0  works in \b C\b0 : the function exits at that point, and returns the values that follow the \b Return\b0  statement:\par
+\par
+   Function foo( a )\par
+      Return a * 10\par
+   End Function\par
+\par
+If you want to continue processing through the function, just store the value in a temporary variable:\par
+\par
+   Function foo( a )\par
+      Dim tmp = a * 10\par
+      ' Do something else\par
+      Return tmp\par
+   End Function\par
+\par
+\b\f0 Functions Can Return Multiple Values\b0\par
+\f1 Like \b Lua\b0  and \b Python\b0 , wxb allows functions to return multiple values. For example:\par
+\par
+   Function doubleTheValue( a )\par
+      ' Return double the value and original value\par
+      Return a*2, a\par
+   End Function\f0\par
+\f1\par
+   newValue, oldValue = doubleTheValue( 120 )\par
+\par
+Basically, this replaces the need for passing values by reference. wxb checks to make sure the number of arguments on both sides match. If they don't, wxb will fill in the missing values on the left hand side with \b Nothing\b0 , or drop extra values on the right hand side. For example:\par
+\par
+   a, b = 10, 20, 30\par
+\par
+will cause \b a\b0  to be assigned the value \b 10\b0 , and \b b\b0  the value \b 20\b0 . There is no variable to recieve the value \b 30\b0 , so it is dropped. Similarly:\par
+\par
+   a, b = 10\par
+\par
+will cause \b a\b0  to be assigned the value \b 10\b0 , and \b b\b0  the value \b Nothing\b0 .\par
+\par
+If a function doesn't explicitly return a value, it will by default return the value \b Nothing\b0 :\par
+\par
+   Function doNothing()\par
+   End Function\par
+\par
+   a = doNothing()\par
+\par
+This will cause the variable \b a\b0  to be assigned the value \b Nothing\b0 .\par
+\par
+\par
+\b\f0 Functions Can Have Optional Parameters\par
+\b0\f1 You can specify that a routine can have optional parameters. If the routine is called without these parameters being passed, they will be set to their default values. For example:\par
+\par
+   Sub hasOptionalParms( a, b, c = 10, d = 100 )\par
+      Print a, b, c, d\par
+   End Sub\f0\par
+\f1\par
+\b\f0 Functions Can Have Variable Numbers of Parameters\b0\par
+\f1 You can specify that a routine will take a number of (unnamed) parameters, similar to C's \b printf\b0  command:\par
+\par
+   Sub hasVariableParms( a, b, ... )\par
+FIXME!!!\par
+\par
+\par
+\b\f0 Dynamic Variable Declaration\par
+\b0\f1 In wxb, it is not necessary to declare variables or their type; they will be created "on the fly":\par
+\par
+   aString = "This is a string"\par
+   aNumber = 123\par
+\par
+Variables declared outside of routines are \i automatically global in scope\i0 :\par
+\par
+   globalVar = "I'm a global variable"\par
+\par
+   Sub foo()\par
+      localVar = "I'm a local variable"\par
+\par
+      ' This references the global variable globalVar\par
+      Print globalVar\par
+\par
+      ' This references the local variable localVar\par
+      Print localVar\par
+\par
+   End Sub\par
+\f2\par
+\f1 As convenient as this option is, it's much safer to require variables to be explicitly declared in wxb. This is done by adding the statement:\par
+\par
+   Option Explicit\par
+\par
+With \b Option Explicit\b0  enabled, you will need to explicitly declare your variables before use:\par
+\par
+   Dim globalVar = "I'm a global variable"\par
+\par
+   Sub foo()\par
+      Dim localVar = "I'm a local variable"\par
+\par
+      ' This references the global variable globalVar\par
+      Print globalVar\par
+\par
+      ' This references the local variable localVar\par
+      Print localVar\par
+\par
+   End Sub\par
+\par
+\b\f0 No Need To Declare Forward References\par
+\b0\f1 wxb will automatically resolve all forward references.\par
+\par
+\b\f0 Case Insensitive\par
+\b0\f1 The first version of wxb was case sensitive, but this is no longer true.\par
+\par
+\par
+\b\f0 Datatypes\b0\par
+\f1 All values in wxb are stored as \b Variants\b0 . However, the variant will be one of the following types:\par
+\par
+\pard{\pntext\f4\'B7\tab}{\*\pn\pnlvlblt\pnf4\pnindent0{\pntxtb\'B7}}\fi-720\li720\sl240\slmult1\b Variant\b0\par
+\b{\pntext\f4\'B7\tab}Nothing\b0\par
+\b{\pntext\f4\'B7\tab}Integer\b0\par
+\b{\pntext\f4\'B7\tab}Number\b0\par
+\b{\pntext\f4\'B7\tab}String\b0\par
+\b{\pntext\f4\'B7\tab}DateTime\b0\par
+\b{\pntext\f4\'B7\tab}Object\b0\par
+\b{\pntext\f4\'B7\tab}Routine\b0\par
+\b{\pntext\f4\'B7\tab}Array\b0\par
+\b{\pntext\f4\'B7\tab}Table\b0\par
+\b{\pntext\f4\'B7\tab}List\b0\par
+\pard\sl240\slmult1\par
+These value have common properties:\par
+\par
+\tab integer = variant.GetType()\par
+\tab string = variant.ToString()\par
+\tab integer variant.Equal( otherValue )\par
+\tab integer variant.Compare( otherValue )\par
+\tab clone = variant.Clone()\par
+\par
+However, not all datatypes implement these properties.\b\f0\par
+\par
+\par
+Nothing\b0\par
+\b\f1 Nothing\b0  is akin to other language's \b nil\b0  or \b null\b0  value. In a truth test, it evaluates to \b False\b0 . All unassigned variables default to \b Nothing\b0 , even if they have been declared as some other type. You can directly test for a value of \b Nothing\b0 :\par
+\par
+   If a = Nothing Then\par
+      Print "a = Nothing"\par
+   End If\par
+\par
+It implements the following methods:\par
+\par
+\tab isNumeric\par
+\tab fromChar\par
+\tab toChar\par
+\tab isTrue\par
+\par
+\b\f0 Integer\b0\par
+\b\f1 Integer\b0  is a integer. It is stored as an \b int\b0  value, although all math operations are internally done with \b double\b0 , even if both types are declared as \b Integer\b0 .\par
+\par
+\b\f0 Number\b0\par
+\b\f1 Number\b0  is a floating point number, stored as a \b C\b0  double. All math operations in wxb are internally done with a \b Number\b0  type, even if the datatype is declared differently.\par
+\par
+\b\f0 String\b0\par
+\b\f1 String\b0  is an alphanumeric string. When tested in a truth operation, an empty string returns \b False\b0 , and a non-empty string returns \b True\b0 .\par
+You can embed special characters into the string by using the backslash (\b\\\b0 )\par
+\par
+\tab\\n\tab newline\par
+\tab\\r\tab carriage return\par
+\tab\\t\tab tab\par
+\tab\\'\tab single quote (not really needed)\par
+\tab\\"\tab double quote\par
+\tab\\\\\tab backslash\par
+\par
+For example:\par
+\par
+   stringWithANewline = "This is the first line\\nThis is the second"\par
+\par
+You can treat a string as if it were a collection. You iterate through a string. For example:\par
+\par
+   For Each position, letter In "Hello, World"\par
+      Print "Position="; position, "Letter="; letter\par
+   End For\par
+\par
+You can also index and slice a string like an array. For example:\par
+\par
+   Print "Hello, World"[8]\par
+\par
+prints \b "W"\b0 , and:\par
+\par
+   Print "Hello, World"[1:5]\par
+\par
+prints \b "Hello"\b0 .\par
+\par
+\par
+\b\f0 DateTime\b0\par
+\b\f1 DateTime\b0  represents a date and time. It is normally created by calling the routine\b  TimeValue\b0 :\par
+\par
+   Dim myDate = TimeValue( "Jan 12, 2003" )\par
+\par
+You can extract the parts of the date by calling the various methods (also available as builtin functions):\par
+\par
+   myDate.Year()\par
+   myDate.Month()\par
+   myDate.MonthName()\par
+   myDate.Weekday()\par
+   myDate.Day()\par
+   myDate.DayName()\par
+   myDate.Hour()\par
+   myDate.Minute()\par
+   myDate.Second()\par
+\par
+\b DateTime\b0  values can be compares for exact equality or inequality. To determine specific differences between dates, use \b DateDiff\b0  (see the \b DateDiff\b0  function for details).\par
+\par
+\par
+\b\f0 Object\b0\par
+\f1 Any data declared with a \b Class\b0  (builtin or user declared) is stored as a datatype \b Object\b0 . \b Objects\b0  are passed by reference, not by value. If you want to create a unique copy of an \b Object\b0 , use the \b Clone\b0  method:\par
+\par
+   myCopy = theObject.Clone()\par
+\par
+Objects are reference counted, and automatically destroyed when no object refers to them anymore. For more information about objects, see the section on \b Classes\b0 .\par
+\par
+\b\f0 Routine\b0\par
+\f1 A \b Routine\b0  is a user-defined routine or method. There is currently only an internal datatype.\par
+\par
+\par
+\b\f0 Collections\b0\par
+\f1 A c\i ollection \i0 is a grouping of \b Variant\b0  data which can be accessed by a key value. For example, \b Arrays\b0 , \b Tables\b0 , and \b Lists\b0  are all collections. There are operations that are (in general) common across collections. You can access an element in a collection by specifying that element's key. For example, here's a \b Table\b0  collection:\par
+\par
+   Dim myCats = \{\}\par
+\par
+\b\f0 Indexes\b0\par
+\f1 Let's populate the \b Table\b0 :\par
+\par
+   myCats[ 1 ] = "Chester"\par
+   myCats[ 2 ] = "Charlotte"\par
+   myCats[ 3 ] = "Chloe"\par
+\par
+If we print the table:\par
+\par
+   Print myTable\par
+\par
+we'll get: \b\{ 1:"Chester", 2:"Charlotte", 3:"Chloe" \}\b0\par
+\par
+We can access elements in a collection by specifying the collection, and the key in square brackets:\par
+\par
+   Print myCats[ 3 ]\par
+\par
+prints \b "Chloe"\b0 .\par
+\par
+\b\f0\par
+Slices\b0\par
+\f1 If the collection is \i ordered\i0 , you can print a \i slice\i0  from the collection:\par
+\par
+   Print myCats[ 2:3 ]\par
+\par
+prints \b\{ 2:"Charlotte", 3:"Chloe" \}\b0\par
+\par
+\b\f0 Collection Methods\b0\par
+\f1 In addition to the methods implemented by \b Variants\b0 , most collections implement one or more of these methods:\par
+\par
+\tab collection.\b Append\b0 ( \i value\i0  )\par
+\tab collection.\b Prepend\b0 ( \i value \i0 )\par
+\tab collection.\b InsertAt\b0 ( \i key\i0 , \i value \i0 )\par
+\tab collection.\b Slice\b0 ( \i startSlice\i0 , \i endSlice \i0 )\par
+\tab\i integer \i0 = collection.\b Count\b0\par
+\par
+\par
+\b\f0 Array\b0\par
+\f1 An \b Array\b0  is a collection of static size. Like all other collections, they are passed by reference. Unlike most versions of Basic, wxb uses square brackets to help distinguish them from routine calls. Here's a simple declaration:\par
+\par
+   Dim myArray[10]\par
+\par
+If the lower range is not declared, wxb will assume the array starts at zero. You can have up to five dimensions to the array:\par
+\par
+   Dim myArray[5 To 20, -10 To 10]\par
+\par
+\b Array\b0  with undeclared types values initialize their values to zero. You can specify an initial value like this:\par
+\par
+      Dim myArray[10] = Nothing\par
+\par
+You can declare the type as well:\par
+\par
+      Dim myArray[10] As Number\par
+\par
+You can also declare the type and initial value:\par
+\par
+   Dim myaArray[10] As Integer = 10\par
+\par
+\par
+\b\f0 Table\b0\par
+\f1 An \b Table\b0  is an unordered collection of dynamic size. Like all other collections, they are passed by reference. You create a table by declaring a collection within curly brackets. The following declares an empty \b Table\b0 :\par
+\par
+   Dim myTable = \{\}\par
+\par
+A collection is indexed by keys, which can either be \b Integer\b0  or \b String\b0  values (\b Numbers\b0  will be automatically converted to \b Integers\b0 ). For example:\par
+\par
+   Dim myCats = \{ 1:"Chester", 2:"Charlotte", 3:"Chloe", 4:"Julius" \}\par
+\par
+is the same as writing:\par
+\par
+   Dim myCats = \{\}\par
+   myCats[1] = "Chester"\par
+   myCats[2] = "Charlotte"\par
+   myCats[3] = "Chloe"\par
+   myCats[4] = "Julius"\par
+\par
+Note here that if the key does not exist in the \b List\b0 , wxb will insert a new key/value pair. \par
+\par
+If you leave off the key in the declaration, wxb will assign a sequential value, so this produces the same result as the prior example:\par
+\par
+   Dim myCats = \{ "Chester", "Charlotte", "Chloe", "Julius" \}\par
+\par
+You can retrieve data by specifying the index, the same as an array:\par
+\par
+   Print myCats[1]\par
+\par
+If a key does not exist in the \b Table\b0 , wxb returns the value \b Nothing\b0 . If a \b List\b0  contains another \b List\b0 , you can access it as if it were an array:\par
+\par
+   Dim myCats = \{\}\par
+   myKids[ "Chester", "favorite food" ] = "Pounce"\par
+\par
+is the same as writing:\par
+\par
+   Dim myCats = \{\}\par
+   myKids[ "Chester" ] = \{ "favorite food":"Pounce" \}\par
+\par
+which is also the same as:\par
+\par
+   Dim myCats = \{ "Chester":\{ "favorite food":"Pounce" \} \}\par
+\par
+and it can be accessed similarly:\par
+\par
+   Print myKids[ "Chester", "favorite food" ]\par
+\par
+prints \b "Pounce"\b0 .\par
+\par
+As with the other collections, you can iterate through it with the \b For Each\b0  loop:\par
+\par
+   For Each index, name In myCats\par
+      Print index, name\par
+   End For\par
+\par
+Note that the \b List\b0  is \i unordered\i0 , so there is no guarantee that the data will come back in any order.\par
+\par
+You can remove items from the list by removing the key from the collection:\par
+\par
+   myCats.Remove( "Julius" )\par
+\par
+\par
+\b\f0 List\b0\par
+\f1 An \b List\b0  is an ordered collection of dynamic size. Like all other collections, they are passed by reference. You create a table by declaring a collection within square brackets. The following declares an empty \b List\b0 :\par
+\par
+   Dim myList = [] \par
+\par
+Construction of a \b Table\b0  is similar to that of a list, except that the keys are implicit, based on order:\par
+\b\f0\par
+\b0\f1    Dim myCats = [ "Chester", "Charlotte", "Chloe", "Julius" ]\par
+\par
+You can add items to the list with \b Append\b0 , which adds the elements to the end of the list:\par
+\par
+   Dim myCats = []\par
+   myCats.Append( "Chester" )\par
+   myCats.Append( "Charlotte" )\par
+   myCats.Append( "Chloe" )\par
+   myCats.Append( "Julius" )\par
+\par
+Or with \b Prepend\b0 , which adds elements to the beginning:\par
+\par
+   Dim myCats = []\par
+   myCats.Prepend( "Julius" )\par
+   myCats.Prepend( "Chloe" )\par
+   myCats.Prepend( "Charlotte" )\par
+   myCats.Prepend( "Chester" )\par
+\par
+Or \b Insert\b0 , which specifies a position to insert at:\par
+\par
+   Dim myCats = []\par
+   myCats.Insert( 1, "Julius" )\par
+   myCats.Insert( 2, "Chloe" )\par
+   myCats.Insert( 3, "Charlotte" )\par
+   myCats.Insert( 4, "Chester" )\par
+\par
+Elements can be accessed by index, starting at 1. Attempting to access a non-existant element will result in wxb throwing an error.\par
+\par
+   Print myCats[3]\par
+\par
+You can also access a slice of elements:\par
+\par
+   Print myCats[2:3]\par
+\par
+\b\f0\par
+wxBasic Syntax\b0\par
+\b\par
+\par
+\par
+Assignment\b0\par
+\f2\fs20\tab lval \{, lval\} = expr \{, expr \}\f0\fs24\par
+\f2\fs20\par
+\par
+\f1\fs24 Assigns a value to one or more \i lval\i0 :\f0\par
+\f1\par
+\f2\fs20\tab a, b, c = 1, 2, 3\f0\fs24\par
+\f2\fs20\par
+\b\page\f0\fs24 CLASS\b0\par
+\f2\fs20\tab CLASS className [INHERITS className]\f0\fs24\par
+\f2\fs20\tab\tab [DIM attribute \{, attribute\}]\f0\fs24\par
+\f2\fs20\tab\tab subroutineDefinition\f0\fs24\par
+\f2\fs20\tab\tab functionDefintition\f0\fs24\par
+\f2\fs20\tab END CLASS\f0\fs24\par
+\f2\fs20\par
+\f1\fs24 Creates a new user-defined class. Single inheritance is supported. Class attributes are defined in the \b Dim\b0  section. \f0\par
+\f1\par
+New instances of a class object are created by calling a constructor method with the same name of the class. For example:\f0\par
+\f1\par
+\f2\fs20\tab\lquote  create a Point class\f0\fs24\par
+\pard\fi720\sl240\slmult1\f2\fs20 CLASS Point\f0\fs24\par
+\pard\sl240\slmult1\f2\fs20\tab\tab DIM x, y\f0\fs24\par
+\f2\fs20\tab END CLASS\f0\fs24\par
+\f2\fs20\par
+\tab\lquote  create a point\f0\fs24\par
+\f2\fs20\tab p = Point()\f0\fs24\par
+\f2\fs20\tab p.x = 10\f0\fs24\par
+\f2\fs20\tab p.y = 20\f0\fs24\par
+\f2\fs20\par
+\f1\fs24 Objects are automatically destroyed when there are no references to the object. If you want an object to be permanent, create it with the \b New\b0  keyword:\f0\par
+\f1\par
+\f2\fs20\tab\lquote  create a Point class\f0\fs24\par
+\f2\fs20\tab CLASS Point\f0\fs24\par
+\f2\fs20\tab\tab DIM x, y\f0\fs24\par
+\f2\fs20\tab END CLASS\f0\fs24\par
+\f2\fs20\par
+\tab\lquote  create a temporary point and assign some values\f0\fs24\par
+\f2\fs20\tab p1 = Point()\f0\fs24\par
+\f2\fs20\tab p1.x, p1.y = 10, 20\f0\fs24\par
+\f2\fs20\par
+\tab\lquote  create a permanent point and assign some values\f0\fs24\par
+\f2\fs20\tab p2 = NEW Point()\f0\fs24\par
+\f2\fs20\tab p2.x, p2.y = 40, 80\f0\fs24\par
+\f2\fs20\par
+\tab\lquote  destroy the temporary point\f0\fs24\par
+\f2\fs20\tab p1 = NOTHING\f0\fs24\par
+\f2\fs20\par
+\tab\lquote  This does not destroy the permanent point\f0\fs24\par
+\f2\fs20\tab p2 = NOTHING\f0\fs24\par
+\f2\fs20\par
+\f1\fs24 To destroy an object created with \b New\b0 , use the \b Dispose\b0  command:\f0\par
+\f1\par
+\f2\fs20\tab\lquote  Destroy the point\f0\fs24\par
+\f2\fs20\tab DISPOSE p2\f0\fs24\par
+\f2\fs20\par
+\f1\fs24 You can define an initializer for a class by including a \b NEW\b0  method in the class:\f0\par
+\f1\par
+\pard\fi720\sl240\slmult1\f2\fs20\lquote  create a Point class\f0\fs24\par
+\f2\fs20 CLASS Point\f0\fs24\par
+\f2\fs20\tab DIM x, y\f0\fs24\par
+\f2\fs20\par
+\tab SUB NEW ( useX, useY )\f0\fs24\par
+\f2\fs20\tab\tab x, y = useX, useY\f0\fs24\par
+\f2\fs20\tab END SUB\f0\fs24\par
+\pard\sl240\slmult1\f2\fs20\tab END CLASS\f0\fs24\par
+\f2\fs20\par
+\tab\lquote  create a Point\f0\fs24\par
+\f2\fs20\tab p1 = Point( 10, 20 )\f0\fs24\par
+\f2\fs20\par
+\f1\fs24 When an object is destroyed, the \b FINALIZE\b0  routine for it is run:\f0\par
+\f1\par
+\pard\fi720\sl240\slmult1\f2\fs20\lquote  create a Point class\f0\fs24\par
+\f2\fs20 CLASS Point\f0\fs24\par
+\f2\fs20\tab DIM x, y\f0\fs24\par
+\f2\fs20\par
+\tab SUB NEW ( useX, useY )\f0\fs24\par
+\f2\fs20\tab\tab x, y = useX, useY\f0\fs24\par
+\f2\fs20\tab\tab PRINT \ldblquote Created Point \{\ldblquote ; x; \ldblquote , \ldblquote ; y; \ldblquote )\rdblquote\f0\fs24\par
+\f2\fs20\tab END SUB\f0\fs24\par
+\f2\fs20\par
+\tab SUB FINALIZE()\f0\fs24\par
+\f2\fs20\tab\tab PRINT \ldblquote Destroyed the point \{\ldblquote ; x; \ldblquote , \ldblquote ; y; \ldblquote )\rdblquote\f0\fs24\par
+\f2\fs20\tab END SUB\f0\fs24\par
+\pard\sl240\slmult1\f2\fs20\tab END CLASS\f0\fs24\par
+\f2\fs20\par
+\par
+\b\page\f0\fs24 CLOSE\b0\par
+\f2\fs20\tab CLOSE\f0\fs24\par
+\f2\fs20\tab CLOSE #\i handle\i0\f0\fs24\par
+\i\f2\fs20\par
+\i0\f1\fs24 Close a currently open file. To close all files, use \b Close\b0  without a handle number.\f0\par
+\f1\par
+\f2\fs20\tab\lquote  Append text to a file, and then close it\f0\fs24\par
+\f2\fs20\tab OPEN \ldblquote tmp.txt\rdblquote  FOR APPEND AS #1\f0\fs24\par
+\f2\fs20\tab PRINT #1, \ldblquote Some text\rdblquote\f0\fs24\par
+\f2\fs20\tab CLOSE #1\f0\fs24\par
+\f1\par
+Also see \b fClose\b0 .\f0\par
+\b\par
+\page CONST\b0\par
+\b CONSTANT\b0\par
+\f2\fs20\tab CONST \i constantName\i0  = \i expression\i0  \{, \i constantName\i0  = \i expression\i0  \}\f0\fs24\par
+\pard\fi720\sl240\slmult1\f2\fs20 CONSTANT \i constantName\i0  = \i expression\i0  \{, \i constantName\i0  = \i expression\i0  \}\f0\fs24\par
+\pard\sl240\slmult1\f2\fs20\par
+\f1\fs24 Declare a variable to be a constant. Constants are similar to variables, except they cannot be assigned values.\f0\par
+\f1\par
+\f2\fs20\tab\lquote  Declare the name of the program\f0\fs24\par
+\pard\fi720\sl240\slmult1\f2\fs20 CONST ProgName = \ldblquote My Cool Program\rdblquote ,\f0\fs24\par
+\f2\fs20\tab Version = \ldblquote 1.0\rdblquote\f0\fs24\par
+\f2\fs20\par
+\pard\sl240\slmult1\f1\fs24\page\b\f0 DIM\b0\par
+\f2\fs20\tab DIM name [ '[' [expr [TO expr] ']' ] [ = expr] [AS type]\f0\fs24\par
+\f2\fs20\tab\tab (, name [= expr] \}\f0\fs24\par
+\f2\fs20\par
+\f1\fs24 Define an object. Arrays can be initialized to a default value by assiging them. Variables that are unassigned default to \b NOTHING\b0 .\f0\par
+\f2\fs20\tab\f0\fs24\par
+\f2\fs20\tab ' Create a 2 x 3 array, initialize it to zero\f0\fs24\par
+\f2\fs20\tab DIM a[2,3] = 0\f0\fs24\par
+\f2\fs20\par
+\tab ' Create a string variable and assign it\f0\fs24\par
+\f2\fs20\tab DIM b AS STRING = "This is a string"\f0\fs24\par
+\f2\fs20\par
+\tab ' Create and assign several variables\f0\fs24\par
+\f2\fs20\tab DIM a = 10, b, c = a+12\f0\fs24\par
+\f2\fs20\par
+\b\page\f0\fs24 END\b0\par
+\f2\fs20\tab END\f0\fs24\par
+\f2\fs20\par
+\f1\fs24 Halt the program.\f0\par
+\f1\par
+\f2\fs20\tab\lquote  Stop the program if the user is bored.\f0\fs24\par
+\f2\fs20\tab INPUT \ldblquote Do you want to play again (Y/N\}?\rdblquote ; answer\f0\fs24\par
+\f2\fs20\tab IF answer = \ldblquote Y\rdblquote  OR answer = \ldblquote y\rdblquote  THEN\f0\fs24\par
+\f2\fs20\tab\tab END\f0\fs24\par
+\f2\fs20\tab END IF\f0\fs24\par
+\f2\fs20\par
+\f1\fs24\page\b\f0 FOR...NEXT\b0\par
+\f2\fs20\tab FOR variable = startExpr TO endExpr \{STEP stepExpr\}\f0\fs24\par
+\f2\fs20\tab\tab [CONTINUE]\f0\fs24\par
+\f2\fs20\tab\tab [BREAK]\f0\fs24\par
+\f2\fs20\tab\tab [EXIT FOR]\f0\fs24\par
+\f2\fs20\tab\tab\{ statement \}\f0\fs24\par
+\f2\fs20\tab ELSE\f0\fs24\par
+\f2\fs20\tab\tab\{ statement \}\f0\fs24\par
+\f2\fs20\tab END FOR | NEXT \{variable\}\f0\fs24\par
+\f2\fs20\par
+\f1\fs24 Loop from \i startExpr\i0  to \i endExpr\i0 , incrementing by \i stepExpr\i0 . If \i stepExpr\i0  is left off, it is assumed to be 1. \b BREAK\b0  leaves the loop immediately, while \b CONTINUE\b0  jumps to the top of the loop for the next value.\f0\par
+\f1\par
+\fs22 Here is an example of a loop printing the numbers between 1 and 10, inclusive:\f0\fs24\par
+\f1\fs22\par
+\f2\fs20\tab ' loop from 1 to 10\f0\fs24\par
+\f2\fs20\tab FOR i = 1 TO 10\f0\fs24\par
+\f2\fs20\tab\tab PRINT i\f0\fs24\par
+\f2\fs20\tab NEXT\f0\fs24\par
+\f2\fs20\par
+\f1\fs24 If the loop is not exited via the \b BREAK\b0  statement, the \b ELSE\b0  clause will execute.\f0\par
+\f1\par
+\f2\fs20\tab ' loop through an array, looking for a value\f0\fs24\par
+\f2\fs20\tab FOR i = 1 to LENGTH( list )\f0\fs24\par
+\f2\fs20\tab\tab IF list[i] = someValue THEN\f0\fs24\par
+\f2\fs20\tab\tab\tab PRINT "Found it!"\f0\fs24\par
+\f2\fs20\tab\tab\tab BREAK\f0\fs24\par
+\f2\fs20\tab\tab END IF\f0\fs24\par
+\f2\fs20\tab ELSE\f0\fs24\par
+\f2\fs20\tab\tab PRINT "Didn't find it"\f0\fs24\par
+\f2\fs20\tab END FOR\f0\fs24\par
+\f2\fs20\par
+\b\page\f0\fs24 FOR EACH...END FOR\b0\par
+\f2\fs20\tab FOR EACH variable \{, variable\} IN expression\f0\fs24\par
+\f2\fs20\tab\tab [CONTINUE]\f0\fs24\par
+\f2\fs20\tab\tab [BREAK]\f0\fs24\par
+\f2\fs20\tab\tab [EXIT FOR]\f0\fs24\par
+\f2\fs20\tab\tab\{ statement \}\f0\fs24\par
+\f2\fs20\tab ELSE\f0\fs24\par
+\f2\fs20\tab\tab\{ statement \}\f0\fs24\par
+\f2\fs20\tab END FOR\f0\fs24\par
+\f2\fs20\tab\tab\f0\fs24\par
+\f1 Iterate through a collection (table, list). If only one loop variable is used, it will hold the index from the collection. If two variables are used, they will hold the key/index and value. \b CONTINUE\b0 , \b BREAK\b0  and \b ELSE\b0  behave the same as a \b FOR\b0  loop.\f0\par
+\f1\par
+\f2\fs20\tab ' Print the value and keys from a list\f0\fs24\par
+\f2\fs20\tab FOR EACH key, value IN list\f0\fs24\par
+\f2\fs20\tab\tab PRINT key, value\f0\fs24\par
+\f2\fs20\tab END FOR\f0\fs24\par
+\f2\fs20\par
+\b\page\f0\fs24 FUNCTION ... END FUNCTION\b0\par
+\f2\fs20\tab FUNCTION name ( [arg [= expr]\{,arg [= expr]\} ] [, ...] )\f0\fs24\par
+\f2\fs20\tab\tab [ DIM variable \{, variable \} ]\f0\fs24\par
+\f2\fs20\tab\tab [ STATIC variable \{, variable \} ]\f0\fs24\par
+\f2\fs20\tab\tab [ SHARED variable \{, variable \} ]\f0\fs24\par
+\f2\fs20\tab\tab [ RETURN expr \{, expr\} ]\f0\fs24\par
+\f2\fs20\tab\tab [ EXIT FUNCTION ]\f0\fs24\par
+\f2\fs20\tab\tab\{ statement \}\f0\fs24\par
+\f2\fs20\tab END FUNCTION\f0\fs24\par
+\f2\fs20\par
+\f1\fs24 Define a function. Unlike many BASICs, more than one value may be returned from a function. As a result, the \b Return\b0  keyword is used to return values from functions. If no value is explicitly returned, the value \b Nothing\b0  is returned.\f0\par
+\f1\par
+\f2\fs20\tab FUNCTION addOne( n )\f0\fs24\par
+\f2\fs20\tab\tab RETURN n + 1\f0\fs24\par
+\f2\fs20\tab END FUNCTION\f0\fs24\par
+\f2\fs20\par
+\f1\fs24 You can have optional values in parameters. If these parameters are are not included in the function call, they are assigned the default value:\f0\par
+\f1\par
+\f2\fs20\tab FUNCTION hasOptional( a, b=10, c=\rdblquote default string\rdblquote  )\f0\fs24\par
+\f2\fs20\tab\tab PRINT \ldblquote a=\rdblquote , a\f0\fs24\par
+\f2\fs20\tab\tab PRINT \ldblquote b=\rdblquote , b\f0\fs24\par
+\f2\fs20\tab\tab PRINT \ldblquote c=\rdblquote , c\f0\fs24\par
+\f2\fs20\tab END FUNCTION\f0\fs24\par
+\f2\fs20\par
+\f1\fs24 You can use \b Static\b0  variables in functions. These are variables that retain their value. The initial value of \b Static\b0  variables is \b Nothing\b0 :\f0\par
+\f1\par
+\f2\fs20\tab FUNCTION accum( n )\f0\fs24\par
+\f2\fs20\tab\tab\lquote  declare result as a STATIC variable\f0\fs24\par
+\f2\fs20\tab\tab STATIC result\f0\fs24\par
+\f2\fs20\par
+\tab\tab\lquote  first time calling accum?\f0\fs24\par
+\f2\fs20\tab\tab IF result = NOTHING THEN\f0\fs24\par
+\f2\fs20\tab\tab\tab\lquote  initialize the result\f0\fs24\par
+\f2\fs20\tab\tab\tab result = n\f0\fs24\par
+\f2\fs20\tab\tab ELSE\f0\fs24\par
+\f2\fs20\tab\tab\tab\lquote  add value to the result\f0\fs24\par
+\f2\fs20\tab\tab\tab result = result + n\f0\fs24\par
+\f2\fs20\tab\tab END IF\f0\fs24\par
+\f2\fs20\par
+ \par
+\tab\tab\lquote  return accumulated result\f0\fs24\par
+\f2\fs20\tab\tab RETURN result\f0\fs24\par
+\f2\fs20\par
+\tab END FUNCTION\f0\fs24\par
+\f2\fs20\par
+\f1\fs24 Some or all of the return values may be discarded by the caller. If a function returns more values than requested, the extra values are discarded. If the function returns less values than expected, the extra variables are assigned the value \b Nothing\b0 :\f0\par
+\f1\par
+\f2\fs20\tab FUNCTION returnThreeValues()\f0\fs24\par
+\f2\fs20\tab\tab RETURN 1, 2, 3\f0\fs24\par
+\f2\fs20\tab END FUNCTION\f0\fs24\par
+\f2\fs20\par
+\tab\lquote  ignore all values\f0\fs24\par
+\f2\fs20\tab returnThreeValues()\f0\fs24\par
+\f2\fs20\par
+\tab\lquote  ignore the last value\f0\fs24\par
+\f2\fs20\tab a, b = returnThreeValues\f0\fs24\par
+\f2\fs20\par
+\tab\lquote  Nothing is assigned to d\f0\fs24\par
+\f2\fs20\tab a, b, c, d = returnThreeValues()\f0\fs24\par
+\f2\fs20\par
+\page\b\f0\fs24  IF ... ELSEIF ... ELSE ... END IF\b0\par
+\f2\fs20\tab IF expr THEN\f0\fs24\par
+\f2\fs20\tab\tab\{ statement \}\f0\fs24\par
+\f2\fs20\tab\{ ELSEIF expr THEN\f0\fs24\par
+\f2\fs20\tab\tab\{ statement \} \}\f0\fs24\par
+\f2\fs20\tab [ ELSE\f0\fs24\par
+\f2\fs20\tab\tab\{ statement \} ]\f0\fs24\par
+\f2\fs20\tab END IF\f0\fs24\par
+\f2\fs20\par
+\b\f1\fs24 IF\b0  performs conditional operations. For example:\f0\par
+\f1\par
+\f2\fs20\tab IF 10 > 12 THEN\f0\fs24\par
+\f2\fs20\tab\tab PRINT \ldblquote 10 is less than 12\rdblquote\f0\fs24\par
+\f2\fs20\tab END IF\f0\fs24\par
+\f2\fs20\par
+\f1\fs24 These tests can be chained together with additional \b ELSEIF\b0  tests, which are performed if the prior tests fail. An optional \b ELSE\b0  clause is executed if none of the prior tests were true:\f0\par
+\f1\par
+\f2\fs20\tab IF a = 1 THEN\f0\fs24\par
+\f2\fs20\tab\tab PRINT \ldblquote One\rdblquote\f0\fs24\par
+\f2\fs20\tab ELSEIF a = 1 THEN\f0\fs24\par
+\f2\fs20\tab\tab PRINT \ldblquote Two\rdblquote\f0\fs24\par
+\f2\fs20\tab ELSEIF a = 3 THEN\f0\fs24\par
+\f2\fs20\tab\tab PRINT \ldblquote Three\rdblquote\f0\fs24\par
+\f2\fs20\tab ELSE\f0\fs24\par
+\f2\fs20\tab\tab PRINT \ldblquote Too big!\rdblquote\f0\fs24\par
+\f2\fs20\tab END IF\f0\fs24\par
+\f2\fs20\page\b\f0\fs24 INPUT\b0\par
+\f2\fs20\tab INPUT [ \i promptString ;\i0\f1\fs24 ] \i variable\i0\f0\par
+\i\f1\par
+\i0 Prompt the user for a value. This routine is only available in the command line (non-GUI) version of wxBasic.\f0\par
+\f1\par
+\f2\fs20\tab\lquote  Get the user\rquote s name\f0\fs24\par
+\f2\fs20\tab INPUT \ldblquote What\rquote s your name\rdblquote ; yourName\f0\fs24\par
+\f2\fs20\tab PRINT \ldblquote Hello, \ldblquote ; yourName\f0\fs24\par
+\f2\fs20\page\b\f0\fs24 OPEN\b0\par
+\f2\fs20\tab OPEN \i filename\i0  FOR \i mode\i0  AS #\i handle\i0\f0\fs24\par
+\i\f2\fs20\par
+\b\i0\f1\fs24 Open\b0  a file for reading, writing, or appending. This syntax is deprecated, and the function \b FOpen()\b0  is preferred.\f0\par
+\f1\par
+The file modes are:\f0\par
+\f1\par
+\tab\b Input\b0\tab\tab Read from the file\f0\par
+\f1\tab\b Output\b0\tab Write to the file, destroying prior contents\f0\par
+\f1\tab\b Append\b0\tab Write to a file, leaving prior contents\f0\par
+\f1\par
+The \i handle\i0  is a filenumber. You can find the next available handle by calling \b FreeFile()\b0 .\f0\par
+\f1\par
+Close a file by calling \b Close #\b0  or \b Fclose()\b0 . You can close all open files with \b Close\b0 .\f0\par
+\f1\par
+\par
+\f2\fs20\tab\lquote  Copy \ldblquote source.txt\rdblquote  to \ldblquote copy.txt\rdblquote\f0\fs24\par
+\f2\fs20\tab OPEN \ldblquote source.txt\rdblquote  FOR INPUT AS #1\f0\fs24\par
+\f2\fs20\tab OPEN \ldblquote copy.txt\rdblquote  FOR OUTPUT AS #1\f0\fs24\par
+\f2\fs20\par
+\tab\lquote  Read the first file, and copy to the second\f0\fs24\par
+\f2\fs20\tab WHILE NOT EOF( 1 )\f0\fs24\par
+\f2\fs20\tab\tab LINE INPUT #1, text\f0\fs24\par
+\f2\fs20\tab\tab PRINT #2, text\f0\fs24\par
+\f2\fs20\tab WEND\f0\fs24\par
+\f2\fs20\par
+\tab\lquote  Close the files\f0\fs24\par
+\f2\fs20\tab CLOSE #1\f0\fs24\par
+\f2\fs20\tab CLOSE #2\f0\fs24\par
+\f2\fs20\page\b\f0\fs24 OPTION\b0\par
+\f2\fs20\tab OPTION \i optionName\i0\f0\fs24\par
+\i\f2\fs20\par
+\b\i0\f1\fs24 Option\b0  allows toggling on various behaviors for the interpreter. \f0\par
+\f1\par
+The only option currently supported is \b Option Explicit\b0 , which will cause wxBasic to generate an error when it encounters a reference to a variable that has not been declared. Without \b Option Explicit\b0 , the variable \b a\b0  will be automatically declared for you:\f0\par
+\f1\par
+\f2\fs20\tab\lquote  Without OPTION EXPLICIT, variables are created \ldblquote on demand\rdblquote\f0\fs24\par
+\f2\fs20\tab a = 12\f0\fs24\par
+\f2\fs20\par
+\f1\fs24 However, with \b Option Explict\b0 , the same code will generate an error, since \b a \b0 has not been explicitly declared:\f0\par
+\f1\par
+\f2\fs20\tab\lquote  Generates an error, because it is not declared:\f0\fs24\par
+\f2\fs20\tab Option Explicit\f0\fs24\par
+\f2\fs20\tab a = 12\f0\fs24\par
+\f2\fs20\par
+\f1\fs24 With \b Option Explicit\b0 , you must declare all variables before use:\f0\par
+\f1\par
+\f2\fs20\tab\lquote  No error, a is declared before use\f0\fs24\par
+\f2\fs20\tab Option Explicit\f0\fs24\par
+\f2\fs20\tab Dim a\f0\fs24\par
+\f2\fs20\tab a = 12\f0\fs24\par
+\f2\fs20\par
+\f1\fs24 This is true even for global variables. To use global variables with \b Option Explicit\b0 , use \b Shared\b0 .\f0\par
+\f1\page\b\f0 PRINT\b0\par
+\b PRINT #\b0\par
+\b\par
+\pard\fi720\sl240\slmult1\b0\f2\fs20 PRINT \{ [expr] [,] [;] \}\f0\fs24\par
+\pard\sl240\slmult1\f2\fs20\tab PRINT # expr \{ [expr] [,] [;] \}\f0\fs24\par
+\f2\fs20\par
+\par
+\f1\fs24 Send the values following the \b Print\b0  statement to the output. Values seperated by semicolons \{\b ;\b0\} have no spaces between them, while values seperated by commas \{\b ,\b0\} have a single space placed between them:\f0\par
+\f1\par
+\pard\fi720\sl240\slmult1\f2\fs20 PRINT \ldblquote Hello, world!\rdblquote\f0\fs24\par
+\f2\fs20 PRINT \ldblquote a = \ldblquote ; a\f0\fs24\par
+\pard\sl240\slmult1\f2\fs20\par
+\f1\fs24 The linefeed is automatically placed after the last item, unless it is followed by a semicolon:\f0\par
+\f1\par
+\pard\fi720\sl240\slmult1\f2\fs20\lquote  this generates a linefeed\f0\fs24\par
+\f2\fs20 PRINT \ldblquote Hello, world!\rdblquote\f0\fs24\par
+\f2\fs20\par
+\lquote  this does not\f0\fs24\par
+\f2\fs20 PRINT \ldblquote Hello, world\rdblquote ;\f0\fs24\par
+\pard\sl240\slmult1\f2\fs20\par
+\f1\fs24 Output can be directed to a file by using the \b Print #\b0  form of the command:\f0\par
+\f1\par
+\pard\fi720\sl240\slmult1\f2\fs20\lquote  open a file for output\f0\fs24\par
+\f2\fs20 OPEN \ldblquote output.txt\rdblquote  FOR OUTPUT AS #1\f0\fs24\par
+\f2\fs20\par
+\lquote  print some text\f0\fs24\par
+\f2\fs20 PRINT #1, \ldblquote This is written to the file\rdblquote\f0\fs24\par
+\f2\fs20 PRINT #1, \ldblquote And so is this\rdblquote\f0\fs24\par
+\f2\fs20\par
+\lquote  close the file\f0\fs24\par
+\f2\fs20 CLOSE #1\f0\fs24\par
+\pard\sl240\slmult1\f2\fs20\par
+\par
+\par
+\par
+\page\b\f0\fs24 REDO\b0\par
+\f2\fs20\tab REDO\f0\fs24\par
+\f2\fs20\par
+\b\f1\fs24 Redo\b0  jumps to the top of the loop (similar to \b Continue\b0 ), but doesn\rquote t re-evalute the test condition again. \b Redo\b0  can also be used inside a \b Try\b0  statement. This is an easy way to get into an infinite loop if you aren\rquote t careful.\f0\par
+\f1\par
+\pard\fi720\sl240\slmult1\par
+\f2\fs20\lquote  Open a file. On failure, delete temp file and try again.\f0\fs24\par
+\f2\fs20 Try\f0\fs24\par
+\f2\fs20\tab\lquote  Open a file\f0\fs24\par
+\f2\fs20\tab Open \ldblquote test.txt\rdblquote  For Output As #1\f0\fs24\par
+\f2\fs20\par
+\lquote  Perhaps out of disk space. Can temp file be deleted?\f0\fs24\par
+\f2\fs20 Catch FileExists( \ldblquote data.tmp\rdblquote  )\f0\fs24\par
+\f2\fs20\tab\lquote  Delete the temp file\f0\fs24\par
+\f2\fs20\tab Kill( \ldblquote data.tmp\rdblquote  )\f0\fs24\par
+\f2\fs20\par
+\tab\lquote  Try again\f0\fs24\par
+\f2\fs20\tab Redo\f0\fs24\par
+\f2\fs20 End Try\f0\fs24\par
+\pard\sl240\slmult1\f2\fs20\page\b\f0\fs24 SELECT CASE ... END SELECT\b0\par
+\b\par
+\b0\f2\fs20\tab SELECT CASE expression\f0\fs24\par
+\f2\fs20\tab\{ CASE caseTest \{, caseTest \}\f0\fs24\par
+\f2\fs20\tab\tab\{ statement \} \}\f0\fs24\par
+\f2\fs20\tab [CASE ELSE\f0\fs24\par
+\f2\fs20\tab\tab\{ statement \} ]\f0\fs24\par
+\f2\fs20\tab END SELECT\f0\fs24\par
+\f2\fs20\par
+\f1\fs24 The \b Select\b0  statement is used to perform a series of tests on the same value. Unlike \b C\b0 , only a single \b Case\b0  branch is executed. \f2\fs20 caseTest\f1\fs24  is one of the following:\f0\par
+\f1\par
+\f2\fs20\tab\tab IS = | <> | < | > | < | >= expr\f0\fs24\par
+\f2\fs20\tab\tab expr TO expr\f0\fs24\par
+\f2\fs20\tab\tab expr\f0\fs24\par
+\f2\fs20\par
+\f1\fs24 For example:\f0\par
+\f1\par
+\f2\fs20\tab SELECT CASE a\f0\fs24\par
+\f2\fs20\tab CASE 1, 3\f0\fs24\par
+\f2\fs20\tab\tab PRINT \ldblquote The value is either 1, or 3\rdblquote\f0\fs24\par
+\f2\fs20\par
+\tab CASE 4 TO 6, 8\f0\fs24\par
+\f2\fs20\tab\tab PRINT \ldblquote The value is 4, 5, 6, or 8\rdblquote\f0\fs24\par
+\f2\fs20\par
+\tab CASE IS < 12\f0\fs24\par
+\f2\fs20\tab\tab PRINT \ldblquote The value is greater than 12\rdblquote\f0\fs24\par
+\f2\fs20\par
+\tab CASE ELSE\f0\fs24\par
+\f2\fs20\tab\tab PRINT \ldblquote The value is something else\rdblquote\f0\fs24\par
+\f2\fs20\par
+\tab END SELECT\f0\fs24\par
+\f2\fs20\par
+\par
+\par
+\page\b\f0\fs24 SHARED\b0\par
+\f2\fs20\tab SHARED variable \{, variable \}\f0\fs24\par
+\f2\fs20\par
+\f1\fs24 Declare a variable in a \b Function\b0  or \b Sub\b0  as referring to a global variable of the same name. This prevents \b Option Explicit\b0  from generating an error.\f0\par
+\f2\fs20\tab\f0\fs24\par
+\f2\fs20\par
+\tab DIM myGlobalVariable\f0\fs24\par
+\f2\fs20\par
+\tab FUNCTION myFunction()\f0\fs24\par
+\f2\fs20\tab\tab SHARED myGlobalVariable\f0\fs24\par
+\f2\fs20\par
+\tab\tab PRINT \ldblquote Value of global is \ldblquote ; myGlobalVariable\f0\fs24\par
+\f2\fs20\par
+\tab END FUNCTION\f0\fs24\par
+\f2\fs20\page\b\f0\fs24 STATIC\b0\par
+\b\par
+\b0\f2\fs20\tab STATIC \i variableName\i0  \{, \i variableName\i0  \}\f0\fs24\par
+\f2\fs20\par
+\f1\fs24 Declare a variable that is local to a  \b Function\b0  or \b Sub\b0 , but retains it\rquote s value after the routine is called. The initial value of a \b Static\b0  variable is \b Nothing\b0 .\f0\par
+\f1\par
+\f2\fs20\tab FUNCTION accum( n )\f0\fs24\par
+\f2\fs20\tab\tab\lquote  declare result as a STATIC variable\f0\fs24\par
+\f2\fs20\tab\tab STATIC result\f0\fs24\par
+\f2\fs20\par
+\tab\tab\lquote  first time calling accum?\f0\fs24\par
+\f2\fs20\tab\tab IF result = NOTHING THEN\f0\fs24\par
+\f2\fs20\tab\tab\tab\lquote  initialize the result\f0\fs24\par
+\f2\fs20\tab\tab\tab result = n\f0\fs24\par
+\f2\fs20\tab\tab ELSE\f0\fs24\par
+\f2\fs20\tab\tab\tab\lquote  add value to the result\f0\fs24\par
+\f2\fs20\tab\tab\tab result = result + n\f0\fs24\par
+\f2\fs20\tab\tab END IF\f0\fs24\par
+\f2\fs20\par
+\par
+\tab\tab\lquote  return accumulated result\f0\fs24\par
+\f2\fs20\tab\tab RETURN result\f0\fs24\par
+\f2\fs20\par
+\tab END FUNCTION\f0\fs24\par
+\f2\fs20\par
+\f1\fs24\page\b\f0 SUB ... END SUB\b0\par
+\f2\fs20\tab SUB name ( [arg [= expr] \{, arg [= expr]\} ] [, ...] )\f0\fs24\par
+\f2\fs20\tab\tab [ DIM variable \{, variable \} ]\f0\fs24\par
+\f2\fs20\tab\tab [ STATIC variable \{, variable \} ]\f0\fs24\par
+\f2\fs20\tab\tab [ SHARED variable \{, variable \} ]\f0\fs24\par
+\f2\fs20\tab\tab [ RETURN ]\f0\fs24\par
+\f2\fs20\tab\tab [ EXIT SUB ]\f0\fs24\par
+\f2\fs20\tab\tab\{ statement \}\f0\fs24\par
+\f2\fs20\tab END SUB\f0\fs24\par
+\f2\fs20\par
+\b\f1\fs24 Sub\b0  is essentially the same as \b Function\b0 , but does not return any values. Refer to \b Function\b0  for details.\b\f2\fs20\page\f0\fs24 THROW\b0\par
+\f2\fs20\tab THOW expr\f0\fs24\par
+\f2\fs20\par
+\b\f1\fs24 Throw\b0  triggers the \b Try\b0  clause that it is embedded in. See \b Try\b0  for details.\f0\par
+\f1\par
+\f2\fs20\page\b\f0\fs24 TRY ... CATCH ... END TRY\b0\par
+\b\par
+\b0\f2\fs20\tab TRY\f0\fs24\par
+\f2\fs20\tab\tab THROW expression\f0\fs24\par
+\f2\fs20\tab\tab\{ statement \}\f0\fs24\par
+\f2\fs20\tab\f0\fs24\par
+\f2\fs20\tab [ CATCH expr\f0\fs24\par
+\f2\fs20\tab\tab\{ statement \} \f0\fs24\par
+\pard\fi720\li720\sl240\slmult1\f2\fs20 REDO \tab\tab ]\f0\fs24\par
+\pard\sl240\slmult1\f2\fs20\tab [ CATCH | ELSE\f0\fs24\par
+\f2\fs20\tab\tab\{ statement \} \f0\fs24\par
+\pard\fi720\li720\sl240\slmult1\f2\fs20 REDO\tab\tab ]\f0\fs24\par
+\pard\sl240\slmult1\f2\fs20\tab [ FINALLY\f0\fs24\par
+\f2\fs20\tab\tab\{ statement \} \f0\fs24\par
+\pard\fi720\li720\sl240\slmult1\f2\fs20 REDO\tab\tab ]\f0\fs24\par
+\pard\sl240\slmult1\f2\fs20\tab END TRY\f0\fs24\par
+\f2\fs20\par
+\b\f1\fs24 Try\b0  catches errors thrown either by wxBasic when an error occurs, or by the application via the \b Throw\b0  statement.\f0\par
+\f1\par
+If an error occurs, code jumps to the first \b Catch\b0  statement. If no \b Catch\b0  statement handles the exception, it jumps to the next \b Try\b0  block. A \b Catch\b0  without a test expression matches any thrown error.\f0\par
+\f1\par
+To execute the \b Try\b0  block again, call \b Redo\b0 .\f0\par
+\f1\par
+The \b Finally\b0  clause is \i always \i0 executed, even if no error occurred. For example:\f0\par
+\f1\par
+\tab\f2\fs20\lquote  attempt to open a file\f0\fs24\par
+\f2\fs20\tab TRY\f0\fs24\par
+\f2\fs20\tab\tab OPEN \ldblquote myfile.txt\rdblquote  FOR INPUT AS #1\f0\fs24\par
+\f2\fs20\tab\tab PRINT \ldblquote This is written to the file\rdblquote\f0\fs24\par
+\f2\fs20\tab CATCH\f0\fs24\par
+\f2\fs20\tab\tab PRINT \ldblquote Error printing to the file"\par
+\tab FINALLY\par
+\tab\tab CLOSE #1\f0\fs24\par
+\f2\fs20\tab END TRY\f0\fs24\par
+\f2\fs20\par
+\page\b\f0\fs24 WHILE ... END WHILE\b0\par
+\f2\fs20\tab WHILE expr\f0\fs24\par
+\f2\fs20\tab\tab [ BREAK ]\f0\fs24\par
+\f2\fs20\tab\tab [ CONTINUE ]\f0\fs24\par
+\f2\fs20\tab\tab [ EXIT WHILE ]\f0\fs24\par
+\f2\fs20\tab\tab\{ statement \}\f0\fs24\par
+\f2\fs20\tab [ELSE\f0\fs24\par
+\f2\fs20\tab\tab\{ statement \} ]\f0\fs24\par
+\f2\fs20\tab END WHILE | WEND\f0\fs24\par
+\f2\fs20\par
+\b\f1\fs24 While\b0  repeats a loop until the test conditions are met. \b Break\b0  exits the loop immediately, and \b Continue\b0  jumps to the top of the loop.\f0\par
+\f1\par
+If the \b While\b0  statement is exited without executing a \b Break\b0 , the optional \b Else\b0  statement will be executed.\f0\par
+\f1\par
+\f2\fs20\tab\lquote  Search a file for a matching string\f0\fs24\par
+\f2\fs20\tab WHILE NOT EOF()\f0\fs24\par
+\f2\fs20\tab\tab INPUT #1, text\f0\fs24\par
+\f2\fs20\tab\tab IF instr( text, matchingText ) THEN\f0\fs24\par
+\f2\fs20\tab\tab\tab PRINT \ldblquote Found the text\rdblquote\f0\fs24\par
+\f2\fs20\tab\tab\tab BREAK\f0\fs24\par
+\f2\fs20\tab\tab END IF\f0\fs24\par
+\f2\fs20\tab ELSE\f0\fs24\par
+\f2\fs20\tab\tab PRINT \ldblquote Text not found\rdblquote\f0\fs24\par
+\f2\fs20\tab END WHILE\f0\fs24\par
+\f2\fs20\par
+\par
+\page\b\f0\fs24 Expressions\b0\par
+\f1 An expression is a combination of one of the following:\f0\par
+\f1\par
+\f2\fs20\tab\tab object.methodName( [ expr \{, expr \} ] )\f0\fs24\par
+\f2\fs20\tab\tab object.property\f0\fs24\par
+\f2\fs20\tab\tab expr XOR expr\f0\fs24\par
+\f2\fs20\tab\tab expr IN expr (not coded yet!)\f0\fs24\par
+\f2\fs20\tab\tab expr OR expr\f0\fs24\par
+\f2\fs20\tab\tab expr AND expr\f0\fs24\par
+\f2\fs20\tab\tab NOT expr\f0\fs24\par
+\f2\fs20\tab\tab ! expr\f0\fs24\par
+\f2\fs20\tab\tab expr = expr\f0\fs24\par
+\f2\fs20\tab\tab expr <> expr\f0\fs24\par
+\f2\fs20\tab\tab expr != expr\f0\fs24\par
+\f2\fs20\tab\tab expr < expr\f0\fs24\par
+\f2\fs20\tab\tab expr > expr\f0\fs24\par
+\f2\fs20\tab\tab expr <= expr\f0\fs24\par
+\f2\fs20\tab\tab expr >= expr\f0\fs24\par
+\f2\fs20\tab\tab expr + expr\f0\fs24\par
+\f2\fs20\tab\tab expr - expr\f0\fs24\par
+\f2\fs20\tab\tab expr & expr\f0\fs24\par
+\f2\fs20\tab\tab expr '|' expr\f0\fs24\par
+\f2\fs20\tab\tab expr INV expr\f0\fs24\par
+\f2\fs20\tab\tab expr ^ expr\f0\fs24\par
+\f2\fs20\tab\tab expr * expr\f0\fs24\par
+\f2\fs20\tab\tab expr / expr\f0\fs24\par
+\f2\fs20\tab\tab expr \\ expr\f0\fs24\par
+\f2\fs20\tab\tab expr % expr\f0\fs24\par
+\f2\fs20\tab\tab expr << expr\f0\fs24\par
+\f2\fs20\tab\tab expr >> expr\f0\fs24\par
+\f2\fs20\tab\tab ( expr )\f0\fs24\par
+\f2\fs20\tab\tab + expr\f0\fs24\par
+\f2\fs20\tab\tab - expr\f0\fs24\par
+\f2\fs20\tab\tab '\{' [expr \{, expr \}] '\}'\f0\fs24\par
+\f2\fs20\tab\tab '[' [expr \{, expr \}] ']'\f0\fs24\par
+\f2\fs20\tab\tab NEW className '(' [expr \{, expr\}] ')'\f0\fs24\par
+\f2\fs20\tab\tab className [ '(' [expr \{, expr\}] ')' ]\f0\fs24\par
+\f2\fs20\tab\tab variableName\f0\fs24\par
+\f2\fs20\tab\tab constantName\f0\fs24\par
+\f2\fs20\tab\tab integer\f0\fs24\par
+\f2\fs20\tab\tab float\f0\fs24\par
+\f2\fs20\tab\tab string\f0\fs24\par
+\f2\fs20\tab\tab NOTHING\f0\fs24\par
+\f2\fs20\tab\tab functionName '(' [expr \{, expr\}] ')'\f0\fs24\par
+\f2\fs20\tab\tab THIS\f0\fs24\par
+\f2\fs20\tab\tab expr '[' expr \{, expr \} ']'\f0\fs24\par
+\f2\fs20\par
+\par
+\par
+\par
+\b\f0\fs24\page The Buillt In Routines\b0\par
+\b\par
+ABS( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns the absolute value of \i n\i0 .\f0\par
+\pard\sl240\slmult1\f2\fs20\tab\f0\fs24\par
+\b ACOS( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns the arccos of \i n\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 ARGV( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns the value of parameter \i n\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 ASC( string )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns the ASCII value of the first character in \i string\i0 .\f0\par
+\pard\sl240\slmult1\f2\fs20\{\f0\fs24\par
+\b ASIN( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns the arcsin value of \i n\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 ARCTAN( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns the arctangent value of \i n\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\par
+\b\f0 CHDIR( directoryName )\b0\par
+\pard\fi720\sl240\slmult1\f1 Not currently implemented\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 CHR( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns a string representation of the ASCII value \i n\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 COMMAND( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns the value of parameter \i n\i0  passed from the command line.\f0\par
+\pard\sl240\slmult1\f1\par
+\par
+\b\f0 CONCAT( string1, string2 )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns \i string1\i0  joined to \i string2\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 CONNECT( object, [id, ] eventType, routineName )\b0\tab\par
+\tab\f1 When \i event\i0  is triggered in \i object\i0 , causes \i routineName\i0  to be triggered.\f0\par
+\f1\par
+\b\f0 COS( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns the cosine of \i n\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 DATE()\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns the current data in MM-DD-YYYY format.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 DIR()\b0\par
+\pard\fi720\sl240\slmult1\f1 Not currently implemented.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 DIREXISTS( name )\b0\par
+\pard\fi720\sl240\slmult1\f1 Not currently implemented.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 DISCONNECT( object, [id, ] eventType )\b0\tab\par
+\tab\f1 Removes any callback for attached to \i object\i0  for \i eventType\i0 . See CONNECT().\f0\par
+\f1\par
+\par
+\b\f0 EOF( fileHandle )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns nonzero if \i fileHandle\i0  is not at the end of the file.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 EXP( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns the exponent of \i n\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\par
+\b\f0 FCLOSE( fileHandle )\b0\par
+\pard\fi720\sl240\slmult1\f1 Closes \i fileHandle\i0 . Same as \b CLOSE #fileHandle\b0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 FGETS( fileHandle )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns next line of text from \i fileHandle\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 FOPEN( fileName, modeString )\b0\par
+\pard\fi720\sl240\slmult1\f1 Opens file \i fileName\i0  in \ldblquote r\rdblquote  (read), \ldblquote w\rdblquote  (write) or \ldblquote a\rdblquote  (append) mode.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 FPUTS( fileHandle, string )\b0\par
+\pard\fi720\sl240\slmult1\f1 Write \i string\i0  to \i fileHandle\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 FILEEXISTS( fileName )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns nonzero if file exists.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 FIX( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Truncates fractional number, rounding down towards zero.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 FORMAT( formatString, ... )\b0\par
+\pard\fi720\sl240\slmult1\f1 Not yet implemented.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 FRAC( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns fractional portion of \i n\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 FREEFILE( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns next free handle number.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 GETWXAPP( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Not yet implemented.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 GETWXHANDLE( handle )\b0\par
+\pard\fi720\sl240\slmult1\f1 Not yet implemented.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 HEX( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns hexidecimal representation of \i n\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 INDEXES( arrayName )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns number of indexes in \i arrayName\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 INSERT( targetString, subString, position )\b0\par
+\pard\fi720\sl240\slmult1\f1 Not yet implemented.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 INSTR( [startPosition, ] searchString, searchForString )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns position of \i searchForString\i0 in \i searchString\i0 , or 0 if not found.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 INT( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Convert \i n\i0  to a 32 bit integer, truncating fractional portion.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 KILL( fileName )\b0\par
+\pard\fi720\sl240\slmult1\f1 Delete \i fileName\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 LCASE( string )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns \i string\i0  in lower case. \f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 LEFT( string, length )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns the \i length\i0  leftmost characters in \i string\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 LEN( string )\b0\par
+\b LENGTH( string )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns the length of \i string\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 LOC( fileHandle )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns the position in \i fileHandle\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 LOF( fileHandle )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns the length of \i fileHandle\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 LOG( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns the natural log of \i n\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 LBOUND( arrayName )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns the lower bound of \i arrayName\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 LTRIM( string )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns \i string\i0  with leftmost whitespace removed.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 MAINLOOP( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Not yet implemented.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 MID( string, startPosition [, length] )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns substring from \i string\i0  starting at \i startPosition\i0  for \i length\i0  characters.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 MKDIR( directoryName )\b0\par
+\pard\fi720\sl240\slmult1\f1 Not yet implemented.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 NOTBITS( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns bitwise not of \i n\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 ORBITS( n1, n2 )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns bitwise OR of \i n1\i0 and \i n2\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 QUICKSORT( arrayName )\b0\par
+\pard\fi720\sl240\slmult1\f1 Not yet implemented.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 RANDOMIZE( [seed] )\b0\par
+\pard\fi720\sl240\slmult1\f1 Reseeds random number generator with \i seed\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 READBYTE( fileHandle )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns a single byte from \i fileHandle\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 RENAME( oldFileName, newFileName )\b0\par
+\pard\fi720\sl240\slmult1\f1 Renames \i oldFileName\i0  to \i newFileName\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 REPLACE( [startPosition, ] sourceString, searchForString, replaceWithString )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns string with \i searchForString\i0  replaced with \i replaceWithString\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 REVERSE( string )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns reversed \i string\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 RIGHT( string, length )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns \i length\i0  rightmost characters in \i string\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 RINSTR( searchString, searchForString [, optionalStartPosition] )\b0\par
+\pard\fi720\sl240\slmult1\f1 Reverse version of \b Inst\b0 , searches from end to start position.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 RMDIR( directoryName )\b0\par
+\pard\fi720\sl240\slmult1\f1 Not yet implemented.\f0\par
+\pard\sl240\slmult1\f1\par
+\par
+\b\f0 ROUND( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns \i n\i0  rounded to the nearest integer.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 RTRIM( string )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns \i string\i0  with whitespace characters removed from right side.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 RUN( commandString )\b0\par
+\pard\fi720\sl240\slmult1\f1 Not yet implemented.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 SEEK( handle [, filePosition] )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns current file position. If \i filePosition\i0  is specified, seeks to that position.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 SIGN( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns -1 if \i n\i0  is negative, 1 if \i n\i0  is positive, and 0 if \i n\i0  is zero.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 SHELL( commandString )\b0\par
+\pard\fi720\sl240\slmult1\f1 Executes \i commandString\i0 , waits until finished.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 SIN( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns the sin of \i n\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 SPACE( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns string built of \i n\i0  spaces.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 SQR( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns square root of \i n\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 STR( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns the string representation of \i n\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 STRF( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns the string representation of \i n\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 STRING( \i string\i0 , repetitions )\b0\par
+\b STRING( n, repetitions )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns a string with \i string\i0  repeated \i repetition\i0  times.\f0\par
+\f1 If value is numeric, converts \i n\i0  to an ASCII value first.\f0\par
+\pard\sl240\slmult1\b SUBSTR( sourceString, startPosition, endPosition )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns substring from \i sourceString\i0 , starting at \i startPosition\i0  to \i endPosition\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 TALLY( [startPosition, ] searchString, searchForString )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns number of times \i searchForString\i0  occurs in \i searchString\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 TAN( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns tangent of given angle in radians.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 TIMER()\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns current timer value.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 TIME( n )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns current time as string in HH:MM:SS format.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 TYPEOF( object )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns string with name of \i object\i0\rquote s datatype.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 UBOUND( arrayName, index )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns the upper bound of \i index\i0  index in \i arrayName\i0 .\f0\par
+\f1 Not yet implemented.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 UCASE( string )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns \i string \i0 in upper case.\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 VAL( string )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns the numeric value of \i string\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\b\f0 WRITEBYTE( fileHandle, byte )\b0\par
+\pard\fi720\sl240\slmult1\f1 Writes a single \i byte\i0  to \i fileHandle\i0 .\f0\par
+\pard\sl240\slmult1\f1\par
+\par
+\b\f0 XOR( n1, n2 )\b0\par
+\pard\fi720\sl240\slmult1\f1 Returns bitwise XOR of \i n1\i0  and \i n2\i0 .\f0\par
+\pard\sl240\slmult1\b\par
+\par
+The wxBasic Virtual Machine\b0\par
+\f1 This section documents the opcodes used in the wxBasic virtual machine. You can see a listing of opcodes produced by your program by typing:\par
+\par
+   wxbasic -list \i filename\i0\par
+\b\f0\page UNDEFINED\b0\par
+\f1\tab UNDEFINED\par
+This is opcode zero, and will cause the VM to throw an error if it is executed.\par
+\b\f0\par
+NOOP\b0\par
+\f1\tab NOOP\par
+\par
+This is a "no op" opcode. It does nothing, but acts as a placeholder. It's currently never generated by the VM.\par
+\par
+\b\f0 TRACE\b0\par
+\f1\tab TRACE  \i lineNumber\i0\par
+\par
+This opcode is used to keep track of what line in the source file is being executed. If an error is thrown, this is how the VM can display the errant line. Generation of TRACE opcodes can be suppressed by the \b -notrace\b0  command line option.\par
+\par
+\b\f0 HALT\b0\par
+\f1\tab HALT\par
+\par
+This opcode causes the VM to halt and the application to end.\par
+ \par
+\b\f0 END\b0\par
+\f1\tab END\par
+\par
+This opcode indicates the end of the main code section has been reached. If the wxWidgets library is linked and there is an active top window, the wxWidgets main loop will be entered. Otherwise, the application will end.\par
+\b\f0\par
+DROP\b0\par
+\f1\tab DROP \i n\i0\par
+\par
+Drop \i n \i0 items from the stack.\par
+\b\f0\par
+MISSING\b0\par
+\f1\tab MISSING \i n\i0\par
+\par
+Returns true if parameter \i n\i0  was not passed on the arglist. Used to implement optional parameters.\par
+\par
+\b\f0 NOTHING\b0\par
+\f1\tab NOTHING\par
+\par
+Push the value of \b Nothing\b0  onto the stack.\par
+\par
+\b\f0 LITERAL\b0\par
+\f1\tab LITERAL \i n\i0\par
+\par
+Push literal \i n\i0  from the literal table onto the stack.\par
+\par
+\pard\f3\fs20\par
+    W_OP_LITERAL,           /* push a literal onto the stack */\par
+    W_OP_EMPTYSTRING,       /* push an empty string onto the stack */\par
+    W_OP_INTEGER,           /* push following integer onto the stack */\par
+\par
+    /* for loop */\par
+    W_OP_FORPREP,           /* set up for loop */\par
+    W_OP_FORPREP1,          /* set up for loop, no step */\par
+    W_OP_FORSTEP,           /* increment for loop */\par
+    W_OP_FORSTEP1,          /* increment for loop by 1 */\par
+    W_OP_FOREACHPREP,       /* for each test */\par
+    W_OP_FOREACHLOOP,       /* for increment for each loop */\par
+\par
+    /* routine calls */\par
+    W_OP_ROUTINE,           /* push routine id onto stack */\par
+    W_OP_CALL,              /* call a routine */\par
+    W_OP_RETURN,            /* return from a call */\par
+\par
+    /* input/output */\par
+    W_OP_FILECLOSE,         /* close file */\par
+    W_OP_FILECLOSEALL,      /* close all files */\par
+    W_OP_FILEOPEN,          /* open a file */\par
+    W_OP_FILEREAD,          /* read a line from the file */\par
+    W_OP_READ,              /* read from stdin */\par
+    W_OP_REDIRECT,          /* redirect output of print */\par
+    W_OP_STDIO,             /* redirect back to standard i/o */\par
+    W_OP_PRINT,             /* print a value */\par
+    W_OP_PRINTLN,           /* print a linefeed */\par
+    W_OP_PRINTTAB,          /* print with trailing space */\par
+    W_OP_EMITTAB,           /* print a space, no data */\par
+    W_OP_EMITLN,            /* print a linefeed, no data */\par
+    \par
+    /* jumps */\par
+    W_OP_JMP,               /* unconditional jump */\par
+    W_OP_JMPT,              /* jump on true */\par
+    W_OP_JMPF,              /* jump on false */\par
+    W_OP_JMPONT,            /* jump on true, drop if false */\par
+    W_OP_JMPONF,            /* jump on false, drop if true */\par
+\par
+    /* subroutines */\par
+    W_OP_JSR,               /* jump to a subroutine */\par
+    W_OP_RET,               /* exit from subroutine */\par
+\par
+    /* exception handling */\par
+    W_OP_STARTCATCH,        /* push catch address onto the catch stack */\par
+    W_OP_ENDCATCH,          /* pop catch address off the catch stack, jump */\par
+    W_OP_JMPCATCHF,         /* jump if expression is not exception */\par
+    W_OP_THROW,             /* throw an exception */\par
+    W_OP_RETHROW,           /* pop catch and rethrow current exception */\par
+    W_OP_EXCEPTION,         /* push exception onto stack */\par
+\par
+    /* class related */\par
+    W_OP_DTOR,              /* object destructor */\par
+    W_OP_DELETE,            /* delete an object */\par
+    W_OP_VIRTUAL,           /* resolve a virtual method */\par
+    W_OP_MYVIRTUAL,         /* resolve virtual method with Me */\par
+    W_OP_CALLMETHOD,        /* call method with object on stack*/\par
+    W_OP_CALLMYMETHOD,      /* call method belonging to Me */\par
+    W_OP_NEW,               /* call to new */\par
+    W_OP_NEWTEMP,           /* call to new, create on stack */\par
+\par
+    /* math ops */\par
+    W_OP_POWER,             /* power */\par
+    W_OP_NEGATE,            /* negate value */\par
+    W_OP_ADD,               /* addition */\par
+    W_OP_SUB,               /* subtraction */\par
+    W_OP_MUL,               /* multiplication */\par
+    W_OP_DIV,               /* division */\par
+    W_OP_IDIV,              /* integer division */\par
+    W_OP_MOD,               /* modulus */\par
+    W_OP_SHL,               /* bitwise left shift */\par
+    W_OP_SHR,               /* bitwise right shift */\par
+    W_OP_INV,               /* inverse */\par
+    W_OP_CONCAT,            /* string concatenation */\par
+    W_OP_OR_BITS,           /* bitwise or */\par
+    W_OP_AND_BITS,          /* bitwise and */\par
+    W_OP_ADD_SET ,          /* increment lval */\par
+    W_OP_SUB_SET ,          /* decrement lval */\par
+    W_OP_MUL_SET ,          /* multiply lval */\par
+    W_OP_DIV_SET ,          /* divide lval */\par
+    W_OP_IDIV_SET ,         /* integer divide lval */\par
+    W_OP_MOD_SET ,          /* mod lval */\par
+    W_OP_CONCAT_SET ,       /* concat lval */\par
+    \par
+    /* tests */\par
+    W_OP_EQ,                /* equality */\par
+    W_OP_NE,                /* inequality */\par
+    W_OP_LT,                /* less than */\par
+    W_OP_LE,                /* less or equal than */\par
+    W_OP_GT,                /* greater than */\par
+    W_OP_GE,                /* greater or equal than */\par
+    W_OP_NOT,               /* logical not */\par
+    W_OP_DUP,               /* duplicate stack value */\par
+    W_OP_AND,               /* logical and */\par
+    W_OP_OR,                /* logical or */\par
+    W_OP_XOR,               /* logical exclusive or */\par
+\par
+    /* case tests */\par
+    W_OP_CASERANGE,         /* range of case values */\par
+    W_OP_CASE,              /* case test */\par
+\par
+    W_OP_IN,                /* element is in array */\par
+\par
+    /* arrays */\par
+    W_OP_CREATEARRAY,       /* create an indexed array */\par
+    W_OP_INITARRAY,         /* create an array with default values */\par
+    W_OP_ERASEARRAY,        /* reset array back to default values */\par
+\par
+    /* tables */\par
+    W_OP_CREATETABLE,       /* create a table */\par
+    W_OP_SETLIST,           /* copy items from stack into table */\par
+    W_OP_SETMAP,            /* map keys and values into table */\par
+\par
+    /* lists */\par
+    W_OP_CREATELIST,        /* create a list */\par
+    W_OP_GETSLICE,          /* return a slice from a list */\par
+    W_OP_SETSLICE,          /* set a slice in a list */\par
+\par
+    /* variables */\par
+    W_OP_FREE,               /* set variable to undefined */\par
+\par
+    /* accessing values */\par
+    W_OP_VARIABLE,          /* return pointer to variable */\par
+    W_OP_INDEX,             /* return pointer to value at index position */\par
+    W_OP_PROP,              /* return pointer to property by index */\par
+    W_OP_PROPBYNAME,        /* return pointer to property by name */\par
+    W_OP_ME,                /* return pointer to current object */\par
+\par
+    /* modifiers */\par
+    W_OP_GET,               /* put value of pointer onto stack */\par
+    W_OP_SET,               /* store value on stack into pointer */\par
+    W_OP_LVAL,              /* put pointer on stack */\par
+    W_OP_SETTYPE            /* set datatype for variable */\par
+\};\par
+\par
+/* opcode names */\par
+char *wOpcodeName[] = \{\par
+    "UNDEFINED",         /* no such op */\par
+    "NOOP",              /* no op */\par
+    "TRACE",             /* trace */\par
+    "HALT",              /* halt execution */\par
+    "END",               /* end of code */\par
+    "DROP",              /* drop stack item */\par
+    "MISSING",           /* return true if parm not passed in list */\par
+    "NOTHING",           /* push undefined value onto the stack */\par
+    "LITERAL",           /* push a literal onto the stack */\par
+    "EMPTYSTRING",       /* push an empty string onto the stack */\par
+    "INTEGER",           /* push following integer onto the stack */\par
+    "FORPREP",           /* set up for loop */\par
+    "FORPREP1",          /* set up for loop", no step */\par
+    "FORSTEP",           /* increment for loop */\par
+    "FORSTEP1",          /* increment for loop by 1 */\par
+    "FOREACHPREP",       /* for each test */\par
+    "FOREACHLOOP",       /* for increment for each loop */\par
+    "ROUTINE",           /* push routine id onto stack */\par
+    "CALL",              /* call a routine */\par
+    "RETURN",            /* return from a call */\par
+    "FILECLOSE",         /* close file */\par
+    "FILECLOSEALL",      /* close all files */\par
+    "FILEOPEN",          /* open a file */\par
+    "FILEREAD",          /* read a line from the file */\par
+    "READ",              /* read from stdin */\par
+    "REDIRECT",          /* redirect output of print */\par
+    "STDIO",             /* redirect back to standard i/o */\par
+    "PRINT",             /* print a value */\par
+    "PRINTLN",           /* print a linefeed */\par
+    "PRINTTAB",          /* print with trailing space */\par
+    "EMITTAB",           /* print a space", no data */\par
+    "EMITLN",            /* print a linefeed", no data */\par
+    "JMP",               /* unconditional jump */\par
+    "JMPT",              /* jump on true */\par
+    "JMPF",              /* jump on false */\par
+    "JMPONT",            /* jump on true", drop if false */\par
+    "JMPONF",            /* jump on false", drop if true */\par
+    "JSR",               /* jump to a subroutine */\par
+    "RET",               /* exit from subroutine */\par
+    "STARTCATCH",        /* push catch address onto the catch stack */\par
+    "ENDCATCH",          /* pop catch address off the catch stack", jump */\par
+    "JMPCATCHF",         /* jump if expression is not exception */\par
+    "THROW",             /* throw an exception */\par
+    "RETHROW",           /* pop catch and rethrow current exception */\par
+    "EXCEPTION",         /* push exception onto stack */\par
+    "DTOR",              /* object destructor */\par
+    "DELETE",            /* delete an object */\par
+    "VIRTUAL",           /* resolve a virtual method */\par
+    "MYVIRTUAL",         /* resolve virtual method with Me */\par
+    "CALLMETHOD",        /* call method with object on stack*/\par
+    "CALLMYMETHOD",      /* call method belonging to Me */\par
+    "NEW",               /* call to new */\par
+    "NEWTEMP",           /* call to new", create on stack */\par
+    "POWER",             /* power */\par
+    "NEGATE",            /* negate value */\par
+    "ADD",               /* addition */\par
+    "SUB",               /* subtraction */\par
+    "MUL",               /* multiplication */\par
+    "DIV",               /* division */\par
+    "IDIV",              /* integer division */\par
+    "MOD",               /* modulus */\par
+    "SHL",               /* bitwise left shift */\par
+    "SHR",               /* bitwise right shift */\par
+    "INV",               /* inverse */\par
+    "CONCAT",            /* string concatenation */\par
+    "OR_BITS",           /* bitwise or */\par
+    "AND_BITS",          /* bitwise and */\par
+    "ADD_SET ",          /* increment lval */\par
+    "SUB_SET ",          /* decrement lval */\par
+    "MUL_SET ",          /* multiply lval */\par
+    "DIV_SET ",          /* divide lval */\par
+    "IDIV_SET ",         /* integer divide lval */\par
+    "MOD_SET ",          /* mod lval */\par
+    "CONCAT_SET ",       /* concat lval */\par
+    "EQ",                /* equality */\par
+    "NE",                /* inequality */\par
+    "LT",                /* less than */\par
+    "LE",                /* less or equal than */\par
+    "GT",                /* greater than */\par
+    "GE",                /* greater or equal than */\par
+    "NOT",               /* logical not */\par
+    "DUP",               /* duplicate stack value */\par
+    "AND",               /* logical and */\par
+    "OR",                /* logical or */\par
+    "XOR",               /* logical exclusive or */\par
+    "CASERANGE",         /* range of case values */\par
+    "CASE",              /* case test */\par
+    "IN",                /* element is in array */\par
+    "CREATEARRAY",       /* create an indexed array */\par
+    "INITARRAY",         /* create an array with default values */\par
+    "ERASEARRAY",        /* reset array back to default values */\par
+    "CREATETABLE",       /* create a table */\par
+    "SETLIST",           /* copy items from stack into table */\par
+    "SETMAP",            /* map keys and values into table */\par
+    "CREATELIST",        /* create a list */\par
+    "GETSLICE",          /* return a slice from a list */\par
+    "SETSLICE",          /* set a slice in a list */\par
+    "FREE",               /* set variable to undefined */\par
+    "VARIABLE",          /* return pointer to variable */\par
+    "INDEX",             /* return pointer to value at index position */\par
+    "PROP",              /* return pointer to property by index */\par
+    "PROPBYNAME",        /* return pointer to property by name */\par
+    "ME",                /* return pointer to current object */\par
+    "GET",               /* put value of pointer onto stack */\par
+    "SET",               /* store value on stack into pointer */\par
+    "LVAL",              /* put pointer on stack */\par
+    "SETTYPE"            /* set datatype for variable */\par
+\};\par
+\par
+\par
+\par
+wVariant *wVmGetVariable( int index );\par
+char *wVmVariableName( wSymbol *s, int index );\par
+void wVmTypeCast( wVariant *variant );\par
+void wVmTrace( wSymbol *sRoutine, int *pcode, int pc );\par
+void wVmExecute( wSymbol *sRoutine );\par
+void wVmDecompile( wSymbol *sRoutine );\par
+int wVmDecompileOp( wSymbol *sRoutine, int *pcode, int pc );\par
+void wVmDecompileAll( void );\par
+void wVmShowOp( int opcode, int args, int arg1, int arg2, int arg3 );\par
+\par
+\par
+\pard\sl240\slmult1\b\f0\fs24\par
+}
+ 

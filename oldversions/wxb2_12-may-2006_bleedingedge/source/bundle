@@ -1,0 +1,7 @@
+// bundle.wxb
+// bundle up all the files referenced in a source file
+// into a single file
+
+
+
+print bundle( "junk" )

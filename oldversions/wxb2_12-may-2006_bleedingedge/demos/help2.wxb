@@ -1,0 +1,17 @@
+' Test the help file controller
+' Uses data in the helpdata directory
+' create the help controller
+dim helpController as wxHtmlHelpController = new wxHtmlHelpController()
+
+' add the help file as a book
+dim helpFile as wxFileName = new wxFileName("helpdata/test.hhp")
+try
+    if helpController.AddBookFileName(helpFile, false) then
+		' display the help
+		helpController.displayContents()
+	else
+		wxMessageBox("Unable to open help file " & helpFile.getFullName() )
+	end if
+catch
+	wxMessageBox("threw an error...")
+end try

@@ -1,0 +1,1573 @@
+.title Introducing wxBasic
+
+wxb is a cross-platform BASIC interpreter licensed under the LGPL. While not
+complying with the ANSI BASIC standard, wxBasic provides much of the
+functionality associated with modern structured BASIC, along with a number of
+extentions borrowed from languages such as Python, Lua and Java.
+
+At its core, wxBasic is a fairly small language, weighing in at under 300K
+(less than 80K when compressed via UPX). However, wxBasic gains much of
+its functionality by using the wxWindows library, which provides a
+cross-platform GUI and non-GUI functionality. The wxWindows-enabled version
+of wxBasic is far more capable, but quite a bit heftier.
+
+
+.chapter How wxBasic Differs from Other Basics
+
+wxb has a mixed parentage, deriving mostly from QBasic, but pilfering from
+C, Lua, Python, and VB.NET. The result is a language with a lot of 'C-isms'.
+The main points where wxBasic differs from 'classic' BASICs is:
+
+.list
+    .item There is no passing by reference. Instead, wxBasic allows multiple
+    values to be returned from an expression. For example, here is how
+    a swap can be written in wxBasic:
+
+.code
+a, b = b, a
+.end
+
+    .item Because FUNCTIONs can return more than a single value, the only way to
+    return a value from a function is to use the RETURN statement.
+
+    .item By default, all variables are VARIANTS, unless declared otherwise.
+
+    .item wxBasic is case-insensitive. (The prior version of wxBasic was not.)
+
+    .item There are no explicit forward references. wxBasic is a two-pass
+    interpreter, loading source and resolving symbols in the first pass,
+    and generating bytecode in the second pass.
+
+    .item wxBasic treats empty strings as False, and non-empty strings as True.
+    For example:
+
+.code
+If "0" Then
+    Print "This is always true, because it's not empty"
+End If
+.end
+
+If you are treating strings as numbers, be sure to convert them first:
+
+.code
+If Convert("0", Number) Then
+    Print "This is always false, because 0 is treated as false"
+End If
+.end
+
+.endlist
+
+.section Missing Stuff
+
+The following parts of the grammar are not yet implemented. 
+
+.list
+    .item Erase
+.endlist
+
+
+.section Deprecated Stuff
+
+.subsection Declare
+
+Forward references no longer need to be declared; they are automatically
+resolved in a pre-processing step by the interpreter.
+
+.subsection Assignment
+.code
+    _lval {, _lval} = _expr {, _expr }
+.endcode
+
+Assigns a value to one or more lval:
+
+.code
+	a, b, c = 1, 2, 3
+.endcode
+
+.chapter wxBasic Grammar
+
+Some text goes here...
+
+.chapter CLASS
+.code
+    CLASS _className [INHERITS _className]
+        [DIM _attribute {, _attribute}]
+        _subroutineDefinition
+        _functionDefintition
+	END CLASS
+.endcode
+Creates a new user-defined class. Single inheritance is supported.
+Class attributes are defined in the [link Dim] section.
+
+New instances of a class object are created by calling a constructor
+method with the same name of the class. For example:
+
+.code
+' create a Point class
+CLASS Point
+		DIM x, y
+END CLASS
+
+' create a point
+p = Point()
+p.x = 10
+p.y = 20
+.code
+
+Objects are automatically destroyed when there are no references to the
+object. If you want an object to be permanent, create it with the
+_New keyword:
+
+.code
+' create a Point class
+CLASS Point
+    DIM x, y
+END CLASS
+
+' create a temporary point and assign some values
+p1 = Point()
+p1.x, p1.y = 10, 20
+
+' create a permanent point and assign some values
+p2 = NEW Point()
+p2.x, p2.y = 40, 80
+
+' destroy the temporary point
+p1 = NOTHING
+
+' This does not destroy the permanent point
+p2 = NOTHING
+.endcode
+
+To destroy an object created with _New, use the _Dispose command:
+
+.code
+    ' Destroy the point
+    DISPOSE p2
+.endcode
+
+You can define an initializer for a class by including a _New method in
+the class:
+
+.code
+' create a Point class
+CLASS Point
+	DIM x, y
+
+	SUB NEW ( useX, useY )
+		x, y = useX, useY
+	END SUB
+	END CLASS
+
+	' create a Point
+	p1 = Point( 10, 20 )
+.endcode
+
+When an object is destroyed, the _Finalize routine for it is run:
+.code
+' create a Point class
+CLASS Point
+	DIM x, y
+
+	SUB NEW ( useX, useY )
+		x, y = useX, useY
+		PRINT "Created Point {"; x; ", "; y; ")"
+	END SUB
+
+	SUB FINALIZE()
+		PRINT "Destroyed the point {"; x; ", "; y; ")"
+	END SUB
+	END CLASS
+.code
+
+.chapter CLOSE
+.code
+CLOSE
+CLOSE # _handle
+.endcode
+
+Close a currently open file. To close all files, use _Close without a
+handle number.
+
+.code
+' Append text to a file, and then close it
+OPEN "tmp.txt" FOR APPEND AS #1
+PRINT #1, "Some text"
+CLOSE #1
+.endcode
+
+.chapter CONST
+.code
+CONSTANT
+    CONST _constantName = _expression {, _constantName = _expression }
+CONSTANT _constantName = _expression {, _constantName = _expression }
+.endcode
+
+Declare a variable to be a constant. Constants are similar to variables,
+except they cannot be assigned values.
+
+.code
+' Declare the name of the program
+CONST ProgName = "My Cool Program",
+	Version = "1.0"
+.endcode
+
+.chapter CONVERT
+.code
+CONVERT( _expression, _datatype )
+.endcode
+
+Used to convert an expression from one _datatype to another. If the
+conversion cannot be done, it will throw an error.
+
+.code
+' Convert a string into an integer
+n1 = Convert( "123", Integer )
+.endcode
+
+.chapter DIM
+.code
+DIM name [ '[' [expr [TO expr] ']' ] [ = expr] [AS type]
+    (, name [= expr] }
+.endcode
+
+Define an object. Arrays can be initialized to a default value by
+assigning them. Variables that are unassigned default to _Nothing.
+
+.code
+' Create a 2 x 3 array, initialize it to zero
+DIM a[2,3] = 0
+
+' Create a string variable and assign it
+DIM b AS STRING = "This is a string"
+
+' Create and assign several variables
+DIM a = 10, b, c = a+12
+.endcode
+
+.chapter END
+.code
+END
+.endcode
+
+Halt the program.
+
+.code
+' Stop the program if the user is bored.
+INPUT "Do you want to play again (Y/N)?"; answer
+  IF UCase( answer ) = "Y" THEN
+    END
+END IF
+.endcode
+
+.chapter FOR...NEXT
+.code
+FOR _variable = _startExpr TO _endExpr {STEP _stepExpr}
+    [CONTINUE]
+    [BREAK]
+    [EXIT FOR]
+    { _statement }
+ELSE
+    { _statement }
+END FOR | NEXT {_variable}
+.endcode
+
+Loop from _startExpr to _endExpr, incrementing by _stepExpr. If
+_stepExpr is left off, it is assumed to be 1. [link BREAK] leaves the
+loop immediately, while [link CONTINUE] jumps to the top of the loop
+for the next value.
+
+Here is an example of a loop printing the numbers between 1 and 10,
+inclusive:
+
+.code
+' loop from 1 to 10
+FOR i = 1 TO 10
+    PRINT i
+NEXT
+.endcode
+
+If the loop is not exited via the _Break statement, the _Else clause will
+execute.
+
+.code
+' loop through an array, looking for a value
+FOR i = 1 to LENGTH( list )
+    IF list[i] = someValue THEN
+        PRINT "Found it!"
+        BREAK
+    END IF
+ELSE
+    PRINT "Didn't find it"
+END FOR
+.endcode
+
+.chapter FOR EACH...END FOR
+.code
+FOR EACH _variable {, _variable} IN _expression
+    [CONTINUE]
+    [BREAK]
+    [EXIT FOR]
+    { _statement }
+ELSE
+    { _statement }
+END FOR
+.endcode
+		
+Iterate through a collection (_table, _list). If only one loop variable
+is used, it will hold the index from the collection. If two variables
+are used, they will hold the key/index and value. _Continue,
+_Break and _Else behave the same as a _For loop.
+
+.code
+' Print the value and keys from a list
+FOR EACH key, value IN list
+    PRINT key, value
+END FOR
+.endcode
+
+.chapter FUNCTION ... END FUNCTION
+.code
+FUNCTION _name ( [ _arg [ = _expr ] { , _arg [ = _expr ] } ] [, ...] )
+    [ DIM _variable {, _variable } ]
+    [ STATIC _variable {, _variable } ]
+    [ SHARED _variable {, _variable } ]
+    [ RETURN _expr {, _expr} ]
+    [ EXIT FUNCTION ]
+    { _statement }
+END FUNCTION
+.endcode
+
+Define a function. Unlike many BASICs, more than one value may be
+returned from a function. As a result, the _Return keyword is used
+to return values from functions. If no value is explicitly returned,
+the value _Nothing is returned.
+
+.code
+FUNCTION addOne( n )
+    RETURN n + 1
+END FUNCTION
+.endcode
+
+You can have optional values in parameters. If these parameters are
+not included in the function call, they are assigned the default value:
+
+.code
+FUNCTION hasOptional( a, b=10, c="default string" )
+    PRINT "a=", a
+    PRINT "b=", b
+    PRINT "c=", c
+END FUNCTION
+.endcode
+
+You can use _Static variables in functions. These are variables that
+retain their value. The initialization code for _Static variables will
+only execute the first time through the routine. The default value for
+a _Static variable is _Nothing:
+
+.code
+FUNCTION accum( n )
+    ' declare result as a STATIC variable
+    STATIC result = 0
+
+    ' add value to the result
+    result = result + n
+
+    ' return accumulated result
+    RETURN result
+
+END FUNCTION
+.endcode
+
+Some or all of the return values may be discarded by the caller.
+If a function returns more values than requested, the extra values
+are discarded. If the function returns less values than expected,
+the extra variables are assigned the value _Nothing:
+
+.code
+FUNCTION returnThreeValues()
+    RETURN 1, 2, 3
+END FUNCTION
+
+' ignore all values
+returnThreeValues()
+
+' ignore the last value
+a, b = returnThreeValues
+
+' Nothing is assigned to d
+a, b, c, d = returnThreeValues()
+.endcode
+
+.chapter IF ... ELSEIF ... ELSE ... END IF
+.code
+IF _expr THEN
+    { _statement }
+{ ELSEIF _expr THEN
+    { _statement } }
+[ ELSE
+    { _statement } ]
+END IF
+.endcode
+
+_If performs conditional operations. For example:
+
+.code
+IF 10 > 12 THEN
+    PRINT "10 is less than 12"
+END IF
+.endcode
+
+A numeric expression is treated as true if the result in non-zero. In
+general, wxBasic will attempt to convert the test expression into a
+numeric value. Exceptions are the datatypes _Nothing (which is always
+_False) and _Strings. An empty _String is treated as _False; otherwise it
+is _True. So the following will always evaluate to _True:
+
+.code
+IF "0" THEN
+   PRINT "This will always be true, because the string is not empty"
+END IF
+.code
+
+If you want to do numeric comparisons with strings, be sure to convert
+them first:
+
+.code
+IF VALUE("0") THEN
+    PRINT "This is always false, because numeric 0 is treated as false"
+END IF
+.endcode
+
+These tests can be chained together with additional _ElseIf tests, which
+are performed if the prior tests fail. An optional _Else clause is executed
+if none of the prior tests were true:
+
+.code
+IF a = 1 THEN
+    PRINT "One"
+ELSEIF a = 1 THEN
+    PRINT "Two"
+ELSEIF a = 3 THEN
+    PRINT "Three"
+ELSE
+    PRINT "Too big!"
+END IF
+.endcode
+
+Using _Else _If instead of _ElseIf is also acceptable:
+
+.code
+IF a = 1 THEN
+    PRINT "One"
+ELSE IF a = 1 THEN
+    PRINT "Two"
+ELSE IF a = 3 THEN
+    PRINT "Three"
+ELSE
+    PRINT "Too big!"
+END IF
+.endcode
+
+
+.chapter INPUT
+.code
+INPUT [ _promptString ;] _variable
+.endcode
+
+Prompt the user for a value. This routine is only available in the
+command line (non-GUI) version of wxBasic.
+
+.code
+' Get the user's name
+INPUT "What's your name"; yourName
+PRINT "Hello, "; yourName
+.endcode
+
+.chapter OPEN
+.code
+OPEN _filename FOR _mode AS # _handle
+.endcode
+
+Open a file for reading, writing, or appending. This syntax is
+deprecated, and the function _FOpen() is preferred.
+
+The file modes are:
+[list]
+    [*] _Input Read from the file
+    [*] _Output Write to the file, destroying prior contents
+    [*] _Append Write to a file, leaving prior contents
+[/list]
+The _handle is a filenumber. You can find the next available handle
+by calling _FreeFile().
+
+Close a file by calling _Close # or _FClose(). You can close all open
+files with _Close.
+
+.code
+' Copy "source.txt" to "copy.txt"
+OPEN "source.txt" FOR INPUT AS #1
+OPEN "copy.txt" FOR OUTPUT AS #1
+
+' Read the first file, and copy to the second
+WHILE NOT EOF( 1 )
+    LINE INPUT #1, text
+    PRINT #2, text
+WEND
+
+' Close the files
+CLOSE #1
+CLOSE #2
+.endcode
+
+.chapter OPTION
+.code
+OPTION _optionName
+.endcode
+
+FIXME!
+
+_Option allows toggling on various behaviors for the interpreter. 
+
+The only option currently supported is _Option _Explicit, which will
+cause wxBasic to generate an error when it encounters a reference to a
+variable that has not been declared. Without _Option _Explicit, the
+variable a will be automatically declared for you:
+
+.code
+' Without OPTION EXPLICIT, variables are created "on demand"
+a = 12
+.endcode
+
+However, with _Option _Explict, the same code will generate an error,
+since a has not been explicitly declared:
+
+.code
+' Generates an error, because it is not declared:
+Option Explicit
+a = 12
+.endcode
+
+With _Option _Explicit, you must declare _all variables before use:
+
+.code
+' No error, a is declared before use
+Option Explicit
+Dim a
+a = 12
+.endcode
+
+This is true even for global variables. To use global variables with
+_Option _Explicit, use _Shared.
+
+.chapter PRINT
+.code
+PRINT # _fileNumber
+
+PRINT { [expr] [,] [;] }
+	PRINT # expr { [expr] [,] [;] }
+.endcode
+
+
+Send the values following the _Print statement to the output. Values
+seperated by semicolons {;} have no spaces between them, while values
+seperated by commas {,} have a single space placed between them:
+
+.code
+PRINT "Hello, world!"
+PRINT "a = "; a
+.endcode
+
+The linefeed is automatically placed after the last item, unless it is
+followed by a semicolon:
+
+.code
+' this generates a linefeed
+PRINT "Hello, world!"
+
+' this does not
+PRINT "Hello, world";
+.endcode
+
+Output can be directed to a file by using the _Print _# form of the command:
+
+.code
+' open a file for output
+OPEN "output.txt" FOR OUTPUT AS #1
+
+' print some text
+PRINT #1, "This is written to the file"
+PRINT #1, "And so is this"
+
+' close the file
+CLOSE #1
+.endcode
+
+
+.chapter REDO
+.code
+REDO
+.endcode
+
+_Redo jumps to the top of the loop (similar to _Continue), but doesn't
+re-evalute the test condition again. _Redo can also be used inside a
+_Try statement.
+
+[warning This is an easy way to get into an infinite loop if you
+aren't careful.]
+
+.code
+' Open a file. On failure, delete temp file and try again.
+Try
+	' Open a file
+	Open "test.txt" For Output As #1
+
+' Perhaps out of disk space. Can temp file be deleted?
+Catch FileExists( "data.tmp" )
+	' Delete the temp file
+	Kill( "data.tmp" )
+
+	' Try again
+	Redo
+End Try
+.endcode
+
+.chapter SELECT CASE ... END SELECT
+.code
+SELECT CASE _expression
+{ CASE _caseTest {, _caseTest }
+    { _statement } }
+[CASE ELSE
+    { _statement } ]
+END SELECT
+.endcode
+
+The _Select statement is used to perform a series of tests on the
+same value. Unlike C, only a single _Case branch is executed. _caseTest
+is one of the following:
+
+[list]
+    [*] IS = | <> | < | > | < | >= _expr
+    [*] _expr TO _expr
+    _expr
+[/list]
+
+For example:
+
+.code
+SELECT CASE a
+CASE 1, 3
+    PRINT "The value is either 1, or 3"
+
+CASE 4 TO 6, 8
+    PRINT "The value is 4, 5, 6, or 8"
+
+CASE IS < 12
+    PRINT "The value is greater than 12"
+
+CASE ELSE
+    PRINT "The value is something else"
+
+END SELECT
+.endcode
+
+
+.chapter SHARED
+.code
+SHARED _variable {, _variable }
+
+Declare a variable in a _Function or _Sub as referring to a global
+variable of the same name. This prevents _Option _Explicit from generating
+an error.
+	
+.code
+DIM myGlobalVariable
+
+FUNCTION myFunction()
+    SHARED myGlobalVariable
+
+    PRINT "Value of global is "; myGlobalVariable
+
+END FUNCTION
+.endcode
+
+.chapter STATIC
+.code
+STATIC _variableName {, _variableName }
+.code
+
+Declare a variable that is local to a _Function or _Sub, but retains
+it's value after the routine is called. The initial value of a _Static
+variable is _Nothing.
+
+.code
+FUNCTION accum( n )
+    ' declare result as a STATIC variable
+    STATIC result = 0
+
+    ' add value to the result
+    result = result + n
+
+    ' return result
+    return result
+
+    ' return accumulated result
+    RETURN result
+
+END FUNCTION
+.endcode
+
+.chapter SUB ... END SUB
+.code
+SUB name ( [ _arg [ = _expr ] { , _arg [ = _expr ] } ] [, ...] )
+    [ DIM _variable {, _variable } ]
+    [ STATIC _variable {, _variable } ]
+    [ SHARED _variable {, _variable } ]
+    [ RETURN ]
+    [ EXIT SUB ]
+    { _statement }
+END SUB
+.endcode
+
+_Sub is essentially the same as _Function, but does not return any values.
+Refer to _Function for details.
+
+.chapter THROW
+.code
+THROW _expr
+.endcode
+
+_Throw triggers the _Try clause that it is embedded in. See _Try for details.
+
+.chapter TRY ... CATCH ... END TRY
+.code
+TRY
+    THROW _expression
+    { _statement }
+
+[ CATCH _expr
+    { _statement } 
+REDO 		]
+[ CATCH | ELSE
+    { _statement } 
+REDO		]
+[ FINALLY
+    { _statement } 
+END TRY
+.endcode
+
+_Try catches errors thrown either by wxBasic when an error occurs, or by
+the application via the _Throw statement.
+
+If an error occurs, code jumps to the first _Catch statement. If no
+_Catch statement handles the exception, it jumps to the next _Try block.
+A _Catch without a test expression matches any thrown error.
+
+To execute the _Try block again, call _Redo.
+
+The _Finally clause is always executed, even if no error occurred.
+For example:
+
+.code
+' attempt to open a file
+TRY
+    OPEN "myfile.txt" FOR INPUT AS #1
+    PRINT "This is written to the file"
+CATCH
+    PRINT "Error printing to the file"
+FINALLY
+    CLOSE #1
+END TRY
+.endcode
+
+[note]
+_Finally will even be executed if an exit is encountered in the
+_Try block. However, it will _not be executed if an error is encountered
+in a _Catch block.
+[/note]
+
+.chapter WHILE ... END WHILE
+.code
+WHILE _expr
+    [ BREAK ]
+    [ CONTINUE ]
+    [ EXIT WHILE ]
+    { _statement }
+[ELSE
+    { _statement } ]
+END WHILE | WEND
+.endcode
+
+_While repeats a loop until the test conditions are met. _Break exits
+the loop immediately, and _Continue jumps to the top of the loop.
+
+If the _While statement is exited without executing a _Break, the
+optional _Else statement will be executed.
+
+.code
+' Search a file for a matching string
+WHILE NOT EOF()
+    INPUT #1, text
+    IF instr( text, matchingText ) THEN
+        PRINT "Found the text"
+        BREAK
+    END IF
+ELSE
+    PRINT "Text not found"
+END WHILE
+.endcode
+
+.chapter Expressions
+An expression is a combination of one of the following:
+
+[list]
+    [*]object.methodName( [ _expr {, _expr } ] )
+    [*]object.property
+    [*]_expr XOR _expr
+    [*]_expr IN _expr (not coded yet!)
+    [*]_expr OR _expr
+    [*]_expr AND _expr
+    [*]NOT _expr
+    [*]! _expr
+    [*]_expr = _expr
+    [*]_expr <> _expr
+    [*]_expr != _expr
+    [*]_expr < _expr
+    [*]_expr > _expr
+    [*]_expr <= _expr
+    [*]_expr >= _expr
+    [*]_expr + _expr
+    [*]_expr - _expr
+    [*]_expr & _expr
+    [*]_expr '|' _expr
+    [*]_expr INV _expr
+    [*]_expr ^ _expr
+    [*]_expr * _expr
+    [*]_expr / _expr
+    [*]_expr \ _expr
+    [*]_expr % _expr
+    [*]_expr << _expr
+    [*]_expr >> _expr
+    [*]( _expr )
+    [*]+ _expr
+    [*]- _expr
+    [*]'{' [_expr {, _expr }] '}'
+    [*]'[' [_expr {, _expr }] ']'
+    [*]NEW className '(' [_expr {, _expr}] ')'
+    [*]className [ '(' [_expr {, _expr}] ')' ]
+    [*]variableName
+    [*]constantName
+    [*]integer
+    [*]float
+    [*]string
+    [*]NOTHING
+    [*]functionName '(' [_expr {, _expr}] ')'
+    [*]THIS
+    [*]_expr '[' _expr {, _expr } ']'
+[/list]
+
+
+.chapter The Built In Routines
+
+.section ABS( n )
+Returns the absolute value of _n.
+	
+.section ACOS( n )
+Returns the arccos of _n.
+
+.section ARGV( n )
+Returns the value of parameter _n.
+
+.section ASC( string )
+Returns the ASCII value of the first character in string.
+
+.section ASIN( n )
+Returns the arcsin value of n.
+
+.section ARCTAN( n )
+Returns the arctangent value of n.
+
+.section CHDIR( directoryName )
+Not currently implemented
+
+.section CHR( n )
+Returns a string representation of the ASCII value n.
+
+.section COMMAND( n )
+Returns the value of parameter n passed from the command line.
+
+.section CONCAT( string1, string2 )
+Returns string1 joined to string2.
+
+.section CONNECT( handle, [id, ] eventType, routineName )
+Not currently implemented.
+
+.section COS( n )
+Returns the cosine of n.
+
+.section DATE()
+Returns the current data in MM-DD-YYYY format.
+
+.section DIR()
+Not currently implemented.
+
+.section DIREXISTS( name )
+Not currently implemented.
+
+.section EOF( fileHandle )
+Returns nonzero if fileHandle is not at the end of the file.
+
+.section EXP( n )
+Returns the exponent of n.
+
+.section FCLOSE( fileHandle )
+Closes fileHandle. Same as CLOSE #fileHandle.
+
+.section FGETS( fileHandle )
+Returns next line of text from fileHandle.
+
+.section FOPEN( fileName, modeString )
+Opens file fileName in "r" (read), "w" (write) or "a" (append) mode.
+
+.section FPUTS( fileHandle, string )
+Write string to fileHandle.
+
+.section FILEEXISTS( fileName )
+Returns nonzero if file exists.
+
+.section FIX( n )
+Truncates fractional number, rounding down towards zero.
+
+.section FORMAT( formatString, ... )
+Not yet implemented.
+
+.section FRAC( n )
+Returns fractional portion of n.
+
+.section FREEFILE( n )
+Returns next free handle number.
+
+.section GETWXAPP( n )
+Not yet implemented.
+
+.section GETWXHANDLE( handle )
+Not yet implemented.
+
+.section HEX( n )
+Returns hexidecimal representation of n.
+
+.section INDEXES( arrayName )
+Returns number of indexes in arrayName.
+
+.section INSERT( targetString, subString, position )
+Not yet implemented.
+
+.section INSTR( [startPosition, ] searchString, searchForString )
+Returns position of searchForStringin searchString, or 0 if not found.
+
+.section INT( n )
+Convert n to a 32 bit integer, truncating fractional portion.
+
+.code
+' get the integer portion of 3/7
+i = Int( 3/7 )
+.endcode
+
+.section KILL( fileName )
+Delete fileName.
+
+.section LCASE( string )
+Returns string in lower case. 
+
+.section LEFT( string, length )
+Returns the length leftmost characters in string.
+
+.section LEN( string )
+LENGTH( string )
+Returns the length of string. Same as COUNT()
+
+.code
+' Get the length of the string
+n = LENGTH( "123" )
+.endcode
+
+.section LOC( fileHandle )
+Returns the position in fileHandle.
+
+.section LOF( fileHandle )
+Returns the length of fileHandle.
+
+.section LOG( n )
+Returns the natural log of n.
+
+.section LBOUND( arrayName )
+Returns the lower bound of arrayName.
+
+.section LTRIM( string )
+Returns string with leftmost whitespace removed.
+
+.section MAINLOOP( n )
+Not yet implemented.
+
+.section MID( string, startPosition [, length] )
+Returns substring from string starting at startPosition for length characters.
+
+.section MKDIR( directoryName )
+Not yet implemented.
+
+.section NOTBITS( n )
+Returns bitwise not of n.
+
+.section ORBITS( n1, n2 )
+Returns bitwise OR of n1and n2.
+
+.section QUICKSORT( arrayName )
+Not yet implemented.
+
+.section RANDOMIZE( [seed] )
+Reseeds random number generator with seed.
+
+.section READBYTE( fileHandle )
+Returns a single byte from fileHandle.
+
+.section RENAME( oldFileName, newFileName )
+Renames oldFileName to newFileName.
+
+.section REPLACE( [startPosition, ] sourceString, searchForString, replaceWithString )
+Returns string with searchForString replaced with replaceWithString.
+
+.section REVERSE( string )
+Returns reversed string.
+
+.section RIGHT( string, length )
+Returns length rightmost characters in string.
+
+.section RINSTR( searchString, searchForString [, optionalStartPosition] )
+Reverse version of Inst, searches from end to start position.
+
+.section RMDIR( directoryName )
+Not yet implemented.
+
+.section ROUND( n )
+Returns n rounded to the nearest integer.
+
+.section RTRIM( string )
+Returns string with whitespace characters removed from right side.
+
+.section RUN( commandString )
+Not yet implemented.
+
+.section SEEK( handle [, filePosition] )
+Returns current file position. If filePosition is specified, seeks to that position.
+
+.section SIGN( n )
+Returns -1 if n is negative, 1 if n is positive, and 0 if n is zero.
+
+.section SHELL( commandString )
+Executes commandString, waits until finished.
+
+.section SIN( n )
+Returns the sin of n.
+
+.section SPACE( n )
+Returns string built of n spaces.
+
+.section SQR( n )
+Returns square root of n.
+
+.section STR( n )
+Returns the string representation of n.
+
+.section STRF( n )
+Returns the string representation of n.
+
+.section STRING( string, repetitions )
+STRING( n, repetitions )
+Returns a string with string repeated repetition times.
+If value is numeric, converts n to an ASCII value first.
+
+.section SUBSTR( sourceString, startPosition, endPosition )
+Returns substring from sourceString, starting at startPosition to endPosition.
+
+.section TALLY( [startPosition, ] searchString, searchForString )
+Returns number of times searchForString occurs in searchString.
+
+.section TAN( n )
+Returns tangent of given angle in radians.
+
+.section TIMER()
+Returns current timer value.
+
+.section TIME( n )
+Returns current time as string in HH:MM:SS format.
+
+.section TYPEOF( object )
+Returns string with name of object's datatype.
+
+.section UBOUND( arrayName, index )
+Returns the upper bound of index index in arrayName.
+
+.section UCASE( string )
+Returns string in upper case.
+
+.section VAL( string )
+Returns the numeric value of string.
+
+.section WRITEBYTE( fileHandle, byte )
+Writes a single byte to fileHandle.
+
+.section XOR( n1, n2 )
+Returns bitwise XOR of n1 and n2.
+
+
+.chapter Implementation Details
+
+.section The Datatypes
+All data in wxBasic is stored as a variant. The struct for this
+(at the time this was written) is
+
+.code
+struct wVariant {
+    int datatype;           /* type of data */
+    union {
+        wString *string;    /* W_TYPE_STRING */
+        wNumber number;     /* W_TYPE_NUMBER */
+        wObject *object;    /* W_TYPE_USER_OBJECT */
+        int handle;         /* BUILTIN, ROUTINE and POINTER */
+    } data ;
+};
+.endcode
+
+The datatype field indicates what type of data is stored in the variant,
+and the data union holds the data (or pointer to the data, in the case of
+wString and wObject).
+
+.section Nothing
+This is a datatype of _W_TYPE_UNDEFINED. No data is used.
+
+.section wString
+This is datatype of _W_TYPE_STRING. The definitions of _wStrings can be
+found in _wstring.h
+
+.code
+struct wString {
+    int refCount;       /* number of people looking at string */
+    int length;         /* length of the string, not including terminator */
+    char text;        /* the string (more will be allocated); */
+};
+.endcode
+
+In prior versions of wxBasic, strings used to only be _char*. There were
+a couple problems with that approach:
+.list
+    .item Strings could not contains nulls (ASCII 0)
+    .item Every reference to a string created a new copy
+    .item String operations constantly called _strlen, instead of
+        storing the string length.
+.endlist
+
+The new _String code uses COW (Copy On Write) strings. These keep track
+of their lengths, which makies them easier to work with. It also allows
+_NULL values to be placed into them.
+
+.section wNumber
+This is datatype of _W_TYPE_NUMBER. Numbers are stored as C float values.
+The macro _wNumber is used, in case the numeric datatype changes. Because
+of imprecision of _floats, it's necessary to use _FLT_EPSILON in equality
+tests to ensure the margin of error isn't too large.
+
+.section wObject
+This has a datatype of _W_TYPE_OBJECT. For user defined types, the data is
+stored in the object field, which points to the structure
+
+.code
+struct wObject {
+    int refCount;       /* reference count */
+    int tmpFlag;        /* if true, uses refCount */
+    wSymbol *klass;     /* object class */
+    wVariant prop[1];   /* array of properties */
+};
+.endcode
+
+Like strings, most objects are reference counted. The _tmpFlag is used to
+differentiate objects created with _New (which aren't reference counted)
+with objects created without it (which are reference counted). The class
+of the object is stored in _klass (misspelled in order to make the C++
+compilers happy). The size of the array _prop[] depends on the number of
+properties an object has.
+
+
+.section wGrowArray
+
+The _wGrow datatype is a dynamic array to implement a number of structures
+in wxBasic:
+
+.code
+struct wGrow {
+    int count;		/* number of elements used */
+    int free;           /* number of free slots remaining */
+    int chunks;		/* amount of free slots to allocate on resize */
+    void *data;         /* start of data */
+};
+.endcode
+
+The _data field points to the actual data in the array, which is an _int
+array. As the array grows, the _int array is _realloc'ed to accomodate
+the new size. The _count field indicates the number of records that are
+currently being used in the array. The _free field indicates the number
+of fields that are not being used. The _chunks field indicates how many
+fields to add to the array when it runs out of space.
+
+The initial implementation of the _wGrow array allowed the elements to be
+of various size. However, this created problems when the array grew. As a
+result, the array only contains _int values (which, happily, is also the
+size of void pointers).
+
+.section Constants
+
+Constants are stored in two seperate _wGrow arrays. _Strings are stored in
+_wTheStrings, and numeric literals in _wTheNumbers. _Integer constants are
+embedded into the bytecode using the _PUSHINT instruction.
+
+
+.section wTheCall
+
+The call stack holds the current state of a single function call. The
+structure is
+
+.code
+struct wCall {
+    int         parmCount;      /* number of parameters passed to routine */
+    int         returnCount;    /* number of items being returned */
+    wSymbol     *routine;       /* routine being executed */
+    int         catchCount;     /* count of active catch statements */
+    int         sourceLine;     /* id of code being run */
+    wObject     *self;          /* pointer to user object */
+    wVariant    local[1];       /* local variables */
+};
+.endcode
+
+The _parmCount tracks the number of parameters that were passed to the
+routine. The _returnCount field tracks the number of values expected by
+the caller. This is used if a caller expects more (or less) values back
+from a routine than it actually returns.
+
+The field _catchCount tracks the number of catch traps on the stack that
+belong to the current routine. This allows them to be popped off the stack
+when the routine exits, instead of tracking it in the bytecode.
+
+The _sourceLine field is set by the _TRACE opcode, allowing the debugger
+to display the line being executed.
+
+The _self field points to the current object, if this is a call to a method.
+
+Finally, the _local[] array holds the local variables for the routine.
+
+
+.section wTheSymbols
+
+The _wTheSymbols array holds all the symbols:
+
+.code
+struct wSymbol {
+    char    *name;                  /* name */
+    int     useCase;                /* if true, case is relevant */
+    int     index;                  /* index in symbol table */
+    int     tokenType;              /* token type */
+    int     type;                   /* type */
+    int     scope;                  /* index of parent */
+    int     stackPos;               /* position of variable on stack */
+    wGrow   *children;              /* int array of children */
+    int     alias;                  /* index of symbol this aliases */
+    int     isPublic;               /* true if public in scope */
+    int     args;                   /* required args */
+    int     optArgs;                /* optional args */
+    wGrow   *method;                /* pointers to methods */
+    wGrow   *pcode;                 /* pointer to bytecode */
+    void    (*builtin)(void);       /* builtin function */
+};
+.endcode
+
+
+The _name field holds the name of the symbol. The _useCase indicates if
+case is relevant in doing comparisons. If not, the _symbol is stored in
+lower case. The index field indicates the position of the symbol in the
+_wTheSymbols table.
+
+The _type field indicates the general class of symbol:
+
+.code
+enum {
+    W_SYM_KEYWORD = 1,          /* keyword                      */
+    W_SYM_VARIABLE,             /* variable                     */
+    W_SYM_MEMBER,               /* object variable              */
+    W_SYM_CONSTANT,             /* constant                     */
+    W_SYM_BUILTIN,              /* builtin function             */
+    W_SYM_FUNCTION,             /* user defined function        */
+    W_SYM_SUB,                  /* user defined sub             */
+    W_SYM_USER_CLASS,           /* user class name              */
+    W_SYM_BUILTIN_CLASS,        /* builtin class name           */
+    W_SYM_OBJECT                /* instance of a class object   */
+};
+.endcode
+
+The _tokenType indicates what sort of token the symbol is. Generally, if
+the token is not a _keyword, wxBasic relies on the _type field to determine
+the _tokenType. These are used by the parser. The different types are
+defined in _token.h:
+
+.code
+enum {
+    W_TOKEN_EOF = -1024,
+    W_TOKEN_INTEGER,
+    W_TOKEN_FLOAT,
+    W_TOKEN_STRING,
+    W_TOKEN_FUNCTION_NAME,
+    ...
+}
+.endcode
+
+The first set of tokens are classes of tokens, followed by specific keywords.
+As in _YACC, wxBasic uses negative values for token types, so punctuation
+marks return their ASCII value as their token type.
+
+The _scope field is an index to the parent of the symbol. For example:
+
+.list
+    .item _Functions and _Subs are scoped to "__main__".
+    .item Local variables are scoped to their _Function or _Sub.
+    .item _Class methods and properties are scoped to their _Class.
+.endlist
+
+The _stackPos is a bit of a misnomer, a holdover from when local variables
+lived on the data stack. It indicates the sibling order of an object. For
+example, the _stackPos of the second local variable in a routine is 2.
+
+The _children field is a _wGrow array holding the indices of the local
+variables, in _stackPos order.
+
+The _alias field is used when a local variable references a global variable.
+The only example of this currently is _Static variables. A _Static variable
+is actually a anonymous global variable.
+
+The _isPublic field isn't currently used, but it's there in case I implement
+_Public and _Private.
+
+If the _symbol represents a routine, _args indicates the number of required
+args, and _optArgs the number of optional arguments. A value of -1 in the
+_optArgs field indicates that there are optional arguments, but no
+particular number.
+
+The _pcode field holds the bytecode (if any) associated with the routine.
+If the routine is a builtin function, builtin is a function pointer to
+the routine.
+
+
+.chapter The Virtual Machine
+
+The core of wxBasic is the VM (Virtual Machine). Opcodes is stored in
+_wGrow arrays, and attached to routines in the _pcode field in the
+_wTheSymbol array. Opcodes are implemented as integers, and all references
+to external tables are via index position. When a routine references a
+global variable (one scoped to  the "_main_" routine), the index of that
+variable is negative. This avoids having to create _LOCAL and _GLOBAL
+opcodes for many operations.
+
+Temporary values are placed on the data stack ( _wTheStack ). The following
+notation is used to describe the bytecodes:
+
+.code
+    OPCODE        ( Before -- After )         Description
+.endcode
+
+OPCODE is the opcode. _Before shows what is on the data stack before the
+operation, and _After shows what is on the stack after. If there are a
+variable number of values on the stack, the notation _args is used. The
+notation:
+
+.code
+   ( flag -- flag | nothing )
+.endcode
+
+indicates that either the flag is left on the stack, or there is nothing
+left on the stack.
+
+EQ				( n1, n2 -- n1=n2 )		Equal
+NE				( n1, n2 -- n<>n2 )		Not equal
+GT				( n1, n2 -- n1>n2 )		Greater than
+LT				( n1, n2 -- n1 < n2 )		Less than
+GE				( n1, n2 -- n1 >= ne )		Greater or equal
+LE				( n, n2 -- n2 <= n2 )		Less or equal to
+ADD				( n1, n2 -- n1+n2 )		Addition
+CASE var addr			( value --  )			If var equals value, jump to addr
+CASERANGE var addr		( low, high -- )			If var is between low and high, 
+jump to addr
+ENDCATCH			( -- )				Pop catch address from catch stack
+DIV				( n1, n2 -- n1/n2 )			Division
+DROP				( n1 -- )				Drop item on stack
+DTOR				( object -- )			Destroy object
+EMITLN				( -- )			Send a line feed to the 
+								current output
+EMITTAB			( -- )				Send a tab to the current output
+EMPTYSTRING			( -- "" )				Push ""
+END				( -- )				Stop execution
+FOR_EACH							not implemented yet
+FORPREP var tmpVar exitAddr	( start, end, step -- )		Set up FOR loop, exiting to exitAddr if start outside end range
+FORLOOP var tmpVar exitAddr	( -- )				Increment FOR loop, exiting to exitAddr if start outside end range
+FILE_CLOSE			not implemented yet
+FILE_CLOSE_ALL		not implemented yet
+FILE_OPEN			not implemented yet
+FREE var			( -- )				Dereference variable
+GET var				( -- var )				Push the value of the variable
+GETPROP index			( -- var )				Push the value of the object's property onto the stack
+GETPROPBYNAME name		( -- value )			Push the value of the object's property onto the stack
+INCR              							not implemented yet
+JMP addr			( -- )				Unconditional jump
+JMPCATCHF addr		( flag --  )			Jump to address if TOS doesn't match exception.
+JMPF addr			( flag -- flag | nothing )		If TOS false, jump. Otherwise, don't drop value.
+JMPONF addr			( flag -- )				Jump if TOS false
+JMPONT addr			( flag -- flag | nothing )		If TOS true, jump. Otherwise, leave value on stack
+JMPT addr			( flag -- )				Jump if TOS true
+METHOD name in out		( args object -- args )		Execute method name for object
+MUL				( n1, n2 -- n1 * n2 )		Multiply
+NEGATE			( n -- -n )				Negate
+NEW class in out			( args -- object )			Create new object
+NEW_TMP class in out		( args -- object  )			Create a new temporary object.
+POWER				( n1, n2 -- n1 ^ n2 )		Power
+PRINT				( value --  )			Print value to current output
+PRINTLN			( value -- )			Print value  followed by line feed to current output
+PRINTTAB			( value -- )			Print value  followed by tab to current output
+PUSHEXCEPTION		( -- exception )			Push value of exception onto stack
+PUSHINT int			( -- int )				Push an integer int onto the stack
+PUSHNIL			( -- undefined )			Push an undefined value onto the stack
+PUSHNUM index			( -- n )				Push a number from wTheNumbers onto the stack
+PUSHSTRING index		( -- string )			Push a string from wTheStrings onto the stack
+REDIRECT							Not implemented yet
+RETHROW			( -- )				Throw prior exception. Used when no tests have caught an exception.
+RETURN			( values -- )			Exit from routine
+SET var				( value -- )			Set variable to TOS
+SETPROP n			( value -- )			Set object property
+SETPROPBYNAME name		( value -- )			Set object property
+STARTCATCH addr		( -- )				Push jump address onto catch stack
+SUB				( n1, n2 -- n1-n2  )			Subtract
+THROW				( n -- )				Throw an exception
+TRACE n			( -- )				Set the sourceLine field for the current call
+
+
+
+
+UNDEFINED         Opcode zero, triggers an error if executed.
+NOOP              Do nothing opcode. Used as a placeholder.
+TRACE             Line number trace
+HALT              Halts execution.
+END               Marks end of main program At this point, wxWindows event loop is called.
+DROP              Drop n items from the stack
+MISSING           Return true if parm not passed in list
+NOTHING           Pushed value of Nothing onto the stack
+LITERAL           Pushes a value from the literal dictionary onto the stack
+EMPTYSTRING       Pushes an empty string onto the stack
+INTEGER           Pushes an integer onto the stack
+FORPREP           Set up locals for a FOR loop that has a STEP value
+FORPREP1          Set up locals for a FOR loop with a STEP value of 1
+FORSTEP           Increment a FOR loop
+FORSTEP1          Increment a FOR loop with a STEP value of 1
+FOREACHPREP       Set up a locals for a FOR EACH loop
+FOREACHLOOP       Move to the next value on the FOR EACH loop
+ROUTINE           Push a routine ID onto the stack
+CALL              Call the routine on the stack
+RETURN            Return from a CALL
+FILECLOSE         Close the file handle on the stack
+FILECLOSEALL      Close all open files
+FILEOPEN          Open the requested file
+FILEREAD          Read a line cr/lf delimited line from the file
+READ              Read from standard input
+REDIRECT          Redirect the PRINT statement output to a file
+STDIO             Set the PRINT statement output back to standard output
+PRINT             Print the value on the stack
+PRINTLN           Print the value on the stack followed by a newline character
+PRINTTAB          Print the value on the stack followed by a tab character
+EMITTAB           Print a tab character
+EMITLN            Print a linefeed character
+JMP               Unconditionally jump
+JMPT              Jump if top of stack is true
+JMPF              Jump if top of stack is false
+JMPONT            Jump if top of stack is true; drop value if false
+JMPONF            Jump if top of stack is false; drop value if true
+JSR               Jump to subroutine (used to implement Finally)
+RET               Return from subroutine
+STARTCATCH        Push the opcode to return to onto the Catch stack
+ENDCATCH          Pop the Catch stack
+JMPCATCHF         Jump if the value on the stack is not the current exception
+THROW             Throw an exception
+RETHROW           Pop the Catch stack, and throw the current exception again
+EXCEPTION         Push an exception onto the stack, but don't THROW it
+DTOR              Destroy the object on the stack
+DELETE            Delete the object on the stack (IS THIS USED?)
+VIRTUAL           Resolve the string on the stack as a method
+MYVIRTUAL         Resolve the string on the stack as a method with Me
+CALLMETHOD        Call the method on the stack with the object on the stack
+CALLMYMETHOD      Call the method on the stack belonging to Me
+NEW               Call the New method for the object on the stack
+NEWTEMP           Create a New object on the stack
+POWER             Call power function
+NEGATE            Negate the value on the stack
+ADD               Add the two numbers on the stack, leaving the result
+SUB               Subtract the top two numbers on the stack, leaving the result
+MUL               Multiply the top two numbers on the stack, leaving the result
+DIV               Divide the top two numbers on the stack, leaving the result
+IDIV              Divide the top two numbers on the stack, leaving the integer result
+MOD               Divide the top two numbers on the stack, leaving the remainder
+SHL               Shift the top number on the stack bitwise to the left
+SHR               Shift the top number on the stack bitwise to the right
+INV               Invert the number on the top of the stack
+CONCAT            Concatentate the top two strings on the stack
+
+These opcodes are used for bitwise operations:
+
+OR_BITS           Perform a bitwise OR operation on the top two integers on the stack, leaving the result
+AND_BITS          Perform a bitwise AND operation on the top two integers on the stack, leaving the result
+
+The following opcodes are used to implement code such as:
+
+   a += 12
+
+ADD_SET           Add the value below the top of stack to the LVAL on the top of stack
+SUB_SET           Subtract the value below the top of stack to the LVAL on the top of stack
+MUL_SET           Multiply the value below the top of stack to the LVAL on the top of stack
+DIV_SET           Divide the value below the top of stack to the LVAL on the top of stack
+IDIV_SET          Divide the value below the top of stack to the LVAL on the top of stack, storing the integer result
+MOD_SET           Divide the value below the top of stack to the LVAL on the top of stack, storing the remainder
+CONCAT_SET        Add the value below the top of stack to the LVAL on the top of stack
+EQ                /* equality */
+NE                /* inequality */
+LT                /* less than */
+LE                /* less or equal than */
+GT                /* greater than */
+GE                /* greater or equal than */
+NOT               /* logical not */
+DUP               /* duplicate stack value */
+AND               /* logical and */
+OR                /* logical or */
+XOR               /* logical exclusive or */
+CASERANGE         /* range of case values */
+CASE              /* case test */
+IN                /* element is in array */
+CREATEARRAY       /* create an indexed array */
+INITARRAY         /* create an array with default values */
+ERASEARRAY        /* reset array back to default values */
+CREATETABLE       /* create a table */
+SETLIST           /* copy items from stack into table */
+SETMAP            /* map keys and values into table */
+CREATELIST        /* create a list */
+GETSLICE          /* return a slice from a list */
+SETSLICE          /* set a slice in a list */
+FREE               /* set variable to undefined */
+VARIABLE          /* return pointer to variable */
+INDEX             /* return pointer to value at index position */
+PROP              /* return pointer to property by index */
+PROPBYNAME        /* return pointer to property by name */
+ME                /* return pointer to current object */
+GET               /* put value of pointer onto stack */
+SET               /* store value on stack into pointer */
+LVAL              /* put pointer on stack */
+SETTYPE"            /* set datatype for variable */

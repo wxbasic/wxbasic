@@ -1,0 +1,125 @@
+' markov.wxb
+' simple markov chain generator
+
+Dim wordList = []
+Dim follow1List = {}
+Dim follow2List = {}
+
+sub getWords( text )
+    word = ""
+    text &= " "
+    for each position, char in text         
+        if char = " " or char = "\t" then
+            if word <> "" then
+                wordList.append( word )
+                word = ""
+            end if
+        else
+            word &= char
+        end if
+    end for
+end sub
+
+function isEndWord( word )
+    return instr( word, "." ) or
+           instr( word, "!" ) or
+           instr( word, "?")
+end function
+
+sub buildFollowList( fileName )
+    ' read all the words
+    open fileName for input as #1
+    while not eof( 1 )
+        line input #1, text
+        getWords( text )
+    end while
+    close #1
+
+    ' build level 1 markov chain
+    prior = ""
+    for each key, word in wordList
+        choices = follow1List[ prior ]
+        if choices = nothing then
+                follow1List[prior] = []
+                choices = follow1List[prior]
+        end if
+        choices.append( word )
+
+        if isEndWord( word ) then
+            prior = ""
+        end if
+    end for
+
+    ' build level 2 markov chain
+    prior = ""
+    prior0 = ""
+    for each key, word in wordList
+        choices = follow2List[ prior0, prior ]
+        if choices = nothing then
+                follow2List[prior0, prior] = []
+                choices = follow2List[prior0, prior]
+        end if
+        choices.append( word )
+
+        ' end of sentance?
+        if isEndWord( word ) then
+            prior0 = ""
+            prior = ""
+        else            
+            prior0 = prior
+            prior = word
+        end if
+
+    end for
+
+end sub
+
+function getFollower( prior, word )
+
+    ' try for a best match
+    follows = follow2List[ prior, word ]
+
+    if follows = Nothing then
+
+       ' get the list of words that follow this word
+        follows = follow1List[word]
+
+        if follows = Nothing then
+            return ""
+        end if
+
+    end if
+
+    ' return   random item
+    index = rnd( follows.count() )        
+    return follows[ index ]
+
+end function
+
+sub main()
+        buildFollowList( "emcty10.txt" )
+        buffer = ""
+        prior = ""
+        word = ""
+        for i = 1 to 10000
+            nextWord = getFollower( prior, word )
+            ' print accumulated?
+            if buffer.count() + nextWord.count() >= 72 then
+                print buffer
+                buffer = ""
+            end if
+            buffer &= " " & nextWord
+
+            if isEndWord( nextWord ) then
+                prior = ""
+                word = ""
+            else
+                prior = word
+                word = nextWord
+            end if
+        next
+        print buffer
+end sub
+        
+
+main()

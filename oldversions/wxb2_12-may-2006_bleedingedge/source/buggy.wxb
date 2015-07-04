@@ -1,0 +1,109 @@
+option explicit 
+
+dim theObjectList = [ 
+	sphere( 0, 0, 600, 80, 0, 100, 0 ),
+	sphere( 0, 40, 800, 80, 100, 0, 0 )
+]
+
+
+class Sphere
+
+	dim x, y, z
+	dim radius
+	dim red, green, blue
+
+	sub new( theX, theY, theZ, theRadius, theRed, theGreen, theBlue )
+		x, y, z = theX, theY, theZ
+		radius = theRadius
+		red, green, blue = theRed, theGreen, theBlue
+	end sub
+
+	function distanceTo( x0, y0, z0, x1, y1, z1 )
+
+		' Start of ray is x0, y0, z0
+		' Ray passes through point x1, y1, z1
+	
+		' if ray misses sphere, returns negative value
+	
+		' distance from p0 to p1
+		dim dx = x1 - x0
+		dim dy = y1 - y0
+		dim dz = z1 - z0
+	
+		dim a = dx*dx + dy*dy + dz*dz
+		dim b = 2*dx*(x0-me.x) +  2*dy*(y0-me.y) +  2*dz*(z0-me.z)
+		dim c = me.x*me.x + me.y*me.y + me.z*me.z + x0*x0 + y0*y0 + z0*z0 +	
+			-2*(me.x*x0 + me.y*y0 + me.z*z0) - (me.radius * me.radius)
+	
+		' calculate the discriminant
+		dim d = (b*b) - (4*a*c)
+		if d <= 0 then
+			return -1
+		end if
+	
+		' two intersections, solve for T
+		dim t1 = (-b - sqrt(d)) / (2 * a)
+		dim t2 = (-b + sqrt(d)) / (2 * a)
+	
+		' choose closer value of t
+		dim t = t1
+		if t2 < t1 and t2 > 0 then
+			return t2
+		else
+			return t1		
+		end if
+	end function
+
+	function calcColor( hitX, hitY, hitZ, lx, ly, lz )
+
+		' return color of point on sphere
+		' Point on sphere is x, y, z
+		' Position of light is lx, ly, lz
+					
+		' calculate unit normal vector to the sphere
+		dim nx = (hitX - me.x)/me.radius
+		dim ny = (hitY - me.y)/me.radius
+		dim nz = (hitZ - me.z)/me.radius
+			
+		dim intensity = .5
+
+		' use the color of the object scaled by the light
+		dim r = min(me.red * intensity, 255)
+		dim g = min(me.green * intensity, 255)
+		dim b = min(me.blue * intensity, 255)
+	
+		' create the color
+		return wxColor( r, g, b )
+
+	end function
+
+end class
+
+
+function min( x, y )
+	if y < x then return y
+	return x
+end function
+
+
+function calcColor( x0, y0, z0, x1, y1, z1 )
+	dim theSphere
+	dim hitObject = Nothing
+	dim hitDistance = -1
+	for each theSphere in theObjectList
+		dim t = theSphere.distanceTo( x0, y0, z0, x1, y1, z1 )
+		if t > 0 and (t < hitDistance or hitObject = nothing) then
+			hitObject = theSphere
+			hitDistance = t
+		end if
+	end for
+		
+	if hitObject = nothing then
+		return Nothing
+	else
+		' FIXME: this conflicts with Sphere:calcColor
+		dim hitX = 0, hitY = 0, hitZ = 0
+		return hitObject.calcColor( x, y, z, 800, 800, -800)
+	end if
+
+end function

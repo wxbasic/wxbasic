@@ -1,0 +1,51 @@
+' small prolog implementation
+
+function unify( e, x, y )
+	' get value of x and y in current environment
+	x = getValue( e, x )
+	y = getValue( e, y )
+
+	' is x a variable?
+	if isVar(x) then
+		' add it to the current environment bindings
+		cons( e, list(x, y) )
+		return true
+	end if
+
+	' is y a variable?
+	if isVar(y) then
+		' add it to the current environment bindings
+		cons( e, list(y, x) )
+		return true
+	end if
+
+	' are either values atoms?
+	if isAtom(x) or isAtom(y) then
+		' true if they are the same value
+		return ( x = y )
+	end if
+
+	' attempt to unify the lists
+	f1 = unify( e, first(x), first(y) )
+	f2 = unify( e, tail(x), tail(y) ) )
+
+	' true if both succeeded
+	return (f1 and f2)
+
+end function
+
+' return value of e in the environment
+function getValue( e, x ) 
+
+	' if it's not a variable, return the value
+	if not isVar(x) then return x
+
+	' find the association
+	b = assoc( e, x )
+	if b = null then return x
+
+	' recurse
+	return value( tail(b) )
+
+end function
+

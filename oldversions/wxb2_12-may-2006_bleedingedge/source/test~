@@ -1,0 +1,4 @@
+for i = 1 to 100000
+	print ticks(),;
+next
+

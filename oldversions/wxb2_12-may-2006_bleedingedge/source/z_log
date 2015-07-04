@@ -1,0 +1,1009 @@
+fixing underflow caused by error in the Finally:
+
+   added to error.h:
+    int         gosubCount;     /* height of return stack before try */
+
+    added to W_OP_STARTCATCH in vm.c:
+
+            aCatch->gosubCount = wGrowCount( wTheSubroutineStack );
+
+                /* restore the subroutine stack to it's prior size */
+                i = wTheSubroutineStack->count - aCatch->gosubCount;
+                wGrowDrop( wTheSubroutineStack, i );
+
+
+Changed SYMBOL.C and SYMBOL.H to use hash tables
+Fixed ERROR.C to make sure source code was loaded before looking for error line
+---
+FIXME: Table[3] = Nothing can't remove the item, because by the
+    time the code's been exectuted, it's forgotten that it's a table.
+
+FIXME: this doesn't work:
+
+        print {1,2,3}[2]
+
+FIXME: The following wrapper fails under 2.4.2
+    // int GetCursor();
+    void wxStyledTextCtrl_GetCursor()
+    {
+        
+        int returns;
+        // call GetCursor
+        returns = ((wxStyledTextCtrl *)(wTheCall->self->ptr))->GetCursor();
+        wWrapDerefArgs();
+        wStackPushNumber( (wNumber)returns);
+    }
+
+FIXME: dim a[] as type isn't working. Perhaps should make
+       syntax  dim integer a, b, c
+               dim string a[], b 
+
+FIXME: old error message had the first line form of:
+    Syntax error on line number NUMBER of FILENAME
+        
+FIXME: Add True and False to wxBasic?
+
+FIXME: FOREACH leaves stuff on the stack. Rewrite.
+
+FIXME: replace wMalloc, wFree and wRealloc with wMemMalloc, etc.
+FIXME: EXIT SUB and EXIT FUNCTION no longer supported
+FIXME: setpen( undefinedVar ) crashes the app.
+
+Change log for wxBasic
+
+Bugs:
+    Object deref not working. Or maybe it is. Verify status, and
+    fix if needed.
+
+    Date conversion is wrong. Converting the date "January 12" doesn't
+    work properly.
+
+    Most of the date stuff is messed up, not the least which
+    is the DateAdd function.
+
+    Apparently the date format %c displays differently on different
+    platforms. Fix.
+
+    Attributes from superclass can be redefined, and they don't
+    generate an error.
+
+    Because INDEX returns an lval, setting an indexed value to Nothing
+    will not remove the index. Instead, the Remove() routine has to be
+    called explicitly.
+
+To Do:
+    Add 'me' check to properties as well.
+
+    Add syntax:
+        Dim <var> As New <type>( ... )
+    Same as:
+        Dim <var> As <type> = New <type>( ... )
+
+    Look into:
+        Dim a, b, c As <type>
+
+        Accumulate list of untyped vars.
+
+    Add support for boxing constants, by creating a tmp variable to hold
+    the object:
+        "foo".length
+
+    Track the number of times that a variable is set. If it is zero,
+    issue a warning.
+
+    Warn if variable is assigned in a branch, but not set before hand/
+    set in each branch (probably too hard)
+
+    Dump of bytecodes in XML format:
+        <?xml version="1.0" ?>
+            ...
+
+    Add code to convert string to date/time
+
+    Add the following date functions:
+        DateAdd
+        DateDiff
+        DatePart
+        DateValue
+        TimeValue
+        TimeSerial
+        DateSerial
+
+
+    Move these "builtin" routines that deal with the date to
+    wTime.c
+
+    add wTheClassScopeSymbol so I don't have to keep looking it up...
+
+/* ASP Routines */
+The following should be probably be added for compatibility
+    Array       return an array
+    DateDiff    number of intervals between two dates
+    DatePart    part of a date
+    Eval        someday...
+    Filter      select subset of array, based on value. someday...
+    InputBox    probably too GUI dependant
+    IsArray     true if variant is an array
+    IsEmpty     Except that there is no Empty is wxb
+    IsNull      how about isNothing?
+    IsNumeric   ok
+    Join        create big string out of collection
+    LBound      hasn't this been coded yet?
+    MsgBox      also probably GUI dependant
+    ScriptEngine    hehehe. Don't think so.
+    Split       split string into an array
+    StrCmp      convert both to strings and compare.
+    StrReverse  Should add this.
+    TypeName    wxb has "typeOf"
+
+/* PENDING ROUTINES */
+wCode *wParseStatementDestroy()        { wParseError("Destroy not yet coded"); return NULL; }
+
+December 12
+    Added wxJOYSTICK_ANY constant.
+    Added wxDir
+    Added file utility functions.
+
+December 3
+    Added Remove() method to Tables.
+
+December 1
+    Removed unneeded code from WXBASIC.CPP
+
+    Added isTrue routine to Variants. The IF tests now call wVariantIsTrue
+    instead of popping a number. The this allows empty strings to evaluate
+    and Nothing to evaluate as False.
+
+    The main change here is that the string "0" will always evaluate to
+    True, where in the old version, it would evaluate the numeric expression
+    and return false.
+
+November 25
+    Changed wxCursor:GetCursor to return wxCursor, not int.
+
+    When entering the mainLoop, the code checks to see if the
+    main window is visible. If not, it makes it visible.
+
+November 24
+    wGrowStackPeek() now takes an index value.
+
+    wCodeEmitForwardAddress now takes an index value.
+
+    Break, Continue, Redo and Return have been rewritten to generate
+    the appropriate code to call any Finally blocks, and drop any
+    Catch handlers on the stack.
+
+November 20
+    Changed KEY_UP, KEY_DOWN and CHAR as wxKeyEvents.
+
+    Found error in expression parser - missing closing comment on
+    one of the clauses.
+
+November 19
+    Reworked wParseExpression, now takes strength of operator into
+    account when parsing expressions. Still need to add proper
+    weights to the operators.
+
+    Remove wTempCountStack, rewriting For Each code.
+
+    List of opcode names stored in wOpcodeName[]
+
+    Rewrote opcode display code to use name lookup.
+
+    Added FREE op at end of For Each loop to free the collection.
+    This ensures that it will be executed by a Break statement.
+
+    Iteration through tables works.
+
+    Iteration through strings works.
+
+November 11
+    Fixed table insert so wTableNew() passes zero instead of 16 as
+    the requested table size. Otherwise, it thinks there are 16
+    good elements in the table.
+
+    Fixed table in wTableNew() so it never builds any dummy.
+
+    Fixed MAPTABLE bytecode. Args were reversed, and it was dereferencing
+    the value away.
+
+November 10
+    Casting is now automatic again, instead of throwing an error.
+    I should have some sort of "soft" option switch for this.
+
+
+November 8
+    Coded syntax for ERASE statement.
+
+    Added wParseTokenName, parses out variable name and creates it if
+    it doesn't exist. Consolidates redundant code.
+
+    Variables that are cast to a type no longer try to convert
+    values before failing.
+
+November 3
+    Got wxUniv to compile, but not with wxStyleTextCtrl. Dropdown
+    menus on the games didn't draw correctly, and about 30 different
+    routines had to be commented out.
+
+    wParseLval is no longer passed a parameter. This was restructured
+    so that '+=' would parse properly.
+
+    The following lval incrementing opcodes have been implemented:
+
+        +=      ADD_SET
+        -=      SUB_SET
+        *=      MUL_SET
+        /=      DIV_SET
+        \=      IDIV_SET
+        %=      MOD_SET
+        &=      CONCAT_SET
+
+November 1
+    Added missing MOD operator to parser.
+
+    Added division by zero test to MOD operator.
+
+    Added missing IDIV opcode to virtual machine.
+
+    Default for arrays with no specified type is now zero, not
+    Nothing. I'm not sure I want this to be the permanant behavior.
+
+    Exit Sub and Exit Function are now working.
+
+October 31
+    Moved wxWindows constants back into CLASS.I, added the
+    keywords %num, %str and %ptr.
+
+    Debugging of new keywords completed.
+
+October 30
+    Equality comparisons work between different types without
+    throwing an error (ie: "cat" <> Nothing)
+
+    Inequality comparisons between different types throw an error.
+
+    Fixed bug in inequality comparisons.
+
+    Changed END opcode; now exits main loop under wxWindows, then
+    calls exit(0).
+
+    Fixed bug accidentally added to Mines, checking isTouching()
+    code.
+
+    Multiple search/replaces finally work with the IDE.
+
+October 28
+    Compiled wxStyledTextCtrl (STC) component.
+
+    Added STC constants back into code.
+
+
+October 24
+    Parser now allows optional line breaks after AND,
+    OR, NOT, and other tokens that function similar to
+    operators.
+
+    Fixed bug in wCallTrace, which tried to display trace
+    lines when no trace line had been set.
+
+    Added new flag wTheTraceOpsFlag. If true, generates
+    trace opcodes. Since these are used by the error message
+    routines, they need to be seperated from wTheTraceFlag,
+    which indicates if the trace is active.
+
+    Fixed ADD, SUB, MUL and DIV ops - they were backwards.
+
+    Fixed NE op, wasn't negating the right variable.
+
+    Fixed MINES demo, was depending on TRUE to be equal to
+    1, not -1.
+
+    Fixed the arrays, were not loading indexes off the stack
+    properly.
+
+    Adding missing builtin COMMAND
+
+    Tested BIND with mines program. It works, but it's slow.
+
+    Fixed parsing of hex numbers (ie: 0xFF)
+
+    Rewrote FOR loops, no longer leave values on the stack.
+
+    Rewrote MINES and FREECELL demos to use PNG graphics. FREECELL
+    demo now only uses a single file, FREECELL.PNG.
+
+October 23
+    Replaced wConcatChar with wMemConcatChar and
+    wMemConcatCharFormatted. Much simpler logic for
+    creating formatted strings.
+
+    Rewrote wObjectToChar using wMemConcat routines.
+
+    Moved memory routines dealing with Char strings to
+    CHAR.C and renamed them.
+
+    Error messages now concat their values and print in a
+    single dialog.
+
+    wErrorMessage creates the file WX.ERR.
+
+October 22
+    Fixed bug in wVariantCoerce; was targeting wCoerceFrom
+    instead of wCoerceTo.
+
+    Added Trace() to toggle trace on and off in program.
+    Doesn't work unless trace bytecodes are enabled.
+
+    In wxWindows mode, -l option creates a file called "listing".
+
+    Found bug - W_OP_VIRTUAL was leaving the dereferenced object
+    on the stack.
+
+    Fixed message in wParseExpect, had unneeded quotes.
+
+
+October 21
+    Fixed wWrapSetThis to no longer change the settings of the
+    tmpFlag, since they are already set in the calling program.
+
+    Minimal program runs correctly again, but Scribble program doesn't
+    display anything on the screen.
+
+October 19
+    Instead of a seperate String and Number literal table, there
+    is a single literal table, and a single LITERAL opcode. 
+
+    Moved code to create numeric and string literals into from CODE.C
+    to LITERAL.C.
+
+    Literals work.
+
+    Found missing skipToken() after parsing integer.
+
+    Lots of small hacks, callbacks work.
+
+October 17
+    The program had been failing because there were a number
+    of %alias routines with Center which were shadowing
+    existing routines. The application now runs, but with no
+    visible output.
+
+    Removed memory debugging; now runs. Otherwise, it takes
+    forever for it to build the dictionary.
+
+    Added optional seperator after operand in wParseExpression
+
+    Changed opcode END to HALT. END is used to indicate the end
+    of executable code, which calls wxApp::MainLoop if in wxWindows.
+    This is different than it used to be, but is needed so that locals
+    aren't freed.
+
+    Corrected wrapper error - all created objects were calling
+    wWrapSetThis, which should only have been called when creating
+    a new object. wWrapPushObject is now used for all other cases where
+    a pointer is returned.
+
+October 15
+    Added wPopChar() to return pointer to string on stack.
+
+    Added wWrapDerefArgs() to dereference arguments left on the
+    stack. Objects that are refcounted are NOT removed by their
+    corresponding wStackPop() calls; otherwise, they might be
+    dereferenced and destroyed. This routine cleans up after they
+    have been used, before the result is pushed onto the stack.
+
+    For the moment, NOTHING is treated as NULL.
+
+    wVariantPrint passes NULL as the file handle to wVariantPrintFile,
+    so output is routed to the console in wxWindows.
+
+    Modified WRAP.LUA to generate wrappers to the new syntax.
+
+    Changed CLASS.I so defined routines use the new syntax.
+
+    Removed OPENGL and wxStyledEdit from CLASS.I.
+
+    Moved initialization of class names into wInitWrappers. Otherwise
+    it crashes the applicaion.
+
+    Compiles with CLASS.I, but crashes on startup. 
+
+October 11
+    Removed "append" from tokenName[] list, so debugger displays
+    correct symbol types.
+
+    wMemTest now returns an error if the memory address in NULL.
+
+    wObject routines now check for children rather than assume they
+    exist, since builtin classes have no children.
+
+    Added propCount property to objects, to make it easier to check if
+    how many properties they have, if any.
+
+    After a builtin object is created, it is assgned to wTheCall->this.
+    In the old wrappers, it was placed on the stack.
+
+    wObject had assigned the clone method to the copy operation; fixed.
+
+    Got wxFrame to display, hurrah!
+
+October 9
+    Code was getting stuck on "new" statement in wWrapClass - "new"
+    was an existing keyword.
+
+
+October 8
+    Hacked together wxFrame class. Compiles, but doesn't run.
+
+October 7
+    Code compiles under wxBasic, although no object classes are
+    implemented.
+
+    Added wConsole. Output to NULL is now sent out via wConsolePrintf
+    or wConsolePrint.
+
+    Changed routines to use wConsolePrint if output file is stdout.
+
+    Changed code to call wConsolePrint instead of wConsolePrintf for
+    various cases where large buffers were crashing the application.
+
+October 4
+    APPEND is no longer a keyword, so the append() function no
+    longer conflicts with it.
+
+    Changed wStackSwap() so that it takes positional args. This allows
+    swapping of any two stack items, which is far more useful.
+
+    Added the builtins:
+        append
+        count
+        getType
+        insertAt
+        prepend
+        slice
+        toString
+
+    but insertAt and slice are not yet implemented.
+
+    Fixed a number of builtin routines that used wStackPeek() and had
+    negative indexes.
+
+    Fixed wVariantMove so that it sets the source to NOTHING after
+    the move.
+
+    Found bug in wTableClone where destination table was not being
+    written to.
+
+    Fixed bugs in wTableClone and wListClone where count and free were
+    not being set.
+
+    Fixed bug on virtual.clone(); was swapping variable not on the stack.
+
+    Added append() and prepend() to list.
+
+    Fixed bug in wConcatChar - parameters had been passed in a different
+    order in a number of routines, so large buffers would crash the application.
+
+    Fixed bug in List allocation - empty list would create an error because
+    can't malloc size 0. Instead,  Tables and Lists are automatically created
+    with padding of 32.
+
+    Fixed bug in wListCount; wasn't returning a value.
+
+October 3
+    No longer crashes if no args passed.
+
+    Bound executables don't print help message and exit. The default
+    options should probably be suppressed as well.
+
+
+October 2
+    Added support for bound executables.
+
+September 28, 2003
+    Added count to all datatypes.
+
+    Added getType, toString, equal, compare, append, prepend,
+    clone and count as common methods for all routines. insertAt and
+    slice are missing and will throw errors.
+
+September 25, 2003
+    Added clone to all datatypes, and added builtin clone() routine.
+    
+    Added wStackSwap to swap top two stack items. Need to look at
+    spots where memory is malloc'ed, and see if using the stack can be
+    used as a placeholder instead, since it's more efficient.
+    
+    Added support for builtin methods, but didn't implement them all.
+
+September 19, 2003
+    Fixed nasty Try/Catch bug. The call stack wasn't being cleared
+    after a jump back, so the locals being pointed to were all wrong.
+    Added as structure wC
+
+    Fixed a bug with file I/O. A buffer wTheFileBuffer is used to hold
+    keyboard and file input. This makes the routine a bit faster, since
+    it doesn't have to malloc a chunk of memory every time it's going
+    to read. Unfortunately, it returns the buffer, so it looked like the
+    buffer was being malloc'ed, and some routines free()'d the buffer.
+    wFileLineInput and wFileKeyboard input now return void, so it's more
+    clear what's happening.
+
+
+September 18, 2003
+    Rewrite of the Try/Catch code. Replaced the old logic with
+    setjmp(). This should be a lot more robust than the prior code.
+
+    Fixed error in Replace(); it was inserting the replacement string
+    into the beginning of the string instead of where the match took
+    place.
+    
+
+September 17, 2003
+    List datatype is now working. 
+
+
+September 16, 2003
+    Lots of fixes to wTable. Now appears to work (mostly).
+
+    Fixed two references in Integer that referenced Number field
+    by mistake.
+
+    Fixed Integer.toChar() to use %d instead of %g.
+
+    Added "integer" as W_TOKEN_INTEGER, and integer as option in parse
+    of DIM <var> AS <datatype>
+
+September 15, 2003
+
+    Added missing 'break' and push of result to EQ opcode
+
+    Factored wListInsert and wTableInsert into wVariantInsert. INSERT opcode
+    now calls that.
+    
+    Restored opcode CREATETABLE. Didn't factor it into anything, since it's
+    a seperate opcode. Might possible create a NEWCOLLECTION opcode in the
+    future.
+    
+
+September 12, 2003
+    The VarPtr datatype hadn't been initialized. This caused it to blow up
+    when it tried to print values with the debug option on.
+
+    Added ARRAY object back in.
+
+    Added index method. Perhaps this should be split into getIndex and
+    setIndex? Otherwise, it's difficult to work with strings as if they
+    were collections.
+
+    Fixed the parsing of array indexes; wasn't reading indexes after
+    the first correctly, or incrementing the index count.
+
+    Fixed code in wArrayDeref; offset started at 1 instead of 0 so was
+    accessing illegal memory.
+
+    EQ and NE run wVariantEqual, which is optimized in some cases.
+
+    When arrays are created with a default data value, the castTo value
+    for the elements is set to the dataType of the default value.
+
+September 11, 2003
+    Moved the code in METHOD.C into VARIANT.C, and created a method record to
+    point to builtin datatype's methods.
+
+    Replaced call to wMethod() to wVariantMethod()
+    
+    Changed wMalloc() to call calloc() instead of malloc(). This zeros out
+    memory before use, which makes it easier to trap errors.
+
+September 2, 2003
+
+    Fixed bug in LTRIM, didn't get the string pointer after
+    calling wStringUnique. 
+
+    Passed sanity tests.
+
+    Fixed bug in debug mode, printed locals when local count = 0
+
+    WROUTINE.C and WROUTINE.H were not being included, and wRoutineInit
+    wasn't being called. This caused the stack printing routine to crash
+    when it tried to print the routine id.
+
+    Lots of fixes in WROUTINE.C
+
+    In wVariantGetNumber, fixed temporary so it wMalloc'ed, otherwise
+    it triggers a Memory Not Allocated error when passing the pointer.
+
+    Fixed Nothing field is isNumeric is false.
+
+    TEST4 now passes, properly flagging an error when adding variable
+    set to Nothing.
+
+    Fixed wObjectToChar, was referencing an uninitialized variable.
+    Prints the object values properly. TEST2 now behaves properly.
+
+August 31, 2003
+    Removed all 'inline' references, Borland compiler didn't like them.
+
+    Fixed bug in wVariantCoerce; numeric test checked myDataType twice,
+    instead of myDataType and coerceTo.
+
+    Corrected wVariantCoerceTo, had not been setting the coerced variant's
+    dataType field to the new datatype.
+
+August 12, 2003
+    Hacking through the code, trying to get it to compile. For now, the
+    various collection objects are commented out, including the following
+    opcodes in the vm:
+    
+        CREATEARRAY
+        CREATELIST
+        CREATETABLE
+        INDEX
+        GETSLICE
+        INITARRAY
+
+August 3, 2003
+	Converting indexed datatypes.
+	
+	Added wMallocChar and wConcatChar to make it easier to build dynamic
+	strings on the fly. These are used by the routines that convert
+	native data into strings, although I suspect they could be used other
+	places as well.
+
+July 31, 2003
+	Started conversion of datatypes. Coded most of non-indexed datatypes,
+	didn't attempt to compile.
+
+July 18, 2003
+    Started with wrappers. Added WRAP.C for wrapper routines, although
+    these should probably be moved to the SYMBOL.C routines.
+
+    Changed OBJECT.H, now include a 'ptr' field to hold a void pointer
+    to an external object. Since the 'prop' field isn't used in these
+    cases, it's tempting to reuse that, but probably just confusing in
+    the long run.
+
+    Changed wCallRoutine so that calculations to adjust the size of the
+    call malloc is only performed for non-builtin calls. Builtin calls
+    leave their values on the stack, and so don't need to allocate extra
+    space.
+
+    The wrappers that are currently being created look like they will be
+    essentially the same, with a few exceptions:
+
+        'wMe' is replaced with 'wTheCall->self.ptr'
+
+        Creating temp objects needs to be looked at. Objects are reference
+        counted instead of being tied to the scope of an object, so
+        creating a temporary object is a little bit different.
+
+        External routines need to be flagged in the wSymbol table by setting
+        the 'builtin' field to true. Everything else should be more or less
+        automatic.
+
+    Note that in order to compile with classes, you need to use:
+
+        g++ -lm main.c
+
+    instead of:
+
+       gcc -lm.main.c
+
+
+July 8, 2003
+    Corrected CALLMYMETHOD; it was popping the method address off the
+    stack, but not storing it in 's' before calling wCallRoutine.
+    Thanks to TronDoc for catching it.
+
+    Added fflush calls in the wVmTrace() so that if the application
+    core dumps in Windows, you can still catch the output if it's
+    redirected.
+
+
+July 5, 2003
+    Corrected VARIABLE.METHOD() call so that if the variable is typed
+    but the method is ABSTRACT or VIRTUAL, the method is encoded as
+    VIRTUAL despite being resolvable.
+
+    Added OPTION STRICT, makes sure Me preceeds any function calls.
+
+    Added ON and OFF flags for OPTION, so writing OPTION STRICT OFF
+    will turn off OPTION STRICT.
+
+    Removed STRICT and EXPLICIT from keywords list.
+
+July 3, 2003
+    Added ABSTRACT and VIRTUAL functionality.
+
+    Can't instanciate abstract classes - generates parse error (as well as
+    runtime, but that should never happen).
+
+    Classes that inherit abstract classes generate errors if there are
+    undefined abstract classes.
+
+    Methods where inherited classes have defined methods as being
+    VIRTUAL or ABSTRACT are automatically made VIRTUAL.
+
+    Listing now prints ABSTRACT METHOD when displaying abstract methods
+    instead of crashing.
+
+    Method calls inside classes must be prefixed by ME or MYBASE, or they
+    will generate an error.
+
+    Virtual routines encode a METHOD call instead of a ROUTINE call.
+
+    Renamed opcode METHOD to VIRTUAL. 
+
+    Can now reference ME from within code.
+
+June 30, 2003
+    Added keywords ABSTRACT and VIRTUAL
+
+June 24, 2003
+    Added AS clause support in class properties. This reads the symbol
+    directly at runtime, rather than at compile time, so there's a bit
+    of overhead involved. I should look at moving all the initialization
+    code to the bytecodes at some point.
+
+    Changed symbol.typeCheck to symbol.typeCast
+
+    wRedoStack was not being initialized in the wParseTryStatement(), so
+    it was generating an error when it tried to backpatch.
+
+    wFatalError now only shows the last parsed line if code wasn't running.
+    This prevents it from showing the last parsed line of code as having an
+    error. 
+
+    Adding typechecking forces an additional TRACE opcode at the head
+    of the code, so if there is an error in the parms, it displays the
+    beginning of the definition.
+
+    wVariantPrintFile now prints the class members when dumping an object
+
+    wErrorFatal() no longer halts if there is an exception handler that
+    is active.
+
+    GET/SET/LVAL were not throwing exceptions properly because the
+    exception test came before the modifier code. Moved the test location
+    so it triggers an exception if one of the opcodes has an error.
+
+    Fixed REDO in TRY/CATCH so that calling it before the CATCH clause
+    jumps just before the TRY clause, while calling it after the CATCH
+    clause causes it to jump before the TRY clause to retrigger the
+    exception handler.
+
+    Bug in all collection datatypes - castTo was not being set. Fixed,
+    and added test to wVmTypeCast to make sure type is in range.
+
+June 23, 2003
+    Started adding support for the AS keyword. Local variables now carry
+    around typeCheck value, which is initialized to Nothing.
+
+    Renamed String() function to Repeat(); conflicted with the String
+    datatype.
+
+    Renamed field wData.datatype to wData.dataType for consistancy.
+
+June 19, 2003
+    Changed TIME to DATETIME, along with file name (datetime.*)
+    and function calls (wDateTime...)
+
+June 18, 2003
+    Date conversion now works.
+
+June 17, 2003
+    Fixed encoding of Me.method calls. Wasn't initializing the code
+    before emitting, and wasn't emitting a METHOD op either.
+
+    Fixed parse error in SOURCE.C scanning for end of class tokens.
+    If the class is empty, it would overscan to the next line, and
+    not see the END CLASS tokens.
+
+    Fixed error in TOKEN.H where strings of tokens didn't align with
+    the actual tokens. Hitting a token at the end of the list crashed
+    the program in debug mode when it tried to print the string.
+
+    Added DATE datatype. Added the routines:
+
+        Day( time )             returns day number in month
+        Hour( time )            returns hour, starting from 0
+        Minute( time )          returns minute number, starting from 0
+        Month( time )           returns month number, starting from 12
+        MonthName( time )       returns name of month
+        Now()                   returns current time
+        Second( time )          returns second number, starting from 0
+        Weekday( time )         returns weekday number, starting from 1
+        WeekdayName( time )     returns weekday name
+        Year( time )            returns year number
+
+    Removed '$' from builtin function names
+June 16, 2003
+    Dotted tokens now return W_TOKEN_DOTROUTINE or W_TOKEN_DOTPROPERY
+    before returning the individual bits. This allows the parser to
+    identify the type of command more easily.
+
+    Added W_BUFFER_EMPTY with value of -2 to signal when the lexer's
+    buffer is empty, instead of -1. This allows wLexUngetChar to unget
+    the first character in the buffer (at position 0) without causing
+    the lexer to read a new line at the next wLexGetChar call.
+
+    wParseLval() is now passed the opcode (GET/SET/LVAL) that should
+    be generated for the lval.
+
+    Removed code in parser which referenced symbol in error message
+    where the symbol might not exist.
+
+June 12, 2003
+    Added wStackPushNumberFromRoutine() for Log, Exp, Sqrt, Pow and Int;
+    catches errors thrown from the math library.
+
+    wParseError now return to main() via longjmp() instead of exiting.
+
+    Errors in SOURCE.C now call wParseError() instead of trying to
+    set an exception.
+
+    Most returned names in PARSE.C error messages are quoted.
+
+    Fixed bug in VM.C where wSymbol of current routine was being
+    modified by routines that 'borrowed' the variable.
+
+    Traceback now only prints if code was running - wFatalError no
+    longer assumes that code was executing. wFatalError also displays
+    the line that was running, and then jumps back to main for
+    instead of calling exit().
+
+
+
+June 11, 2003
+    Class attributes were not being inherited. This is fixed, but it
+    doesn't check to make sure that new attributes don't shadow old
+    ones, so that needs to be fixed.
+
+    Class methods are now defined in SOURCE.C along with Subs and Functions.
+    Checks for duplicates is probably not working, though.
+
+    Changed OPCODE.H to VM.H and EVAL.C to VM.C, renamed wEval___ code to
+    wVm___.
+
+    The CALL opcode now expects the routine index to be passed on the stack,
+    instead of as a parameter. It's an extra step, but it should reduce the
+    complexity of calls to METHODS (since looking up a routine name can be a
+    seperate OPCODE), as well as potentially allowing the user to pass routine
+    ids at some point.
+
+    Changed W_TYPE_USER_OBJECT to W_TYPE_OBJECT
+
+    The METHOD call has been replaced by CALLMETHOD and CALLMYMETHOD. These
+    are either passed the routine id of the method, or are preceeded by
+    METHOD opcode, which resolves the method. MYBASE is removed as an opcode,
+    since it generates a CALLMYMETHOD directly.
+
+    Calls to Me.method and MyBase.method now do lookups at compile time.
+
+    Replaced structure element wVariant.data with wVariant.value. I'm
+    considering renaming wVariant to wData.
+
+    ROUTINE pushes value on stack as W_TYPE_ROUTINE. CALL will error if the
+    value is not a W_TYPE_ROUTINE.
+
+    Display of Routine variant now shows the full name.
+
+    Routine type holds pointer to wSymbol instead of the index. This
+    avoids having to convert it to an index, and look it up again.
+
+    Added Format for strings, uses C# style formatting. Shouldn't
+    it start at 1, though?
+
+
+June 10, 2003
+    Fixes found by Ed Davis:
+        array.c: uninitialized 'arraySize' replaced with 'array->elementCount'
+
+        builtin.c: wBuiltinSubStr uses uninitialized 'dst'. Rewrote code
+        so it's built on the stack.
+
+        wstring.c: uninitialize 'dst' removed from wMemoryTest and replaced
+        with proper variable.
+
+    Renamed wStackPushUndefined() to wStackPushNothing().
+
+    Renamed wStackPopPtr to wStackPopLval
+    
+    Added MYMETHOD for calls to methods, so object does not have to be
+    passed on the stack.
+
+    Calls to Me.property now generate PROP calls instead of PROPBYNAME so
+    object doesn't have to be passed on the stack.
+
+    Changed METHOD opcode to CALLMETHOD. METHOD opcode now attempts to
+    resolve the string to the class that it's associated with, and pushes
+    the index onto the stack.
+
+June 9, 2003
+
+    Fixed bug in wParseLval where objects preceeding method name are
+    return their LVAL, not GET.
+
+    Added MyBase and Me as keywords; not coded into parser yet.
+
+June 6, 2003
+
+    Added REDO. This is similar to CONTINUE, but it jumps to the top
+    of the loop _without_ re-evaluating the loop condition. This also
+    works inside a TRY block.
+
+    Changed filenames to lowercase, so it compiles under Linux.
+
+    Timed simple program to read 70,000 lines of text. QBASIC takes
+    less than 1 second, wxb takes 4 seconds. Bleah, much to slow!
+    Have to loop at adding optimizations.
+
+    Started on rewrite of EVAL.C, moving it to OPCODE.C. Changing
+    case statement into seperate routines, so they can be called
+    as function pointers.
+
+    Fixed DIV so it performs division, not multiplication.
+
+June 5, 2003
+    Added Option Explicit. Should probably change the syntax, though.
+
+    Add END statement. This sets an internal HALT flag, so the application
+    closes gracefully instead of exiting with an exit(1). This should allow
+    the code to be embedded, since it won't halt the program it's embedded
+    in. (Assuming exception handling is ever fixed)
+
+    Added file I/O routines:
+        OPEN file FOR mode AS #handle
+        PRINT #handle, ...
+        CLOSE #handle
+        CLOSE
+
+    Got rid of COMMON and DELETE
+
+    Fixed STATIC so that it doesn't create an extra local.
+    Added SHARED
+    Added CONST, CONSTANT
+
+
+June 4, 2003
+    Changed W_TYPE_UNDEFINED to W_TYPE_NOTHING.
+
+    Changed all opcodes in OPCODE.H
+
+    Changed opcode generation on PARSE.C
+
+    Changed opcode execution in EVAL.C
+
+    METHOD is now passed a LVAL
+
+June 3, 2003
+    Removed case flag from symbol.c and routines referring to it.
+    wSymbolNew forces all names to lowercase.
+
+    Found a bug in METHOD call, was popping too much stuff off the
+    stack, which also was freeing the object from memory.
+
+    Found bug in inherits code, wasn't inheriting properties from the
+    superclass.
+
+    Started transition to new bytecode form, with GET, SET and LVAL
+    as opcode modifiers.
+
+June 2, 2003
+    Worked on basic documentation (wxBasic.rtf)
+
+May 31, 2003
+    Methods are no longer case sensitive
+    Added methods for datatypes List and Table
+
+May 30, 2003
+    Fetching index from empty list now catches error.
+
+May 29, 2003
+    Fixed empty list assignment crashing; missing wCodeNew()
+
+            a = []
+    
+

@@ -1,0 +1,1102 @@
+_global:_global, parms: 0, locals: 31
+107 31 5 107 30 5 107 29 5 107 28 5 107 27 303 107 18 388 107 17 387 107 16 387 107 15 387 107 14 316 107 13 336 2 4 2 6 9 1879 99 1 105 11 600 99 2 105 11 600 99 3 105 2 11 9 197 11 1 56 99 4 105 9 197 11 2 56 99 5 105 9 197 11 3 56 99 6 105 9 197 11 4 56 99 7 105 9 197 11 5 56 99 8 105 9 197 11 6 56 99 9 105 9 197 11 7 56 99 10 105 9 197 11 8 56 99 11 105 9 197 11 9 56 99 12 105 2 22 8 11 -1 99 1 104 52 336 3 99 13 105 2 23 11 400 11 400 99 13 106 48 1880 50 2 0 2 26 99 2 104 99 3 104 53 316 2 99 14 105 2 29 52 387 0 99 15 105 2 30 9 146 9 1882 9 1883 99 15 106 48 1881 50 3 0 2 31 99 15 106 48 1884 50 0 0 2 32 9 150 9 1885 9 1886 99 15 106 48 1881 50 3 0 2 35 52 387 0 99 16 105 2 36 99 4 104 9 1887 9 1888 11 1 99 16 106 48 1881 50 4 0 2 37 99 5 104 9 1889 9 1890 11 1 99 16 106 48 1881 50 4 0 2 38 99 6 104 9 1891 9 1892 11 1 99 16 106 48 1881 50 4 0 2 39 99 7 104 9 1893 9 1894 11 1 99 16 106 48 1881 50 4 0 2 40 99 8 104 9 1895 9 1896 11 1 99 16 106 48 1881 50 4 0 2 41 99 9 104 9 1897 9 1898 11 1 99 16 106 48 1881 50 4 0 2 42 99 10 104 9 1899 9 1900 11 1 99 16 106 48 1881 50 4 0 2 43 99 11 104 9 1901 9 1902 11 1 99 16 106 48 1881 50 4 0 2 44 99 16 106 48 1884 50 0 0 2 45 99 12 104 9 1903 9 1904 11 1 99 16 106 48 1881 50 4 0 2 48 52 387 0 99 17 105 2 49 9 157 9 1905 9 1906 99 17 106 48 1881 50 3 0 2 52 52 388 0 99 18 105 2 53 99 15 104 9 1907 99 18 106 48 1881 50 2 0 2 54 99 16 104 9 1908 99 18 106 48 1881 50 2 0 2 55 99 17 104 9 1909 99 18 106 48 1881 50 2 0 2 58 99 18 104 99 13 106 48 1910 50 1 0 2 62 9 1887 11 3 9 688 53 292 3 99 19 105 9 1889 11 3 9 688 53 292 3 99 20 105 9 1891 11 3 9 688 53 292 3 99 21 105 9 1893 11 3 9 688 53 292 3 99 22 105 9 1895 11 3 9 688 53 292 3 99 23 105 9 1897 11 3 9 688 53 292 3 99 24 105 9 1899 11 3 9 688 53 292 3 99 25 105 9 1901 11 3 9 688 53 292 3 99 26 105 2 72 53 303 0 99 27 105 2 73 99 14 104 99 27 106 48 1911 50 1 0 2 74 99 27 106 48 1912 50 0 0 2 77 99 25 104 99 27 106 48 1913 50 1 0 2 78 99 10 104 11 1 99 16 106 48 1914 50 2 0 2 79 99 10 104 99 28 105 2 81 11 0 99 29 105 2 82 11 0 99 30 105 2 83 11 0 99 31 105 99 -13 104 9 1915 108 4879 99 -13 104 9 1916 108 4879 99 -13 104 9 1917 108 4879 99 -13 104 9 1927 108 4880 99 -13 104 9 1928 9 146 109 4881 99 -13 104 9 1928 9 150 109 4882 99 -13 104 9 1928 99 -4 104 109 4883 99 -13 104 9 1928 99 -5 104 109 4883 99 -13 104 9 1928 99 -6 104 109 4883 99 -13 104 9 1928 99 -7 104 109 4883 99 -13 104 9 1928 99 -8 104 109 4883 99 -13 104 9 1928 99 -9 104 109 4883 99 -13 104 9 1928 99 -10 104 109 4883 99 -13 104 9 1928 99 -11 104 109 4883 99 -13 104 9 1928 99 -12 104 109 4884 99 -13 104 9 1928 9 157 109 4885 2 229 9 1 99 13 106 48 1938 50 1 0 4 
+0    	SETTYPE         107  31         ; mousedown must be number
+3    	SETTYPE         107  30         ; lasty must be number
+6    	SETTYPE         107  29         ; lastx must be number
+9    	SETTYPE         107  28         ; checkedcolor must be number
+12   	SETTYPE         107  27         ; bmpdc must be wxmemorydc
+15   	SETTYPE         107  18         ; menubar must be wxmenubar
+18   	SETTYPE         107  17         ; mhelp must be wxmenu
+21   	SETTYPE         107  16         ; mcolor must be wxmenu
+24   	SETTYPE         107  15         ; mfile must be wxmenu
+27   	SETTYPE         107  14         ; bmp must be wxemptybitmap
+30   	SETTYPE         107  13         ; frame must be wxframe
+33   	TRACE             2   4         ; Option Explicit
+
+35   	TRACE             2   6         ; Dim progName = "Scribble Demo",
+
+37   	LITERAL           9 1879         ; "Scribble Demo"
+39   	VARIABLE         99   1         ; progname
+41   	SET             105             ; 
+42   	INTEGER          11 600         ; 600
+44   	VARIABLE         99   2         ; bmpx
+46   	SET             105             ; 
+47   	INTEGER          11 600         ; 600
+49   	VARIABLE         99   3         ; bmpy
+51   	SET             105             ; 
+52   	TRACE             2  11         ; Const   ID_RED          = wxID_HIGHEST + 1,
+
+54   	LITERAL           9 197         ; 5999
+56   	INTEGER          11   1         ; 1
+58   	ADD              56             ; 
+59   	VARIABLE         99   4         ; id_red
+61   	SET             105             ; 
+62   	LITERAL           9 197         ; 5999
+64   	INTEGER          11   2         ; 2
+66   	ADD              56             ; 
+67   	VARIABLE         99   5         ; id_orange
+69   	SET             105             ; 
+70   	LITERAL           9 197         ; 5999
+72   	INTEGER          11   3         ; 3
+74   	ADD              56             ; 
+75   	VARIABLE         99   6         ; id_yellow
+77   	SET             105             ; 
+78   	LITERAL           9 197         ; 5999
+80   	INTEGER          11   4         ; 4
+82   	ADD              56             ; 
+83   	VARIABLE         99   7         ; id_green
+85   	SET             105             ; 
+86   	LITERAL           9 197         ; 5999
+88   	INTEGER          11   5         ; 5
+90   	ADD              56             ; 
+91   	VARIABLE         99   8         ; id_blue
+93   	SET             105             ; 
+94   	LITERAL           9 197         ; 5999
+96   	INTEGER          11   6         ; 6
+98   	ADD              56             ; 
+99   	VARIABLE         99   9         ; id_purple
+101  	SET             105             ; 
+102  	LITERAL           9 197         ; 5999
+104  	INTEGER          11   7         ; 7
+106  	ADD              56             ; 
+107  	VARIABLE         99  10         ; id_black
+109  	SET             105             ; 
+110  	LITERAL           9 197         ; 5999
+112  	INTEGER          11   8         ; 8
+114  	ADD              56             ; 
+115  	VARIABLE         99  11         ; id_white
+117  	SET             105             ; 
+118  	LITERAL           9 197         ; 5999
+120  	INTEGER          11   9         ; 9
+122  	ADD              56             ; 
+123  	VARIABLE         99  12         ; id_color_dialog
+125  	SET             105             ; 
+126  	TRACE             2  22         ; Dim frame as wxFrame = New wxFrame( Nothing, -1, progName )
+
+128  	NOTHING           8             ; 
+129  	INTEGER          11  -1         ; -1
+131  	VARIABLE         99   1         ; progname
+133  	GET             104             ; 
+134  	NEW              52 336   3     ; wxframe, 3 in
+137  	VARIABLE         99  13         ; frame
+139  	SET             105             ; 
+140  	TRACE             2  23         ; frame.SetSize(400, 400)
+
+142  	INTEGER          11 400         ; 400
+144  	INTEGER          11 400         ; 400
+146  	VARIABLE         99  13         ; frame
+148  	LVAL            106             ; 
+149  	VIRTUAL          48 1880         ; "setsize"
+151  	CALLMETHOD       50   2   0     ; 2 in, 0 out
+154  	TRACE             2  26         ; Dim bmp as wxEmptyBitmap = wxEmptyBitmap( bmpX, bmpY )
+
+156  	VARIABLE         99   2         ; bmpx
+158  	GET             104             ; 
+159  	VARIABLE         99   3         ; bmpy
+161  	GET             104             ; 
+162  	NEWTEMP          53 316   2     ; wxemptybitmap, 2 in
+165  	VARIABLE         99  14         ; bmp
+167  	SET             105             ; 
+168  	TRACE             2  29         ; Dim mFile as wxMenu = New wxMenu()
+
+170  	NEW              52 387   0     ; wxmenu, 0 in
+173  	VARIABLE         99  15         ; mfile
+175  	SET             105             ; 
+176  	TRACE             2  30         ; mFile.Append( wxID_NEW, "&New", "Erase the current drawing")
+
+178  	LITERAL           9 146         ; 5002
+180  	LITERAL           9 1882         ; "&New"
+182  	LITERAL           9 1883         ; "Erase the current drawing"
+184  	VARIABLE         99  15         ; mfile
+186  	LVAL            106             ; 
+187  	VIRTUAL          48 1881         ; "append"
+189  	CALLMETHOD       50   3   0     ; 3 in, 0 out
+192  	TRACE             2  31         ; mFile.AppendSeparator()
+
+194  	VARIABLE         99  15         ; mfile
+196  	LVAL            106             ; 
+197  	VIRTUAL          48 1884         ; "appendseparator"
+199  	CALLMETHOD       50   0   0     ; 0 in, 0 out
+202  	TRACE             2  32         ; mFile.Append( wxID_EXIT, "E&xit\tAlt-X", "Quit this program")
+
+204  	LITERAL           9 150         ; 5006
+206  	LITERAL           9 1885         ; "E&xit	Alt-X"
+208  	LITERAL           9 1886         ; "Quit this program"
+210  	VARIABLE         99  15         ; mfile
+212  	LVAL            106             ; 
+213  	VIRTUAL          48 1881         ; "append"
+215  	CALLMETHOD       50   3   0     ; 3 in, 0 out
+218  	TRACE             2  35         ; Dim mColor As wxMenu = New wxMenu()
+
+220  	NEW              52 387   0     ; wxmenu, 0 in
+223  	VARIABLE         99  16         ; mcolor
+225  	SET             105             ; 
+226  	TRACE             2  36         ; mColor.Append( ID_RED,    "Red",    "Make the brush red.", 1 )
+
+228  	VARIABLE         99   4         ; id_red
+230  	GET             104             ; 
+231  	LITERAL           9 1887         ; "Red"
+233  	LITERAL           9 1888         ; "Make the brush red."
+235  	INTEGER          11   1         ; 1
+237  	VARIABLE         99  16         ; mcolor
+239  	LVAL            106             ; 
+240  	VIRTUAL          48 1881         ; "append"
+242  	CALLMETHOD       50   4   0     ; 4 in, 0 out
+245  	TRACE             2  37         ; mColor.Append( ID_ORANGE, "Orange", "Make the brush orange.", 1 )
+
+247  	VARIABLE         99   5         ; id_orange
+249  	GET             104             ; 
+250  	LITERAL           9 1889         ; "Orange"
+252  	LITERAL           9 1890         ; "Make the brush orange."
+254  	INTEGER          11   1         ; 1
+256  	VARIABLE         99  16         ; mcolor
+258  	LVAL            106             ; 
+259  	VIRTUAL          48 1881         ; "append"
+261  	CALLMETHOD       50   4   0     ; 4 in, 0 out
+264  	TRACE             2  38         ; mColor.Append( ID_YELLOW, "Yellow", "Make the brush yellow.", 1 )
+
+266  	VARIABLE         99   6         ; id_yellow
+268  	GET             104             ; 
+269  	LITERAL           9 1891         ; "Yellow"
+271  	LITERAL           9 1892         ; "Make the brush yellow."
+273  	INTEGER          11   1         ; 1
+275  	VARIABLE         99  16         ; mcolor
+277  	LVAL            106             ; 
+278  	VIRTUAL          48 1881         ; "append"
+280  	CALLMETHOD       50   4   0     ; 4 in, 0 out
+283  	TRACE             2  39         ; mColor.Append( ID_GREEN,  "Green",  "Make the brush green.", 1 )
+
+285  	VARIABLE         99   7         ; id_green
+287  	GET             104             ; 
+288  	LITERAL           9 1893         ; "Green"
+290  	LITERAL           9 1894         ; "Make the brush green."
+292  	INTEGER          11   1         ; 1
+294  	VARIABLE         99  16         ; mcolor
+296  	LVAL            106             ; 
+297  	VIRTUAL          48 1881         ; "append"
+299  	CALLMETHOD       50   4   0     ; 4 in, 0 out
+302  	TRACE             2  40         ; mColor.Append( ID_BLUE,   "Blue",   "Make the brush blue.", 1 )
+
+304  	VARIABLE         99   8         ; id_blue
+306  	GET             104             ; 
+307  	LITERAL           9 1895         ; "Blue"
+309  	LITERAL           9 1896         ; "Make the brush blue."
+311  	INTEGER          11   1         ; 1
+313  	VARIABLE         99  16         ; mcolor
+315  	LVAL            106             ; 
+316  	VIRTUAL          48 1881         ; "append"
+318  	CALLMETHOD       50   4   0     ; 4 in, 0 out
+321  	TRACE             2  41         ; mColor.Append( ID_PURPLE, "Purple", "Make the brush purple.", 1 )
+
+323  	VARIABLE         99   9         ; id_purple
+325  	GET             104             ; 
+326  	LITERAL           9 1897         ; "Purple"
+328  	LITERAL           9 1898         ; "Make the brush purple."
+330  	INTEGER          11   1         ; 1
+332  	VARIABLE         99  16         ; mcolor
+334  	LVAL            106             ; 
+335  	VIRTUAL          48 1881         ; "append"
+337  	CALLMETHOD       50   4   0     ; 4 in, 0 out
+340  	TRACE             2  42         ; mColor.Append( ID_BLACK,  "Black",  "Make the brush black.", 1 )
+
+342  	VARIABLE         99  10         ; id_black
+344  	GET             104             ; 
+345  	LITERAL           9 1899         ; "Black"
+347  	LITERAL           9 1900         ; "Make the brush black."
+349  	INTEGER          11   1         ; 1
+351  	VARIABLE         99  16         ; mcolor
+353  	LVAL            106             ; 
+354  	VIRTUAL          48 1881         ; "append"
+356  	CALLMETHOD       50   4   0     ; 4 in, 0 out
+359  	TRACE             2  43         ; mColor.Append( ID_WHITE,  "White",  "Make the brush white.", 1 )
+
+361  	VARIABLE         99  11         ; id_white
+363  	GET             104             ; 
+364  	LITERAL           9 1901         ; "White"
+366  	LITERAL           9 1902         ; "Make the brush white."
+368  	INTEGER          11   1         ; 1
+370  	VARIABLE         99  16         ; mcolor
+372  	LVAL            106             ; 
+373  	VIRTUAL          48 1881         ; "append"
+375  	CALLMETHOD       50   4   0     ; 4 in, 0 out
+378  	TRACE             2  44         ; mColor.AppendSeparator()
+
+380  	VARIABLE         99  16         ; mcolor
+382  	LVAL            106             ; 
+383  	VIRTUAL          48 1884         ; "appendseparator"
+385  	CALLMETHOD       50   0   0     ; 0 in, 0 out
+388  	TRACE             2  45         ; mColor.Append( ID_COLOR_DIALOG,  "Other...",  "Choose a color from the color dialog.", 1 )
+
+390  	VARIABLE         99  12         ; id_color_dialog
+392  	GET             104             ; 
+393  	LITERAL           9 1903         ; "Other..."
+395  	LITERAL           9 1904         ; "Choose a color from the color dialog."
+397  	INTEGER          11   1         ; 1
+399  	VARIABLE         99  16         ; mcolor
+401  	LVAL            106             ; 
+402  	VIRTUAL          48 1881         ; "append"
+404  	CALLMETHOD       50   4   0     ; 4 in, 0 out
+407  	TRACE             2  48         ; Dim mHelp As wxMenu = New wxMenu()
+
+409  	NEW              52 387   0     ; wxmenu, 0 in
+412  	VARIABLE         99  17         ; mhelp
+414  	SET             105             ; 
+415  	TRACE             2  49         ; mHelp.Append( wxID_ABOUT, "&About...\tCtrl-A", "Show about dialog")
+
+417  	LITERAL           9 157         ; 5013
+419  	LITERAL           9 1905         ; "&About...	Ctrl-A"
+421  	LITERAL           9 1906         ; "Show about dialog"
+423  	VARIABLE         99  17         ; mhelp
+425  	LVAL            106             ; 
+426  	VIRTUAL          48 1881         ; "append"
+428  	CALLMETHOD       50   3   0     ; 3 in, 0 out
+431  	TRACE             2  52         ; Dim menuBar as wxMenuBar = New wxMenuBar()
+
+433  	NEW              52 388   0     ; wxmenubar, 0 in
+436  	VARIABLE         99  18         ; menubar
+438  	SET             105             ; 
+439  	TRACE             2  53         ; menuBar.Append(mFile, "&File")
+
+441  	VARIABLE         99  15         ; mfile
+443  	GET             104             ; 
+444  	LITERAL           9 1907         ; "&File"
+446  	VARIABLE         99  18         ; menubar
+448  	LVAL            106             ; 
+449  	VIRTUAL          48 1881         ; "append"
+451  	CALLMETHOD       50   2   0     ; 2 in, 0 out
+454  	TRACE             2  54         ; menuBar.Append(mColor, "&Color")
+
+456  	VARIABLE         99  16         ; mcolor
+458  	GET             104             ; 
+459  	LITERAL           9 1908         ; "&Color"
+461  	VARIABLE         99  18         ; menubar
+463  	LVAL            106             ; 
+464  	VIRTUAL          48 1881         ; "append"
+466  	CALLMETHOD       50   2   0     ; 2 in, 0 out
+469  	TRACE             2  55         ; menuBar.Append(mHelp, "&Help")
+
+471  	VARIABLE         99  17         ; mhelp
+473  	GET             104             ; 
+474  	LITERAL           9 1909         ; "&Help"
+476  	VARIABLE         99  18         ; menubar
+478  	LVAL            106             ; 
+479  	VIRTUAL          48 1881         ; "append"
+481  	CALLMETHOD       50   2   0     ; 2 in, 0 out
+484  	TRACE             2  58         ; frame.SetMenuBar(menuBar)
+
+486  	VARIABLE         99  18         ; menubar
+488  	GET             104             ; 
+489  	VARIABLE         99  13         ; frame
+491  	LVAL            106             ; 
+492  	VIRTUAL          48 1910         ; "setmenubar"
+494  	CALLMETHOD       50   1   0     ; 1 in, 0 out
+497  	TRACE             2  62         ; Const   Red     = wxPenFromColorName( "Red", 3, wxSOLID ),
+
+499  	LITERAL           9 1887         ; "Red"
+501  	INTEGER          11   3         ; 3
+503  	LITERAL           9 688         ; 100
+505  	NEWTEMP          53 292   3     ; wxpenfromcolorname, 3 in
+508  	VARIABLE         99  19         ; red
+510  	SET             105             ; 
+511  	LITERAL           9 1889         ; "Orange"
+513  	INTEGER          11   3         ; 3
+515  	LITERAL           9 688         ; 100
+517  	NEWTEMP          53 292   3     ; wxpenfromcolorname, 3 in
+520  	VARIABLE         99  20         ; orange
+522  	SET             105             ; 
+523  	LITERAL           9 1891         ; "Yellow"
+525  	INTEGER          11   3         ; 3
+527  	LITERAL           9 688         ; 100
+529  	NEWTEMP          53 292   3     ; wxpenfromcolorname, 3 in
+532  	VARIABLE         99  21         ; yellow
+534  	SET             105             ; 
+535  	LITERAL           9 1893         ; "Green"
+537  	INTEGER          11   3         ; 3
+539  	LITERAL           9 688         ; 100
+541  	NEWTEMP          53 292   3     ; wxpenfromcolorname, 3 in
+544  	VARIABLE         99  22         ; green
+546  	SET             105             ; 
+547  	LITERAL           9 1895         ; "Blue"
+549  	INTEGER          11   3         ; 3
+551  	LITERAL           9 688         ; 100
+553  	NEWTEMP          53 292   3     ; wxpenfromcolorname, 3 in
+556  	VARIABLE         99  23         ; blue
+558  	SET             105             ; 
+559  	LITERAL           9 1897         ; "Purple"
+561  	INTEGER          11   3         ; 3
+563  	LITERAL           9 688         ; 100
+565  	NEWTEMP          53 292   3     ; wxpenfromcolorname, 3 in
+568  	VARIABLE         99  24         ; purple
+570  	SET             105             ; 
+571  	LITERAL           9 1899         ; "Black"
+573  	INTEGER          11   3         ; 3
+575  	LITERAL           9 688         ; 100
+577  	NEWTEMP          53 292   3     ; wxpenfromcolorname, 3 in
+580  	VARIABLE         99  25         ; black
+582  	SET             105             ; 
+583  	LITERAL           9 1901         ; "White"
+585  	INTEGER          11   3         ; 3
+587  	LITERAL           9 688         ; 100
+589  	NEWTEMP          53 292   3     ; wxpenfromcolorname, 3 in
+592  	VARIABLE         99  26         ; white
+594  	SET             105             ; 
+595  	TRACE             2  72         ; Dim bmpDC as wxMemoryDC = wxMemoryDC()
+
+597  	NEWTEMP          53 303   0     ; wxmemorydc, 0 in
+600  	VARIABLE         99  27         ; bmpdc
+602  	SET             105             ; 
+603  	TRACE             2  73         ; bmpDC.SelectObject( bmp )
+
+605  	VARIABLE         99  14         ; bmp
+607  	GET             104             ; 
+608  	VARIABLE         99  27         ; bmpdc
+610  	LVAL            106             ; 
+611  	VIRTUAL          48 1911         ; "selectobject"
+613  	CALLMETHOD       50   1   0     ; 1 in, 0 out
+616  	TRACE             2  74         ; bmpDC.Clear()
+
+618  	VARIABLE         99  27         ; bmpdc
+620  	LVAL            106             ; 
+621  	VIRTUAL          48 1912         ; "clear"
+623  	CALLMETHOD       50   0   0     ; 0 in, 0 out
+626  	TRACE             2  77         ; bmpDC.SetPen( Black )
+
+628  	VARIABLE         99  25         ; black
+630  	GET             104             ; 
+631  	VARIABLE         99  27         ; bmpdc
+633  	LVAL            106             ; 
+634  	VIRTUAL          48 1913         ; "setpen"
+636  	CALLMETHOD       50   1   0     ; 1 in, 0 out
+639  	TRACE             2  78         ; mColor.Check( ID_BLACK, 1 )
+
+641  	VARIABLE         99  10         ; id_black
+643  	GET             104             ; 
+644  	INTEGER          11   1         ; 1
+646  	VARIABLE         99  16         ; mcolor
+648  	LVAL            106             ; 
+649  	VIRTUAL          48 1914         ; "check"
+651  	CALLMETHOD       50   2   0     ; 2 in, 0 out
+654  	TRACE             2  79         ; dim checkedColor as Number = ID_BLACK
+
+656  	VARIABLE         99  10         ; id_black
+658  	GET             104             ; 
+659  	VARIABLE         99  28         ; checkedcolor
+661  	SET             105             ; 
+662  	TRACE             2  81         ; Dim lastX as Number = 0
+
+664  	INTEGER          11   0         ; 0
+666  	VARIABLE         99  29         ; lastx
+668  	SET             105             ; 
+669  	TRACE             2  82         ; Dim lastY as Number = 0
+
+671  	INTEGER          11   0         ; 0
+673  	VARIABLE         99  30         ; lasty
+675  	SET             105             ; 
+676  	TRACE             2  83         ; Dim mouseDown as Number = 0
+
+678  	INTEGER          11   0         ; 0
+680  	VARIABLE         99  31         ; mousedown
+682  	SET             105             ; 
+683  	VARIABLE         99 -13         ; frame
+685  	GET             104             ; 
+686  	LITERAL           9 1915         ; "leftdown"
+688  	HANDLES         108 4879         ; set onevent as callback
+690  	VARIABLE         99 -13         ; frame
+692  	GET             104             ; 
+693  	LITERAL           9 1916         ; "rightdown"
+695  	HANDLES         108 4879         ; set onevent as callback
+697  	VARIABLE         99 -13         ; frame
+699  	GET             104             ; 
+700  	LITERAL           9 1917         ; "motion"
+702  	HANDLES         108 4879         ; set onevent as callback
+704  	VARIABLE         99 -13         ; frame
+706  	GET             104             ; 
+707  	LITERAL           9 1927         ; "paint"
+709  	HANDLES         108 4880         ; set onpaint as callback
+711  	VARIABLE         99 -13         ; frame
+713  	GET             104             ; 
+714  	LITERAL           9 1928         ; "menuselected"
+716  	LITERAL           9 146         ; 5002
+718  	HANDLESID       109 4881         ; set onnew as callback
+720  	VARIABLE         99 -13         ; frame
+722  	GET             104             ; 
+723  	LITERAL           9 1928         ; "menuselected"
+725  	LITERAL           9 150         ; 5006
+727  	HANDLESID       109 4882         ; set onquit as callback
+729  	VARIABLE         99 -13         ; frame
+731  	GET             104             ; 
+732  	LITERAL           9 1928         ; "menuselected"
+734  	VARIABLE         99  -4         ; id_red
+736  	GET             104             ; 
+737  	HANDLESID       109 4883         ; set oncolor as callback
+739  	VARIABLE         99 -13         ; frame
+741  	GET             104             ; 
+742  	LITERAL           9 1928         ; "menuselected"
+744  	VARIABLE         99  -5         ; id_orange
+746  	GET             104             ; 
+747  	HANDLESID       109 4883         ; set oncolor as callback
+749  	VARIABLE         99 -13         ; frame
+751  	GET             104             ; 
+752  	LITERAL           9 1928         ; "menuselected"
+754  	VARIABLE         99  -6         ; id_yellow
+756  	GET             104             ; 
+757  	HANDLESID       109 4883         ; set oncolor as callback
+759  	VARIABLE         99 -13         ; frame
+761  	GET             104             ; 
+762  	LITERAL           9 1928         ; "menuselected"
+764  	VARIABLE         99  -7         ; id_green
+766  	GET             104             ; 
+767  	HANDLESID       109 4883         ; set oncolor as callback
+769  	VARIABLE         99 -13         ; frame
+771  	GET             104             ; 
+772  	LITERAL           9 1928         ; "menuselected"
+774  	VARIABLE         99  -8         ; id_blue
+776  	GET             104             ; 
+777  	HANDLESID       109 4883         ; set oncolor as callback
+779  	VARIABLE         99 -13         ; frame
+781  	GET             104             ; 
+782  	LITERAL           9 1928         ; "menuselected"
+784  	VARIABLE         99  -9         ; id_purple
+786  	GET             104             ; 
+787  	HANDLESID       109 4883         ; set oncolor as callback
+789  	VARIABLE         99 -13         ; frame
+791  	GET             104             ; 
+792  	LITERAL           9 1928         ; "menuselected"
+794  	VARIABLE         99 -10         ; id_black
+796  	GET             104             ; 
+797  	HANDLESID       109 4883         ; set oncolor as callback
+799  	VARIABLE         99 -13         ; frame
+801  	GET             104             ; 
+802  	LITERAL           9 1928         ; "menuselected"
+804  	VARIABLE         99 -11         ; id_white
+806  	GET             104             ; 
+807  	HANDLESID       109 4883         ; set oncolor as callback
+809  	VARIABLE         99 -13         ; frame
+811  	GET             104             ; 
+812  	LITERAL           9 1928         ; "menuselected"
+814  	VARIABLE         99 -12         ; id_color_dialog
+816  	GET             104             ; 
+817  	HANDLESID       109 4884         ; set oncolordialog as callback
+819  	VARIABLE         99 -13         ; frame
+821  	GET             104             ; 
+822  	LITERAL           9 1928         ; "menuselected"
+824  	LITERAL           9 157         ; 5013
+826  	HANDLESID       109 4885         ; set onabout as callback
+828  	TRACE             2 229         ; frame.Show(True)
+
+830  	LITERAL           9   1         ; 1
+832  	VARIABLE         99  13         ; frame
+834  	LVAL            106             ; 
+835  	VIRTUAL          48 1938         ; "show"
+837  	CALLMETHOD       50   1   0     ; 1 in, 0 out
+840  	END               4             ; 
+
+_global:onevent, parms: 1, locals: 6
+107 6 311 2 91 99 1 106 48 1918 50 0 1 99 2 105 2 92 99 1 106 48 1919 50 0 1 99 3 105 2 93 99 1 106 48 1920 50 0 1 99 4 105 2 96 99 4 104 99 5 105 2 97 9 1213 87 5 3 33 107 2 99 99 -31 104 35 98 2 100 99 -13 106 48 1921 50 0 0 2 101 11 0 99 -31 105 2 102 99 -29 104 99 -30 104 99 2 104 99 3 104 99 -27 106 48 1922 50 4 0 2 103 99 -13 104 53 311 1 99 6 105 2 104 99 6 106 48 1923 50 0 0 2 105 11 0 11 0 99 -2 104 99 -3 104 99 -27 104 11 0 11 0 99 6 106 48 1924 50 7 0 2 106 99 6 106 48 1925 50 0 0 33 165 2 109 9 1190 87 5 3 33 44 2 110 99 -31 104 81 35 34 2 111 11 1 99 -31 105 2 112 99 -13 106 48 1926 50 0 0 2 113 99 2 104 99 -29 105 2 114 99 3 104 99 -30 105 33 113 2 117 9 1197 87 5 3 33 104 2 118 99 -31 104 35 97 2 119 99 -13 104 53 311 1 99 6 105 2 120 99 -29 104 99 -30 104 99 2 104 99 3 104 99 -27 106 48 1922 50 4 0 2 121 99 6 106 48 1923 50 0 0 2 122 11 0 11 0 99 -2 104 99 -3 104 99 -27 104 11 0 11 0 99 6 106 48 1924 50 7 0 2 123 99 6 106 48 1925 50 0 0 2 124 99 2 104 99 -29 105 2 125 99 3 104 99 -30 105 98 5 20 
+0    	SETTYPE         107   6         ; dc must be wxclientdc
+3    	TRACE             2  91         ;     Dim x = event.GetX()
+
+5    	VARIABLE         99   1         ; event
+7    	LVAL            106             ; 
+8    	VIRTUAL          48 1918         ; "getx"
+10   	CALLMETHOD       50   0   1     ; 0 in, 1 out
+13   	VARIABLE         99   2         ; x
+15   	SET             105             ; 
+16   	TRACE             2  92         ;     Dim y = event.GetY()
+
+18   	VARIABLE         99   1         ; event
+20   	LVAL            106             ; 
+21   	VIRTUAL          48 1919         ; "gety"
+23   	CALLMETHOD       50   0   1     ; 0 in, 1 out
+26   	VARIABLE         99   3         ; y
+28   	SET             105             ; 
+29   	TRACE             2  93         ;     Dim type = event.GetEventType()
+
+31   	VARIABLE         99   1         ; event
+33   	LVAL            106             ; 
+34   	VIRTUAL          48 1920         ; "geteventtype"
+36   	CALLMETHOD       50   0   1     ; 0 in, 1 out
+39   	VARIABLE         99   4         ; type
+41   	SET             105             ; 
+42   	TRACE             2  96         ;     Select Case type
+
+44   	VARIABLE         99   4         ; type
+46   	GET             104             ; 
+47   	VARIABLE         99   5         ; _select
+49   	SET             105             ; 
+50   	TRACE             2  97         ;     Case wxEVT_LEFT_UP
+
+52   	LITERAL           9 1213         ; 10020
+54   	CASE             87   5   3     ; _select, to 59
+57   	JMP              33 107         ; to 165
+59   	TRACE             2  99         ;         If mouseDown Then
+
+61   	VARIABLE         99 -31         ; mousedown
+63   	GET             104             ; 
+64   	JMPF             35  98         ; to 163
+66   	TRACE             2 100         ;             frame.ReleaseMouse()
+
+68   	VARIABLE         99 -13         ; frame
+70   	LVAL            106             ; 
+71   	VIRTUAL          48 1921         ; "releasemouse"
+73   	CALLMETHOD       50   0   0     ; 0 in, 0 out
+76   	TRACE             2 101         ;             mouseDown = 0
+
+78   	INTEGER          11   0         ; 0
+80   	VARIABLE         99 -31         ; mousedown
+82   	SET             105             ; 
+83   	TRACE             2 102         ;             bmpDC.DrawLine( lastX, lastY, x, y )
+
+85   	VARIABLE         99 -29         ; lastx
+87   	GET             104             ; 
+88   	VARIABLE         99 -30         ; lasty
+90   	GET             104             ; 
+91   	VARIABLE         99   2         ; x
+93   	GET             104             ; 
+94   	VARIABLE         99   3         ; y
+96   	GET             104             ; 
+97   	VARIABLE         99 -27         ; bmpdc
+99   	LVAL            106             ; 
+100  	VIRTUAL          48 1922         ; "drawline"
+102  	CALLMETHOD       50   4   0     ; 4 in, 0 out
+105  	TRACE             2 103         ;             Dim dc as wxClientDC = wxClientDC( frame )
+
+107  	VARIABLE         99 -13         ; frame
+109  	GET             104             ; 
+110  	NEWTEMP          53 311   1     ; wxclientdc, 1 in
+113  	VARIABLE         99   6         ; dc
+115  	SET             105             ; 
+116  	TRACE             2 104         ;             dc.BeginDrawing()
+
+118  	VARIABLE         99   6         ; dc
+120  	LVAL            106             ; 
+121  	VIRTUAL          48 1923         ; "begindrawing"
+123  	CALLMETHOD       50   0   0     ; 0 in, 0 out
+126  	TRACE             2 105         ;             dc.Blit( 0, 0, bmpX, bmpY, bmpDC, 0, 0 )
+
+128  	INTEGER          11   0         ; 0
+130  	INTEGER          11   0         ; 0
+132  	VARIABLE         99  -2         ; bmpx
+134  	GET             104             ; 
+135  	VARIABLE         99  -3         ; bmpy
+137  	GET             104             ; 
+138  	VARIABLE         99 -27         ; bmpdc
+140  	GET             104             ; 
+141  	INTEGER          11   0         ; 0
+143  	INTEGER          11   0         ; 0
+145  	VARIABLE         99   6         ; dc
+147  	LVAL            106             ; 
+148  	VIRTUAL          48 1924         ; "blit"
+150  	CALLMETHOD       50   7   0     ; 7 in, 0 out
+153  	TRACE             2 106         ;             dc.EndDrawing()
+
+155  	VARIABLE         99   6         ; dc
+157  	LVAL            106             ; 
+158  	VIRTUAL          48 1925         ; "enddrawing"
+160  	CALLMETHOD       50   0   0     ; 0 in, 0 out
+163  	JMP              33 165         ; to 329
+165  	TRACE             2 109         ;     Case wxEVT_LEFT_DOWN
+
+167  	LITERAL           9 1190         ; 10019
+169  	CASE             87   5   3     ; _select, to 174
+172  	JMP              33  44         ; to 217
+174  	TRACE             2 110         ;         If !mouseDown Then
+
+176  	VARIABLE         99 -31         ; mousedown
+178  	GET             104             ; 
+179  	NOT              81             ; 
+180  	JMPF             35  34         ; to 215
+182  	TRACE             2 111         ;             mouseDown = 1
+
+184  	INTEGER          11   1         ; 1
+186  	VARIABLE         99 -31         ; mousedown
+188  	SET             105             ; 
+189  	TRACE             2 112         ;             frame.CaptureMouse()
+
+191  	VARIABLE         99 -13         ; frame
+193  	LVAL            106             ; 
+194  	VIRTUAL          48 1926         ; "capturemouse"
+196  	CALLMETHOD       50   0   0     ; 0 in, 0 out
+199  	TRACE             2 113         ;             lastX = x
+
+201  	VARIABLE         99   2         ; x
+203  	GET             104             ; 
+204  	VARIABLE         99 -29         ; lastx
+206  	SET             105             ; 
+207  	TRACE             2 114         ;             lastY = y
+
+209  	VARIABLE         99   3         ; y
+211  	GET             104             ; 
+212  	VARIABLE         99 -30         ; lasty
+214  	SET             105             ; 
+215  	JMP              33 113         ; to 329
+217  	TRACE             2 117         ;     Case wxEVT_MOTION
+
+219  	LITERAL           9 1197         ; 10025
+221  	CASE             87   5   3     ; _select, to 226
+224  	JMP              33 104         ; to 329
+226  	TRACE             2 118         ;         If mouseDown Then
+
+228  	VARIABLE         99 -31         ; mousedown
+230  	GET             104             ; 
+231  	JMPF             35  97         ; to 329
+233  	TRACE             2 119         ;             dc = wxClientDC( frame )
+
+235  	VARIABLE         99 -13         ; frame
+237  	GET             104             ; 
+238  	NEWTEMP          53 311   1     ; wxclientdc, 1 in
+241  	VARIABLE         99   6         ; dc
+243  	SET             105             ; 
+244  	TRACE             2 120         ;             bmpDC.DrawLine( lastX, lastY, x, y )
+
+246  	VARIABLE         99 -29         ; lastx
+248  	GET             104             ; 
+249  	VARIABLE         99 -30         ; lasty
+251  	GET             104             ; 
+252  	VARIABLE         99   2         ; x
+254  	GET             104             ; 
+255  	VARIABLE         99   3         ; y
+257  	GET             104             ; 
+258  	VARIABLE         99 -27         ; bmpdc
+260  	LVAL            106             ; 
+261  	VIRTUAL          48 1922         ; "drawline"
+263  	CALLMETHOD       50   4   0     ; 4 in, 0 out
+266  	TRACE             2 121         ;             dc.BeginDrawing()
+
+268  	VARIABLE         99   6         ; dc
+270  	LVAL            106             ; 
+271  	VIRTUAL          48 1923         ; "begindrawing"
+273  	CALLMETHOD       50   0   0     ; 0 in, 0 out
+276  	TRACE             2 122         ;             dc.Blit( 0, 0, bmpX, bmpY, bmpDC, 0, 0 )
+
+278  	INTEGER          11   0         ; 0
+280  	INTEGER          11   0         ; 0
+282  	VARIABLE         99  -2         ; bmpx
+284  	GET             104             ; 
+285  	VARIABLE         99  -3         ; bmpy
+287  	GET             104             ; 
+288  	VARIABLE         99 -27         ; bmpdc
+290  	GET             104             ; 
+291  	INTEGER          11   0         ; 0
+293  	INTEGER          11   0         ; 0
+295  	VARIABLE         99   6         ; dc
+297  	LVAL            106             ; 
+298  	VIRTUAL          48 1924         ; "blit"
+300  	CALLMETHOD       50   7   0     ; 7 in, 0 out
+303  	TRACE             2 123         ;             dc.EndDrawing()
+
+305  	VARIABLE         99   6         ; dc
+307  	LVAL            106             ; 
+308  	VIRTUAL          48 1925         ; "enddrawing"
+310  	CALLMETHOD       50   0   0     ; 0 in, 0 out
+313  	TRACE             2 124         ;             lastX = x
+
+315  	VARIABLE         99   2         ; x
+317  	GET             104             ; 
+318  	VARIABLE         99 -29         ; lastx
+320  	SET             105             ; 
+321  	TRACE             2 125         ;             lastY = y
+
+323  	VARIABLE         99   3         ; y
+325  	GET             104             ; 
+326  	VARIABLE         99 -30         ; lasty
+328  	SET             105             ; 
+329  	FREE             98   5         ; _select
+331  	RETURN           20             ; 
+
+_global:onpaint, parms: 1, locals: 2
+107 2 312 2 135 99 -13 104 53 312 1 99 2 105 2 136 99 2 106 48 1923 50 0 0 2 139 11 0 11 0 99 -2 104 99 -3 104 99 -27 104 11 0 11 0 99 2 106 48 1924 50 7 0 2 141 99 2 106 48 1925 50 0 0 20 
+0    	SETTYPE         107   2         ; dc must be wxpaintdc
+3    	TRACE             2 135         ;     Dim dc as wxPaintDC = wxPaintDC( frame )
+
+5    	VARIABLE         99 -13         ; frame
+7    	GET             104             ; 
+8    	NEWTEMP          53 312   1     ; wxpaintdc, 1 in
+11   	VARIABLE         99   2         ; dc
+13   	SET             105             ; 
+14   	TRACE             2 136         ;     dc.BeginDrawing()
+
+16   	VARIABLE         99   2         ; dc
+18   	LVAL            106             ; 
+19   	VIRTUAL          48 1923         ; "begindrawing"
+21   	CALLMETHOD       50   0   0     ; 0 in, 0 out
+24   	TRACE             2 139         ;     dc.Blit( 0, 0, bmpX, bmpY, bmpDC, 0, 0 )
+
+26   	INTEGER          11   0         ; 0
+28   	INTEGER          11   0         ; 0
+30   	VARIABLE         99  -2         ; bmpx
+32   	GET             104             ; 
+33   	VARIABLE         99  -3         ; bmpy
+35   	GET             104             ; 
+36   	VARIABLE         99 -27         ; bmpdc
+38   	GET             104             ; 
+39   	INTEGER          11   0         ; 0
+41   	INTEGER          11   0         ; 0
+43   	VARIABLE         99   2         ; dc
+45   	LVAL            106             ; 
+46   	VIRTUAL          48 1924         ; "blit"
+48   	CALLMETHOD       50   7   0     ; 7 in, 0 out
+51   	TRACE             2 141         ;     dc.EndDrawing()
+
+53   	VARIABLE         99   2         ; dc
+55   	LVAL            106             ; 
+56   	VIRTUAL          48 1925         ; "enddrawing"
+58   	CALLMETHOD       50   0   0     ; 0 in, 0 out
+61   	RETURN           20             ; 
+
+_global:onnew, parms: 1, locals: 2
+107 2 311 2 148 99 -27 106 48 1912 50 0 0 2 149 99 -13 104 53 311 1 99 2 105 2 150 11 0 11 0 99 -2 104 99 -3 104 99 -27 104 11 0 11 0 99 2 106 48 1924 50 7 0 2 151 11 0 99 -29 105 2 152 11 0 99 -30 105 20 
+0    	SETTYPE         107   2         ; dc must be wxclientdc
+3    	TRACE             2 148         ;     bmpDC.Clear()
+
+5    	VARIABLE         99 -27         ; bmpdc
+7    	LVAL            106             ; 
+8    	VIRTUAL          48 1912         ; "clear"
+10   	CALLMETHOD       50   0   0     ; 0 in, 0 out
+13   	TRACE             2 149         ;     Dim dc as wxClientDC = wxClientDC( frame )
+
+15   	VARIABLE         99 -13         ; frame
+17   	GET             104             ; 
+18   	NEWTEMP          53 311   1     ; wxclientdc, 1 in
+21   	VARIABLE         99   2         ; dc
+23   	SET             105             ; 
+24   	TRACE             2 150         ;     dc.Blit( 0, 0, bmpX, bmpY, bmpDC, 0, 0 )
+
+26   	INTEGER          11   0         ; 0
+28   	INTEGER          11   0         ; 0
+30   	VARIABLE         99  -2         ; bmpx
+32   	GET             104             ; 
+33   	VARIABLE         99  -3         ; bmpy
+35   	GET             104             ; 
+36   	VARIABLE         99 -27         ; bmpdc
+38   	GET             104             ; 
+39   	INTEGER          11   0         ; 0
+41   	INTEGER          11   0         ; 0
+43   	VARIABLE         99   2         ; dc
+45   	LVAL            106             ; 
+46   	VIRTUAL          48 1924         ; "blit"
+48   	CALLMETHOD       50   7   0     ; 7 in, 0 out
+51   	TRACE             2 151         ;     lastX = 0
+
+53   	INTEGER          11   0         ; 0
+55   	VARIABLE         99 -29         ; lastx
+57   	SET             105             ; 
+58   	TRACE             2 152         ;     lastY = 0
+
+60   	INTEGER          11   0         ; 0
+62   	VARIABLE         99 -30         ; lasty
+64   	SET             105             ; 
+65   	RETURN           20             ; 
+
+_global:onquit, parms: 1, locals: 1
+2 158 9 1 99 -13 106 48 1929 50 1 0 20 
+0    	TRACE             2 158         ;     frame.Close(True)
+
+2    	LITERAL           9   1         ; 1
+4    	VARIABLE         99 -13         ; frame
+6    	LVAL            106             ; 
+7    	VIRTUAL          48 1929         ; "close"
+9    	CALLMETHOD       50   1   0     ; 1 in, 0 out
+12   	RETURN           20             ; 
+
+_global:oncolor, parms: 1, locals: 3
+107 2 5 2 171 99 1 106 48 1930 50 0 1 99 2 105 2 173 99 2 104 99 3 105 2 174 99 -4 104 87 3 3 33 16 2 174 99 -19 104 99 -27 106 48 1913 50 1 0 33 174 2 175 99 -5 104 87 3 3 33 16 2 175 99 -20 104 99 -27 106 48 1913 50 1 0 33 149 2 176 99 -6 104 87 3 3 33 16 2 176 99 -21 104 99 -27 106 48 1913 50 1 0 33 124 2 177 99 -7 104 87 3 3 33 16 2 177 99 -22 104 99 -27 106 48 1913 50 1 0 33 99 2 178 99 -8 104 87 3 3 33 16 2 178 99 -23 104 99 -27 106 48 1913 50 1 0 33 74 2 179 99 -9 104 87 3 3 33 16 2 179 99 -24 104 99 -27 106 48 1913 50 1 0 33 49 2 180 99 -10 104 87 3 3 33 16 2 180 99 -25 104 99 -27 106 48 1913 50 1 0 33 24 2 181 99 -11 104 87 3 3 33 14 2 181 99 -26 104 99 -27 106 48 1913 50 1 0 98 3 2 185 99 -28 104 11 0 99 -16 106 48 1914 50 2 0 2 186 99 2 104 99 -28 105 2 187 99 -28 104 11 1 99 -16 106 48 1914 50 2 0 20 
+0    	SETTYPE         107   2         ; id must be number
+3    	TRACE             2 171         ;     Dim id as Number = event.GetId()
+
+5    	VARIABLE         99   1         ; event
+7    	LVAL            106             ; 
+8    	VIRTUAL          48 1930         ; "getid"
+10   	CALLMETHOD       50   0   1     ; 0 in, 1 out
+13   	VARIABLE         99   2         ; id
+15   	SET             105             ; 
+16   	TRACE             2 173         ;     Select Case id
+
+18   	VARIABLE         99   2         ; id
+20   	GET             104             ; 
+21   	VARIABLE         99   3         ; _select
+23   	SET             105             ; 
+24   	TRACE             2 174         ;     Case ID_RED:      bmpDC.SetPen( Red )
+
+26   	VARIABLE         99  -4         ; id_red
+28   	GET             104             ; 
+29   	CASE             87   3   3     ; _select, to 34
+32   	JMP              33  16         ; to 49
+34   	TRACE             2 174         ;     Case ID_RED:      bmpDC.SetPen( Red )
+
+36   	VARIABLE         99 -19         ; red
+38   	GET             104             ; 
+39   	VARIABLE         99 -27         ; bmpdc
+41   	LVAL            106             ; 
+42   	VIRTUAL          48 1913         ; "setpen"
+44   	CALLMETHOD       50   1   0     ; 1 in, 0 out
+47   	JMP              33 174         ; to 222
+49   	TRACE             2 175         ;     Case ID_ORANGE:   bmpDC.SetPen( Orange )
+
+51   	VARIABLE         99  -5         ; id_orange
+53   	GET             104             ; 
+54   	CASE             87   3   3     ; _select, to 59
+57   	JMP              33  16         ; to 74
+59   	TRACE             2 175         ;     Case ID_ORANGE:   bmpDC.SetPen( Orange )
+
+61   	VARIABLE         99 -20         ; orange
+63   	GET             104             ; 
+64   	VARIABLE         99 -27         ; bmpdc
+66   	LVAL            106             ; 
+67   	VIRTUAL          48 1913         ; "setpen"
+69   	CALLMETHOD       50   1   0     ; 1 in, 0 out
+72   	JMP              33 149         ; to 222
+74   	TRACE             2 176         ;     Case ID_YELLOW:   bmpDC.SetPen( Yellow )
+
+76   	VARIABLE         99  -6         ; id_yellow
+78   	GET             104             ; 
+79   	CASE             87   3   3     ; _select, to 84
+82   	JMP              33  16         ; to 99
+84   	TRACE             2 176         ;     Case ID_YELLOW:   bmpDC.SetPen( Yellow )
+
+86   	VARIABLE         99 -21         ; yellow
+88   	GET             104             ; 
+89   	VARIABLE         99 -27         ; bmpdc
+91   	LVAL            106             ; 
+92   	VIRTUAL          48 1913         ; "setpen"
+94   	CALLMETHOD       50   1   0     ; 1 in, 0 out
+97   	JMP              33 124         ; to 222
+99   	TRACE             2 177         ;     Case ID_GREEN:    bmpDC.SetPen( Green )
+
+101  	VARIABLE         99  -7         ; id_green
+103  	GET             104             ; 
+104  	CASE             87   3   3     ; _select, to 109
+107  	JMP              33  16         ; to 124
+109  	TRACE             2 177         ;     Case ID_GREEN:    bmpDC.SetPen( Green )
+
+111  	VARIABLE         99 -22         ; green
+113  	GET             104             ; 
+114  	VARIABLE         99 -27         ; bmpdc
+116  	LVAL            106             ; 
+117  	VIRTUAL          48 1913         ; "setpen"
+119  	CALLMETHOD       50   1   0     ; 1 in, 0 out
+122  	JMP              33  99         ; to 222
+124  	TRACE             2 178         ;     Case ID_BLUE:     bmpDC.SetPen( Blue )
+
+126  	VARIABLE         99  -8         ; id_blue
+128  	GET             104             ; 
+129  	CASE             87   3   3     ; _select, to 134
+132  	JMP              33  16         ; to 149
+134  	TRACE             2 178         ;     Case ID_BLUE:     bmpDC.SetPen( Blue )
+
+136  	VARIABLE         99 -23         ; blue
+138  	GET             104             ; 
+139  	VARIABLE         99 -27         ; bmpdc
+141  	LVAL            106             ; 
+142  	VIRTUAL          48 1913         ; "setpen"
+144  	CALLMETHOD       50   1   0     ; 1 in, 0 out
+147  	JMP              33  74         ; to 222
+149  	TRACE             2 179         ;     Case ID_PURPLE:   bmpDC.SetPen( Purple )
+
+151  	VARIABLE         99  -9         ; id_purple
+153  	GET             104             ; 
+154  	CASE             87   3   3     ; _select, to 159
+157  	JMP              33  16         ; to 174
+159  	TRACE             2 179         ;     Case ID_PURPLE:   bmpDC.SetPen( Purple )
+
+161  	VARIABLE         99 -24         ; purple
+163  	GET             104             ; 
+164  	VARIABLE         99 -27         ; bmpdc
+166  	LVAL            106             ; 
+167  	VIRTUAL          48 1913         ; "setpen"
+169  	CALLMETHOD       50   1   0     ; 1 in, 0 out
+172  	JMP              33  49         ; to 222
+174  	TRACE             2 180         ;     Case ID_BLACK:    bmpDC.SetPen( Black )
+
+176  	VARIABLE         99 -10         ; id_black
+178  	GET             104             ; 
+179  	CASE             87   3   3     ; _select, to 184
+182  	JMP              33  16         ; to 199
+184  	TRACE             2 180         ;     Case ID_BLACK:    bmpDC.SetPen( Black )
+
+186  	VARIABLE         99 -25         ; black
+188  	GET             104             ; 
+189  	VARIABLE         99 -27         ; bmpdc
+191  	LVAL            106             ; 
+192  	VIRTUAL          48 1913         ; "setpen"
+194  	CALLMETHOD       50   1   0     ; 1 in, 0 out
+197  	JMP              33  24         ; to 222
+199  	TRACE             2 181         ;     Case ID_WHITE:    bmpDC.SetPen( White )
+
+201  	VARIABLE         99 -11         ; id_white
+203  	GET             104             ; 
+204  	CASE             87   3   3     ; _select, to 209
+207  	JMP              33  14         ; to 222
+209  	TRACE             2 181         ;     Case ID_WHITE:    bmpDC.SetPen( White )
+
+211  	VARIABLE         99 -26         ; white
+213  	GET             104             ; 
+214  	VARIABLE         99 -27         ; bmpdc
+216  	LVAL            106             ; 
+217  	VIRTUAL          48 1913         ; "setpen"
+219  	CALLMETHOD       50   1   0     ; 1 in, 0 out
+222  	FREE             98   3         ; _select
+224  	TRACE             2 185         ;     mColor.Check( checkedColor, 0 )
+
+226  	VARIABLE         99 -28         ; checkedcolor
+228  	GET             104             ; 
+229  	INTEGER          11   0         ; 0
+231  	VARIABLE         99 -16         ; mcolor
+233  	LVAL            106             ; 
+234  	VIRTUAL          48 1914         ; "check"
+236  	CALLMETHOD       50   2   0     ; 2 in, 0 out
+239  	TRACE             2 186         ;     checkedColor = id
+
+241  	VARIABLE         99   2         ; id
+243  	GET             104             ; 
+244  	VARIABLE         99 -28         ; checkedcolor
+246  	SET             105             ; 
+247  	TRACE             2 187         ;     mColor.Check( checkedColor, 1 )
+
+249  	VARIABLE         99 -28         ; checkedcolor
+251  	GET             104             ; 
+252  	INTEGER          11   1         ; 1
+254  	VARIABLE         99 -16         ; mcolor
+256  	LVAL            106             ; 
+257  	VIRTUAL          48 1914         ; "check"
+259  	CALLMETHOD       50   2   0     ; 2 in, 0 out
+262  	RETURN           20             ; 
+
+_global:oncolordialog, parms: 1, locals: 6
+107 5 288 107 4 286 107 3 284 107 2 376 2 194 99 -13 104 52 376 1 99 2 105 2 195 99 2 106 48 1931 50 0 1 9 178 75 35 100 2 198 99 2 106 48 1932 50 0 1 99 3 105 2 199 99 3 106 48 1933 50 0 1 99 4 105 2 202 99 4 104 11 3 9 688 53 290 3 99 5 105 2 203 99 5 104 99 -27 106 48 1913 50 1 0 2 206 99 -28 104 11 0 99 -16 106 48 1914 50 2 0 2 207 99 1 106 48 1930 50 0 1 99 -28 105 2 208 99 -28 104 11 1 99 -16 106 48 1914 50 2 0 33 44 2 212 99 1 106 48 1930 50 0 1 99 6 105 2 213 99 6 104 11 0 99 -16 106 48 1914 50 2 0 2 214 99 -28 104 11 1 99 -16 106 48 1914 50 2 0 20 
+0    	SETTYPE         107   5         ; custompen must be wxpen
+3    	SETTYPE         107   4         ; color must be wxcolor
+6    	SETTYPE         107   3         ; colordata must be wxcolordata
+9    	SETTYPE         107   2         ; dialog must be wxcolordialog
+12   	TRACE             2 194         ;     Dim dialog as wxColorDialog = New wxColorDialog( frame )
+
+14   	VARIABLE         99 -13         ; frame
+16   	GET             104             ; 
+17   	NEW              52 376   1     ; wxcolordialog, 1 in
+20   	VARIABLE         99   2         ; dialog
+22   	SET             105             ; 
+23   	TRACE             2 195         ;     If dialog.ShowModal() = wxID_OK Then
+
+25   	VARIABLE         99   2         ; dialog
+27   	LVAL            106             ; 
+28   	VIRTUAL          48 1931         ; "showmodal"
+30   	CALLMETHOD       50   0   1     ; 0 in, 1 out
+33   	LITERAL           9 178         ; 5100
+35   	EQ               75             ; 
+36   	JMPF             35 100         ; to 137
+38   	TRACE             2 198         ;         Dim colorData as wxColorData = dialog.GetColorData()
+
+40   	VARIABLE         99   2         ; dialog
+42   	LVAL            106             ; 
+43   	VIRTUAL          48 1932         ; "getcolordata"
+45   	CALLMETHOD       50   0   1     ; 0 in, 1 out
+48   	VARIABLE         99   3         ; colordata
+50   	SET             105             ; 
+51   	TRACE             2 199         ;         Dim color as wxColor = colorData.GetColor()
+
+53   	VARIABLE         99   3         ; colordata
+55   	LVAL            106             ; 
+56   	VIRTUAL          48 1933         ; "getcolor"
+58   	CALLMETHOD       50   0   1     ; 0 in, 1 out
+61   	VARIABLE         99   4         ; color
+63   	SET             105             ; 
+64   	TRACE             2 202         ;         Dim customPen as wxPen = wxPenFromColor( color, 3, wxSOLID )
+
+66   	VARIABLE         99   4         ; color
+68   	GET             104             ; 
+69   	INTEGER          11   3         ; 3
+71   	LITERAL           9 688         ; 100
+73   	NEWTEMP          53 290   3     ; wxpenfromcolor, 3 in
+76   	VARIABLE         99   5         ; custompen
+78   	SET             105             ; 
+79   	TRACE             2 203         ;         bmpDC.SetPen( customPen )
+
+81   	VARIABLE         99   5         ; custompen
+83   	GET             104             ; 
+84   	VARIABLE         99 -27         ; bmpdc
+86   	LVAL            106             ; 
+87   	VIRTUAL          48 1913         ; "setpen"
+89   	CALLMETHOD       50   1   0     ; 1 in, 0 out
+92   	TRACE             2 206         ;         mColor.Check( checkedColor, 0 )
+
+94   	VARIABLE         99 -28         ; checkedcolor
+96   	GET             104             ; 
+97   	INTEGER          11   0         ; 0
+99   	VARIABLE         99 -16         ; mcolor
+101  	LVAL            106             ; 
+102  	VIRTUAL          48 1914         ; "check"
+104  	CALLMETHOD       50   2   0     ; 2 in, 0 out
+107  	TRACE             2 207         ;         checkedColor = event.GetId()
+
+109  	VARIABLE         99   1         ; event
+111  	LVAL            106             ; 
+112  	VIRTUAL          48 1930         ; "getid"
+114  	CALLMETHOD       50   0   1     ; 0 in, 1 out
+117  	VARIABLE         99 -28         ; checkedcolor
+119  	SET             105             ; 
+120  	TRACE             2 208         ;         mColor.Check( checkedColor, 1 )
+
+122  	VARIABLE         99 -28         ; checkedcolor
+124  	GET             104             ; 
+125  	INTEGER          11   1         ; 1
+127  	VARIABLE         99 -16         ; mcolor
+129  	LVAL            106             ; 
+130  	VIRTUAL          48 1914         ; "check"
+132  	CALLMETHOD       50   2   0     ; 2 in, 0 out
+135  	JMP              33  44         ; to 180
+137  	TRACE             2 212         ;         Dim id = event.GetId()
+
+139  	VARIABLE         99   1         ; event
+141  	LVAL            106             ; 
+142  	VIRTUAL          48 1930         ; "getid"
+144  	CALLMETHOD       50   0   1     ; 0 in, 1 out
+147  	VARIABLE         99   6         ; id
+149  	SET             105             ; 
+150  	TRACE             2 213         ;         mColor.Check( id, 0 )
+
+152  	VARIABLE         99   6         ; id
+154  	GET             104             ; 
+155  	INTEGER          11   0         ; 0
+157  	VARIABLE         99 -16         ; mcolor
+159  	LVAL            106             ; 
+160  	VIRTUAL          48 1914         ; "check"
+162  	CALLMETHOD       50   2   0     ; 2 in, 0 out
+165  	TRACE             2 214         ;         mColor.Check( checkedColor, 1 )
+
+167  	VARIABLE         99 -28         ; checkedcolor
+169  	GET             104             ; 
+170  	INTEGER          11   1         ; 1
+172  	VARIABLE         99 -16         ; mcolor
+174  	LVAL            106             ; 
+175  	VIRTUAL          48 1914         ; "check"
+177  	CALLMETHOD       50   2   0     ; 2 in, 0 out
+180  	RETURN           20             ; 
+
+_global:onabout, parms: 1, locals: 2
+107 2 6 2 223 9 1934 9 1935 65 9 1936 65 99 2 105 2 226 99 2 104 9 1937 9 345 9 357 56 99 -13 104 18 488 19 4 0 20 
+0    	SETTYPE         107   2         ; msg must be string
+3    	TRACE             2 223         ;     Dim msg as String = "Simple Scribble program.\n" &
+
+5    	LITERAL           9 1934         ; "Simple Scribble program.
+"
+7    	LITERAL           9 1935         ; "Click on the window's client area, and drag the mouse
+"
+9    	CONCAT           65             ; 
+10   	LITERAL           9 1936         ; "around to draw a picture."
+12   	CONCAT           65             ; 
+13   	VARIABLE         99   2         ; msg
+15   	SET             105             ; 
+16   	TRACE             2 226         ;     wxMessageBox( msg, "About Scribble", wxOK + wxICON_INFORMATION, frame )
+
+18   	VARIABLE         99   2         ; msg
+20   	GET             104             ; 
+21   	LITERAL           9 1937         ; "About Scribble"
+23   	LITERAL           9 345         ; 4
+25   	LITERAL           9 357         ; 2048
+27   	ADD              56             ; 
+28   	VARIABLE         99 -13         ; frame
+30   	GET             104             ; 
+31   	ROUTINE          18 488         ; _global.wxmessagebox
+33   	CALL             19   4   0     ; 4 in 0 out
+36   	RETURN           20             ; 
+

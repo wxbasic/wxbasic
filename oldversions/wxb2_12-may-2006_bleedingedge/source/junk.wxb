@@ -1,0 +1,2 @@
+dim arr[4] = { "cat", "dog", "fish" }
+arr[1] = "monkey"

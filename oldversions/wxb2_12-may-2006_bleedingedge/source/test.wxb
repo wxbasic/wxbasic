@@ -1,0 +1,31 @@
+option Explicit
+
+dim frame as wxFrame = new wxFrame(nothing, -1, "Labeltest"),
+mBar as wxMenuBar = new wxMenuBar(),
+fileMenu as wxMenu = new wxMenu()
+
+frame.SetMenuBar(mBar)
+mBar.Append(fileMenu, "File")
+fileMenu.Append(1, "/home/ducke/wxeditor.wxb", "")
+print fileMenu.GetLabel(1)
+print fileMenu.FindItem("/home/ducke/wxeditor.wxb")
+
+dim buffer as table = {}
+buffer[1] = new wxColour(100, 100, 100)
+frame.Show(1)
+
+sub setColour()
+  dim colourdata as wxColourData = new wxColourData()
+  colourdata.SetCustomColour(1, buffer[1])
+  colourdata.SetColour(buffer[1])
+  dim dialog as wxColourDialog = new wxColourDialog(frame, colourdata)
+  if dialog.ShowModal() = wxID_OK then
+    colourdata = dialog.GetColourData()
+    buffer[1] = colourdata.GetColour()
+  end if
+end sub
+
+SetColour()
+? buffer
+SetColour() 
+? buffer

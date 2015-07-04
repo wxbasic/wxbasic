@@ -1,0 +1,2 @@
+dim frame = new wxFrame( Nothing, -1, "Test App", wxPoint(50, 50),wxSize(250, 140))
+frame.seticon(wxicon("mondrian.ico"))

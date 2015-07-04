@@ -1,0 +1,38 @@
+frame = new wxFrame(Nothing,- 1, "ClientDC",wxPoint(- 1, - 1),wxSize(300, 300))
+win = new wxPanel(frame,- 1)
+b = 0
+
+bmpX = 300
+bmpY = 300
+gdc = wxMemoryDC()
+dim gridBMP = new wxEmptyBitmap(bmpX, bmpY)
+gdc.SelectObject(gridBMP)
+gdc.Clear()
+gdc.DrawRectangle(0, 0, 300, 300)
+
+button = new wxButton(win,- 1, "Test", wxPoint(100, 100))
+
+Sub drawGrid(event)
+dim dc = wxPaintDC(win)
+dc.BeginDrawing()
+dc.Blit( 0, 0, bmpX, bmpY, gdc, 0, 0 )
+dc.EndDrawing()
+End Sub
+Connect(win,- 1,wxEVT_PAINT,"drawGrid")
+
+Sub onButton(event)
+dim bdc = wxClientDC(win)
+If b = 0 then
+bdc.Clear()
+b = 1
+Else
+bdc.BeginDrawing()
+bdc.Blit( 0, 0, bmpX, bmpY, gdc, 0, 0 )
+bdc.EndDrawing()
+b = 0
+End If
+'button.Refresh()
+End Sub
+Connect(button,wxEVT_COMMAND_BUTTON_CLICKED,"onButton")
+
+frame.Show(1) 
