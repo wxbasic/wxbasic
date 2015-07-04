@@ -1,0 +1,175 @@
+// bind.wx 
+// Bind a source file to wxbasic executable
+// (c) 2004 David Cuny
+//
+// Usage:  bind <wxbasic binary> <sourcefile> <destfile>
+//
+// TODO: ensure that files aren't included multiple times
+
+
+// print error message and abort
+Sub fatal( message as string )
+    Print "Fatal Error: " & message
+    End
+End Sub
+
+// return file name from include file
+Function extractInclude( text as string )
+
+    Dim fileName As String = ""
+    Dim isEscaped As Integer = 0
+
+    // remove "include"
+    text = ltrim(mid( text, 9 ))
+
+    // check for quotes
+    If mid( text, 1, 1 ) <> "\"" Then
+        // fixme: also note file name and line number
+        fatal( "Quotes missing on include file" )
+    End If
+
+    // remove start quote
+    text = mid( text, 2 )
+
+    // parse to end quote
+    For Each pos, char In text
+        // prior character an escape character?
+        If isEscaped Then
+            If char <> "\\" Then
+                fatal( "Escape character \\" & char & " illegal inside filename" )
+            Else
+                fileName &= char
+                isEscaped = 0
+            End If
+
+        // escape character?
+        Elsif char = "\\" Then
+            isEscaped = 1
+
+        // end quote?
+        Elsif char = "\"" Then
+            Return fileName
+
+        // normal character
+        Else
+            fileName &= char
+        End If
+    End For
+
+    // didn't see end quote
+    fatal( "Closing quote missing on include file" )
+
+End Function
+
+
+// return the text of the file
+Function bundle( filename As String )
+
+    Dim accumulate As String = ""
+    Dim text As String
+    Dim trimmed As String
+    Dim includeName As String
+
+    Dim handle As Integer = fopen( filename, "r" )
+    While Not eof( handle )
+        text = fgets( handle )
+        trimmed = ltrim( text )
+
+        // include statement?
+        If mid( trimmed, 1, 8 ) = "include " Then
+            // get the include file name
+            includeName = extractInclude( trimmed )
+
+            // comment out the include statement
+            accumulate &= "// " & text & "\n"
+
+            // read the included file
+            accumulate &= bundle( includeName )
+
+        Else
+            accumulate &= text & "\n"
+        End If
+
+    End While
+
+    fclose( handle )
+
+    Return accumulate
+
+End Function
+
+
+Sub bind()
+
+    // read the args from the command line
+    Dim bin     = Command(3)
+    Dim source  = Command(4)
+    Dim dest    = Command(5)
+
+    If dest = "" Then
+        Print "Usage:"
+        Print "bind <wxbasic binary> <sourcefile> <destfile>"
+    
+    Else
+
+        Print "Binding "; source
+    
+        // open the source file
+        outFile = FreeFile()
+        
+        Open dest For Output As #outFile
+        
+        // first, copy wxbasic executable
+        Print "Copying "; bin; "..."
+        wxFile = freeFile()
+        Open bin For Input As #wxFile
+        
+        sizeof = Lof( wxFile )
+        
+        // add the file
+        For i = 1 To Lof( wxFile )
+            writeByte( outFile, readByte( wxFile ) )
+            if i % 10000 = 0 then
+                Print ".";
+            End If
+        End For
+        Close #wxFile
+        Print
+        
+        // next, copy destination file
+        Print "Copying "; source
+
+        // get the code
+        code = bundle( source )
+
+        // emit each character
+        For Each pos, char In code
+            writeByte( outFile, Asc(char) )
+        End For
+    
+        Print "Attaching tag..."
+    
+        // convert to string
+        sizeof = "" & sizeof
+        
+        // pad with zeros
+        While Len( sizeof ) < 8
+            sizeof = "0" & sizeof
+        End While
+        
+        // Write additional information
+        Print #outFile, "\n//"; sizeof; " wxbind"
+        
+        Close# outFile
+    
+        Print "Created "; dest
+    
+        End
+    
+    End If
+
+End Sub
+
+
+// call the bind() routine
+bind()
