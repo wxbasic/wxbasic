@@ -1,0 +1,35 @@
+' get the name of the input file from the command line
+dim infile = command(3)
+if infile = "" then
+    wxError("Didn't specify a file name", "Error")
+    end
+end if
+
+open infile for input as #1
+
+' Write the standard template
+open "template.po" for output as #2
+print #2, "# SOME DESCRIPTIVE TITLE."
+print #2, "# Copyright (C) YEAR Free Software Foundation, Inc."
+print #2, "# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR."
+print #2, "#"
+print #2, "msgid \"\""
+print #2, "msgstr \"\""
+print #2, "\"Project-Id-Version: PACKAGE VERSION\\n\""
+print #2, "\"POT-Creation-Date: 1999-02-19 16:03+0100\\n\""
+print #2, "\"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n\""
+print #2, "\"Last-Translator: FULL NAME <EMAIL@ADDRESS>\\n\""
+print #2, "\"Language-Team: LANGUAGE <LL@li.org>\\n\""
+print #2, "\"MIME-Version: 1.0\\n\""
+print #2, "\"Content-Type: text/plain; charset=iso8859-2\\n\""
+print #2, "\"Content-Transfer-Encoding: 8bit\\n\""
+
+' scan the input file for strings
+dim linenum = 0
+while not eof(1)
+   linenum += 1
+   line input #1, text
+   if instr( text, "wxGetTranslation" ) then
+    print text
+   end if
+wend

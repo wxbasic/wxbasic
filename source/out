@@ -1,0 +1,12 @@
+MAKE Version 5.2  Copyright (c) 1987, 2000 Borland
+	bcc32   @C:\wxWindows-2.4.2\src\msw\wxw32d.cfg  -v -Od -c wxbasic.cpp 
+Borland C++ 5.5.1 for Win32 Copyright (c) 1993, 2000 Borland
+wxbasic.cpp:
+Loaded pre-compiled headers.
+Warning W8066 lex.c 175: Unreachable code in function wLexBackquotedChar()
+Warning W8070 events.c 521: Function should return a value in function wEventNameToType(char *)
+	brc32 -r /iC:\BORLAND\BCC55\BIN\..\include /iC:\wxWindows-2.4.2\include /iC:\wxWindows-2.4.2\contrib\include wxbasic
+Borland Resource Compiler  Version 5.40
+Copyright (c) 1990, 1999 Inprise Corporation.  All rights reserved.
+	ilink32 /v /c /aa -L"C:\wxWindows-2.4.2\lib;C:\wxWindows-2.4.2\contrib\lib;C:\BORLAND\BCC55\BIN\..\lib;C:\BORLAND\BCC55\BIN\..\lib\psdk"  @MAKE0000.@@@
+Turbo Incremental Link 5.00 Copyright (c) 1997, 2000 Borland

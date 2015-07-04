@@ -1,0 +1,32 @@
+%include "wx/image.h"
+
+%class wxObject
+wxObject()
+~wxObject()
+
+%class wxEvtHandler, wxObject
+wxEvtHandler()
+~wxEvtHandler()
+
+%class wxSize
+wxSize(int width, int height)
+~wxSize()
+
+%class wxPoint
+wxPoint(int x, int y)
+~wxPoint()
+
+%class wxWindow, wxEvtHandler
+wxWindow(wxWindow* parent, wxWindowID id, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0, const wxString& name = wxPanelNameStr)
+~wxWindow()
+virtual bool Close(bool force = FALSE)
+bool Hide()
+virtual bool Show(bool show)
+
+%class wxFrame, wxWindow
+wxFrame(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_FRAME_STYLE, const wxString& name = "frame")
+~wxFrame()
+
+
+%class wxEvent, wxObject
+%include "wx/event.h"

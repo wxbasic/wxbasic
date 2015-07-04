@@ -1,0 +1,116 @@
+frame = new wxFrame( Null, -1, "wxWeekly Notes",wxPoint(-1,-1),wxSize(495,479),wxSYSTEM_MENU | wxMINIMIZE_BOX | wxCAPTION)
+
+
+day_names = {"Monday.txt","Tuesday.txt","Wednesday.txt","Thursday.txt","Friday.txt","Saturday","Sunday.txt"}
+
+tool = new wxToolBar(frame, -1)
+
+
+dim bitmap4 = new wxEmptyBitmap(0,0)
+bitmap4.LoadFile("resources/help.gif",wxBITMAP_TYPE_gif)
+dim button4 = new wxBitmapButton(tool,-1,bitmap4,wxPoint(425,0),wxSize(-1,-1))
+button4.SetToolTip("Show Help")
+
+dim bitmap5 = new wxEmptyBitmap(0,0)
+bitmap5.LoadFile("resources/exit.gif",wxBITMAP_TYPE_gif)
+dim button5 = new wxBitmapButton(tool,-1,bitmap5,wxPoint(455,0),wxSize(-1,-1))
+button5.SetToolTip("Exit Program")
+
+notebook = new wxNotebook(frame,-1,wxPoint(0,28),wxSize(490,420))
+
+panel1 = new wxPanel(notebook,-1)
+notebook.AddPage(panel1,"Monday")
+txt1 = new wxTextCtrl(panel1,-1,"Monday",wxPoint(-1,-1),wxSize(484,394),wxTE_MULTILINE)
+
+panel2 = new wxPanel(notebook,-1)
+notebook.AddPage(panel2,"Tuesday")
+txt2 = new wxTextCtrl(panel2,-1,"Tuesday",wxPoint(-1,-1),wxSize(484,394),wxTE_MULTILINE)
+
+panel3 = new wxPanel(notebook,-1)
+notebook.AddPage(panel3,"Wednesday")
+txt3 = new wxTextCtrl(panel3,-1,"Wednesday",wxPoint(-1,-1),wxSize(484,394),wxTE_MULTILINE)
+
+panel4 = new wxPanel(notebook,-1)
+notebook.AddPage(panel4,"Thursday")
+txt4 = new wxTextCtrl(panel4,-1,"Thursday",wxPoint(-1,-1),wxSize(484,394),wxTE_MULTILINE)
+
+panel5 = new wxPanel(notebook,-1)
+notebook.AddPage(panel5,"Friday")
+txt5 = new wxTextCtrl(panel5,-1,"Friday",wxPoint(-1,-1),wxSize(484,394),wxTE_MULTILINE)
+
+panel6 = new wxPanel(notebook,-1)
+notebook.AddPage(panel6,"Saturday")
+txt6 = new wxTextCtrl(panel6,-1,"Saturday",wxPoint(-1,-1),wxSize(484,394),wxTE_MULTILINE)
+
+panel7 = new wxPanel(notebook,-1)
+notebook.AddPage(panel7,"Sunday")
+txt7 = new wxTextCtrl(panel7,-1,"Sunday",wxPoint(-1,-1),wxSize(484,394),wxTE_MULTILINE)
+
+
+function onNotebook( event )
+
+'txt1.SaveFile("notes/" & day_names[1])
+'txt2.SaveFile("notes/" & day_names[2])
+'txt3.SaveFile("notes/" & day_names[3])
+'txt4.SaveFile("notes/" & day_names[4])
+'txt5.SaveFile("notes/" & day_names[5])
+'txt6.SaveFile("notes/" & day_names[6])
+'txt7.SaveFile("notes/" & day_names[7])
+
+print event.GetSelection()
+pickle = event.GetSelection()
+event.SetSelection(pickle)
+
+
+    wxMessageBox( "Notes Saved" )
+
+end function
+
+function on_exit(event)
+
+'txt1.SaveFile("notes/" & day_names[1])
+'txt2.SaveFile("notes/" & day_names[2])
+'txt3.SaveFile("notes/" & day_names[3])
+'txt4.SaveFile("notes/" & day_names[4])
+'txt5.SaveFile("notes/" & day_names[5])
+'txt6.SaveFile("notes/" & day_names[6])
+'txt7.SaveFile("notes/" & day_names[7])
+
+end
+
+end function
+
+function exitwithwindow(event)
+'txt1.SaveFile("notes/" & day_names[1])
+'txt2.SaveFile("notes/" & day_names[2])
+'txt3.SaveFile("notes/" & day_names[3])
+'txt4.SaveFile("notes/" & day_names[4])
+'txt5.SaveFile("notes/" & day_names[5])
+'txt6.SaveFile("notes/" & day_names[6])
+'txt7.SaveFile("notes/" & day_names[7])
+
+end
+
+end function
+
+Sub onHelpAbout( event )
+    Dim msg = "wxWeekly Notes\n" &
+            "2005 Ray Pope" &
+            "\n\n" &
+            "Click on the tab with the day name\n" &
+            "of the day you want to make notes.\n" &
+            "Then just type in your notes.\n" &
+            "\n" &
+            "Right-click on the text for the edit menu\n" &
+            "\n" &
+            "This program automatically saves the files\n" &
+            "so you don't have to worry about forgetting\n" &
+            "to save your notes."
+    wxMessageBox( msg, "About wxBasic Editor", wxOK + wxICON_INFORMATION, frame )
+End Sub
+
+Connect( button4, wxEVT_COMMAND_BUTTON_CLICKED, "onHelpAbout" )
+Connect( notebook, wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED, "onNotebook" )
+Connect( button5, wxEVT_COMMAND_BUTTON_CLICKED, "on_EXIT" )
+Connect( frame, wxEVT_CLOSE_WINDOW,"exitwithwindow")
+frame.Show(True) 

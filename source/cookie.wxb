@@ -1,0 +1,17 @@
+frame = new wxFrame( Nothing, -1, "Tree Demo", wxPoint(-1, -1), wxSize(450, 400))
+tree = new wxTreeCtrl( frame, -1, wxPoint(-1, -1), wxSize(-1, -1), wxTR_LINES_AT_ROOT + wxTR_HAS_BUTTONS)
+dim cookie= 1
+
+ifr = tree.AddRoot( "Root" )
+for idx = 0 to 100
+    ir = tree.AppendItem( ifr, "Parent ("&idx&")" )
+    zz = ir
+    for jdx = 0 to 7
+        tree.AppendItem( ir, "Child ("&idx&", "&jdx&")" )
+    end for
+    '-- uncomment this line for tests --
+    tree.GetFirstChild(zz, cookie)
+end for
+
+tree.Expand(ifr)
+frame.Show(True) 

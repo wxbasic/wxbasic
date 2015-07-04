@@ -1,0 +1,17 @@
+' Test the helpfile using a Zipped help file
+' uses the Help file that came with wxWidgets
+
+' create the help controller
+dim helpController as wxHtmlHelpController = new wxHtmlHelpController()
+
+' add the help file as a book
+try
+    if helpController.AddBook("helpfile.zip", false) then
+		' display the help
+		helpController.displayContents()
+	else
+		wxMessageBox("Unable to open help file " & helpFile.getFullName() )
+	end if
+catch
+	wxMessageBox("threw an error...")
+end try

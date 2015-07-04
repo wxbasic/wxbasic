@@ -1,0 +1,59 @@
+Option Explicit
+
+// create the main application window
+Dim frame = new wxFrame( Nothing, -1, "Minimal wxBasic App" )
+frame.SetSize( 100, 100 )
+
+// place a panel in the frame
+Dim panel = new wxPanel( frame, -1 )
+
+// create a box sizer and attach it to the panel
+Dim boxSizer = new wxBoxSizer( wxVertical )
+panel.SetSizer( boxSizer )
+
+// create a combo box
+Dim comboBox = new wxComboBox( panel, -1 )
+boxSizer.AddWindow( comboBox, 0, wxALL, 10 )
+
+// fill the combo box
+comboBox.Append("Alpha")
+comboBox.Append("Beta")
+comboBox.Append("Gamma")
+
+// create a pushbutton
+Dim pushButton = new wxButton( panel, -1, "Press Me" )
+boxSizer.AddWindow( pushButton, 0, wxALL, 10)
+
+
+// create a menu bar and attach it to the frame
+Dim menuBar = new wxMenuBar()
+frame.SetMenuBar(menuBar)
+
+// create a "File" menu and append an item
+Dim mFile = new wxMenu()
+mFile.Append( wxID_EXIT, "E&xit\tAlt-X" ) ', "Quit this program")
+
+// attach it to the menubar
+menuBar.Append(mFile, "&File")
+
+
+// callback for the Quit menu option
+function OnQuit( event )
+    // TRUE is to force the frame to close
+    frame.Close(True)
+end function
+connect( frame, wxID_EXIT, wxEVT_COMMAND_MENU_SELECTED, "OnQuit" )
+
+
+// callback for the button
+function OnPush( event )    
+    wxMessageBox( "Selection is: " &  comboBox.GetValue() )
+end function
+connect( pushButton, wxEVT_COMMAND_BUTTON_CLICKED, "OnPush" )
+
+
+// scale sizer
+boxSizer.SetSizeHints( frame )
+
+// show the frame
+frame.Show(1)

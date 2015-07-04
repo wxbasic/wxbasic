@@ -1,0 +1,32 @@
+frame = new wxFrame( Nothing, -1, "Tree Demo", wxPoint(-1, -1), wxSize(450, 400))
+tree = new wxTreeCtrl( frame, -1, wxPoint(-1, -1), wxSize(-1, -1), wxTR_LINES_AT_ROOT + wxTR_HAS_BUTTONS)
+
+
+ifr = tree.AddRoot( "Root" )
+tree.AppendItem( ifr, "first")
+tree.AppendItem( ifr, "second")
+tree.AppendItem( ifr, "third")
+
+
+' get the first item in the tree
+node, cookie =  tree.getFirstchild(ifr, 0)
+
+' iterate through the tree
+i = 0
+while true
+    print node, cookie
+    i = i + 1
+    if i > 100 then break
+	' show information about current node
+    ' print tree.GetItemText(node), cookie
+	
+	' go to next node?
+	if node = tree.getLastChild(ifr) then
+		break
+	else
+		node, cookie =  tree.getNextChild(ifr,cookie)
+	end if
+end while
+trace(1)
+tree.Expand(ifr)
+frame.show(1)

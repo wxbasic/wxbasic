@@ -1,0 +1,238 @@
+Option Explicit
+
+'setup some variables
+
+// dim myweekdays = ["Sun" , "Mon" , "Tue" , "Wed" , "Thu" , "Fri" , "Sat"]
+dim myweekdays = ["So" , "Mo" , "Di" , "Mi" , "Do" , "Fr" , "Sa"]
+dim buttonCount = 42
+dim button[buttonCount]
+dim dummy
+dim filename
+
+dim frame = new wxFrame(Nothing,-1,"Monthly Calendar",wxPoint(0,0),wxSize(650,470))
+    frame.SetBackgroundColour(wxCyan)
+
+
+for i = 1 to 12
+filename=i & ".txt"
+if !wxfileexists(filename) then
+    try
+    dim freeNum= freeFile()
+    open filename For Append As #freeNum
+    close #freeNum
+    catch:wxMessageBox( "Access denied!", "Error!", wxOK + wxICON_ERROR, frame )
+     
+    end try
+
+    freeNum= freeFile()
+    open filename For Output As #freeNum
+    close #freeNum
+end if
+next
+
+
+'get current data for first calendar
+dim the_date = now()
+dim the_day = day(the_date)
+dim the_month = month(the_date)
+dim the_month_name = monthname(the_date)
+dim the_year = year(the_date)
+
+dim Month_label = new wxStaticText(frame,-1,the_month_name,wxPoint(7,50),wxSize(-1,-1))
+dim Year_label = new wxStaticText(frame,-1,the_year,wxPoint(228,50),wxSize(-1,-1))
+dim Notes_label = new wxStaticText(frame,-1,"Notes for " & the_month_name,wxPoint(338,50),wxSize(300,-1))
+dim Monthly_notes = new wxTextCtrl(frame,-1,"",wxPoint(338,75),wxSize(300,313),wxTE_MULTILINE | wxTE_LINEWRAP)
+
+Month_label.SetFont(wxFont(32,wxDEFAULT,wxNORMAL,wxNORMAL))
+Year_label.SetFont(wxFont(32,wxDEFAULT,wxNORMAL,wxNORMAL))
+
+'some more variables
+dim index = 0
+dim firstDay = 1
+dim last_day = 0
+dim day_of_week = 0
+dim mday = 0
+'keep up with the number of days in each month
+dim Month_days = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
+
+'make the buttons
+dim x = 7, y = 125
+for i = 1 to buttonCount
+	' create a button
+	button[i] = new wxButton( frame, wxID_HIGHEST + i, i, wxPoint( x, y ), wxSize(43,43))
+
+	' calculate new button position
+	x += 44
+	if x > 271 then
+		x = 7
+		y += 44
+	end if
+next
+
+dim id_button_Current = wxID_HIGHEST + buttonCount + 1
+dim button_Today = new wxButton(frame,id_BUTTON_Current,"Today",wxPoint(7,390),wxSize(306,23))
+dim button_save = new wxButton(frame,-1,"Save Notes",wxPoint(338,390),wxSize(300,23))
+
+'make day of week for calendar
+dim dayPos = 12
+for i = 1 to 7
+	dim day_label = new wxStaticText(frame,-1,left(myweekdays[i],3), wxPoint(dayPos,100),wxSize(-1,-1),wxALIGN_CENTRE)
+    day_label.SetFont(wxFont(14, wxMODERN, wxNORMAL, wxNORMAL))
+    day_label.SetBackgroundColour(wxCyan)
+    day_label.SetForegroundColour(wxRed)
+	dayPos += 46
+next
+
+'make something to use to change the month
+dim Month_Choice = new wxChoice(frame, -1, wxPoint(4,0), wxSize(100,-1))
+
+  //********* new from Mark
+  for i = 1 to 12
+    Month_Choice.Append(monthname(i))
+  next
+
+    Month_Choice.SetSelection(the_month-1)
+connect(Month_Choice,-1, wxEVT_COMMAND_CHOICE_SELECTED, "change_month")
+
+'make something to use to change the year
+dim Year_Choice = new wxSpinCtrl(frame, -1, "", wxPoint(258,0),wxSize(50,20))
+    Year_Choice.SetRange(1900,3000)
+    Year_Choice.SetValue(the_year)
+connect(Year_Choice,-1, wxEVT_COMMAND_SPINCTRL_UPDATED, "change_year")
+
+'sub to make the calendar
+'clear the button labels
+sub Make_month(event)
+
+'clear selected background
+for i = 1 to buttonCount	
+	button[i].setBackgroundColour(wxWhite)
+	button[i].setForegroundColour(wxBlack)
+end for
+
+'now make current calendar
+
+dim myMonth = the_month
+dim myYear = the_year
+dim IsLeapYear
+
+firstDay = 1
+'Month_label.SetLabel(the_month_name)
+'Year_label.SetLabel(the_Year)
+
+If (myYear mod 4 = 0) and (myYear mod 100 <> 0) or (myYear mod 400 = 0) then
+    IsLeapYear = True
+    else
+    IsLeapYear = False
+end if
+
+If the_month = 2 and IsLeapYear = True then
+        last_day = 29
+    else
+        last_day = Month_days[myMonth]
+end if
+
+If myMonth < 3 then
+    If myMonth = 1 then
+        myMonth = 13
+        myYear = myYear - 1
+    else
+        myMonth = 14
+        myYear = myYear - 1
+    end if
+end if
+
+day_of_week = firstDay + (2*myMonth) + int(3*(myMonth+1)/5) + myYear + int(myYear/4) - int(myYear/100) + (myYear/400) + 2
+
+day_of_week = (day_of_week mod 7)
+if day_of_week = 0 then
+    day_of_week = 7
+end if
+
+dim day_number = 1
+for i = 1 to buttonCount
+	if i < day_of_week or day_number > month_days[ myMonth ] then
+		' clear the label
+		button[i].SetLabel(" ")
+	else
+		' set the label for the day
+		button[i].SetLabel( day_number )
+
+		' color it if it's the current day
+		if day_number = the_day then
+			' set current day color
+			button[i].setbackgroundColour(wxGreen)
+			button[i].SetForegroundColor(wxRed)
+		end if
+
+		' increment the day number
+		day_number += 1
+	end if
+end for
+
+Month_label.SetLabel(the_month_name)
+Year_label.SetLabel(the_Year)
+Notes_label.SetLabel("Notes for " & the_month_name)
+
+end sub
+sub change_month(event)
+the_month = Month_Choice.GetSelection() + 1
+
+the_month_name = Month_Choice.GetLabel()
+
+
+Make_month(dummy)
+Load_notes(the_month)
+
+end sub
+
+sub change_year(event)
+dim year_change = Year_Choice.GetValue()
+the_Year = year_change
+
+make_month(dummy)
+Load_notes(the_month)
+
+end sub
+
+sub Make_today(event)
+    the_date = now()
+    the_day = day(the_date)
+    the_month = month(the_date)
+    the_year = year(the_date)
+    the_month_name = monthname(the_date)
+
+    Make_month(dummy)
+    Month_Choice.SetSelection(the_month - 1)
+    Year_Choice.SetValue(the_year)
+    Load_notes(the_month_name)
+end sub
+connect (button_today,ID_BUTTON_Current,wxEVT_COMMAND_BUTTON_CLICKED,"Make_today")
+
+sub Save_notes(event)
+filename = the_month & ".txt"
+Monthly_notes.SaveFile(filename)
+    dim msg = filename & " saved."
+    wxMessageBox( msg, "", wxOK + wxICON_INFORMATION, frame )
+end sub
+connect (button_save, -1, wxEVT_COMMAND_BUTTON_CLICKED, "Save_notes")
+
+sub Load_notes(event)
+filename = the_month & ".txt"
+If not FileExists (filename) then
+    Monthly_notes.Clear()
+else
+    Monthly_notes.Clear()
+    Monthly_notes.LoadFile(filename)
+end if
+
+  //******** new from Mark
+  the_month_name = monthname(the_month)
+  Month_label.SetLabel(the_month_name)
+  Year_label.SetLabel(the_Year)
+  Notes_label.SetLabel("Notes for " & the_month_name)
+end sub
+
+the_month_name = Month_Choice.GetLabel()
+Make_month(dummy)
+Load_notes(the_month)

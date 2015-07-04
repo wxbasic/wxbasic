@@ -1,0 +1,53 @@
+To Do:
+
+    The code gets confused moving piles sometimes. For example,
+    it will move J Q onto J Q K 
+
+Jan 2:
+    Renamed 'drawpileCard' to 'drawPileCard'
+
+Dec 26, 2001:
+    Fixed case problems - new version of wxBasic is case sensitive
+    about constants.
+
+
+Nov 2, 2001:
+    Added hints
+
+Oct 31, 2001: 0.41 release
+    Fixed bug in autoMovePile,
+                    goal[k,1] = pile[i,j,1]
+                    goal[k,1] = pile[i,j,1]
+
+            should have been:
+                    goal[k,1] = pile[i,j,1]
+                    goal[k,2] = pile[i,j,2]
+
+    Fixed: Max cards in stack is now 52, so will not overflow
+
+    Changed: Prompt message was "Move Pile?", is now "Move Stack?"
+
+    Changed: First tries to move stack, then moves individual card
+
+    Fixed: Better handling of stacks
+
+    Fixed: Moves stacks to empty columns
+
+    Fixed: Moves entire stacks
+
+Oct 31, 2001: 0.40 release
+
+    Fixed: No longer moves FreeCell onto King in holding cell.
+
+    Added: Cheat Mode. Allows for easier testing.
+
+    Fixed: Double click now acts differently than single click.
+
+    Fixed: Automove only happens when a card is no longer needed.
+           ie: There is no lower card of opposite suit on the board.
+
+    Added: Right click exposes card under mouse.
+
+    Added: Automatic moving of piles
+
+

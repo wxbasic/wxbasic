@@ -1,0 +1,3 @@
+for each i, j in ["cat", "dog", "pig"]
+    print i, j
+next

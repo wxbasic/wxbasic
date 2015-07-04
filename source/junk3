@@ -1,0 +1,16 @@
+for j = 1 to 4
+    try
+        for i = 1 to 10
+            try
+                if i > 3 then
+                    return
+                end if
+            catch
+                print "in catch", i
+            end try
+        next
+    catch
+        print "outer catch"
+    end try
+end for
+throw 1

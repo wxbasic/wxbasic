@@ -1,0 +1,4 @@
+Jan 26:
+    Changed case, wxWindows is now case sensitive.
+
+    Changed GetWidth and GetHeight to GetSizeX and GetSizeY

@@ -1,0 +1,23 @@
+if "" then
+    print "blank is true"
+else
+    print "blank is false"
+end if
+
+if Nothing then
+    print "Nothing is true"
+else
+    print "Nothing is false"
+end if
+
+if 0 then
+    print "0 is true"
+else
+    print "0 is false"
+end if
+
+if 1 then
+    print "1 is true"
+else
+    print "1 is false"
+end if

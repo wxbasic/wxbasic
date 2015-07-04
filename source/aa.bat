@@ -1,0 +1,1 @@
+redir -eo a.exe

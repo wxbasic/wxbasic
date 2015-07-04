@@ -1,0 +1,1426 @@
+' freecell.wx - wxBasic version of FreeCell
+' (c) 2003 David Cuny
+'
+' This is supposed to play more or less the same as the
+' MS version by Jim Horne
+'
+' Changes:
+'
+'   head turns with mouse
+'   undo of depth 10
+'   fixed doubleclick to work in linux
+'
+' FIXME: can occasionally move large piles that are too large to
+'        normally move. looks like it's short-circuiting the logic
+'        if the king is at the head of the moved pile.
+
+Option Explicit
+Randomize()
+
+Const   ProgName    = "wxFreecell",
+        ProgVersion = "0.7",
+        CardCX  = 71,
+        CardCY  = 96,
+        SpaceCX = 6,
+        SpaceCY = 18,
+        MidGap  = 61,
+        WinCX   = (CardCX * 8) + MidGap,
+        WinCY   = 500,
+        Black   = 0,            // color( card )
+        Red     = 1,
+        Empty   = -1,
+        Ace     = 0,
+        Deuce   = 1,
+        Holder  = 13,           // image of card holder
+        Heart   = 0,            // suit( card )
+        Club    = 1,
+        Diamond = 2,
+        Spade   = 3,
+        RightFace   = 0,        // the faces
+        LeftFace    = 1,
+        FaceCX      = 38,       // size of the face
+        FaceCY      = 38,
+        FaceX       = (CardCX*4) + 14,  // position of the face
+        FaceY       = 20,
+        UndoMax     = 10
+
+
+
+function suit( theCard )
+    return theCard \ 13
+end function
+
+function rank( theCard )
+    return theCard % 13
+end function
+
+function color( theCard )
+    return suit( theCard ) = Diamond Or suit( theCard ) = Heart
+end function
+
+
+' Custom events
+Const   ID_RESTART   = wxID_HIGHEST + 3,
+        ID_STATS     = wxID_HIGHEST + 4,
+        ID_OPTIONS   = wxID_HIGHEST + 5,
+        ID_CHEAT     = wxID_HIGHEST + 8,
+        ID_HINT      = wxID_HIGHEST + 9,
+        ID_WARN      = wxID_HIGHEST + 10
+
+Dim     gameNumber =  Rnd(32000),   ' seed for the game
+        deep[8],                    ' height of a pile
+        cell[8],                    ' cell pile, rank and suit
+        goal[8],                    ' goal pile, rank and suit
+        pile[8, 52],                ' 8 piles, max 52, rank and suit
+        undoPtr,                    ' pointer in circular buffer
+        undoDepth,                  ' depth of undos
+        undoDeep[UndoMax, 8],
+        undoCell[UndoMax, 8],
+        undoGoal[UndoMax, 8],
+        undoPile[UndoMax, 8, 52],
+        cellAt[8, 2],               ' position of cells
+        goalAt[8, 2],               ' position of goals
+        pileAt[8, 2],               ' position of piles
+        hitPile     = 0,            ' index of clicked pile
+        hitGoal     = 0,            ' index of clicked goal
+        hitCell     = 0,            ' index of clicked cell
+        armedPile   = False,        ' index of armed pile
+        armedCell   = False,        ' index of armed cell
+        remaining   = 52,           ' card remaining
+        cheatFlag   = False,        ' allow illegal moves
+        hintFlag    = True,         ' show hints
+        warnFlag    = False,        ' warn before moving piles
+        face        = RightFace     ' face to display
+
+Const   GreenBrush = wxBrush( wxColor( 0x00, 0x7B, 0x00), wxSOLID )
+
+' create the frame
+Dim frame = New wxFrame( Nothing, -1, ProgName, wxPoint(0,0), wxSize(WinCX, WinCY) )
+    frame.SetClientSize( wxSize(WinCX, WinCY) )
+    frame.Center()
+
+' create a status bar
+frame.CreateStatusBar(2)
+
+Dim mGame = New wxMenu()
+    mGame.Append( wxID_NEW, "&New", "Start a new game")
+    mGame.Append( ID_RESTART, "&Restart", "Start existing game over")
+    mGame.Append( wxID_UNDO, "&Undo\tCtrl-Z", "Undo prior move")
+    mGame.AppendSeparator()
+    mGame.Append( ID_HINT, "&Give hints", "Show hints about possible moves", True )
+    mGame.Append( ID_WARN, "&Warn before moving piles", "Warn before moving a pile", True )
+    mGame.AppendSeparator()
+    mGame.Append( ID_CHEAT, "&Cheat", "Allow illegal moves", True )
+    mGame.AppendSeparator()
+    mGame.Append( wxID_EXIT, "E&xit\tAlt-X", "Quit this program")
+
+Dim mHelp = New wxMenu()
+    mHelp.Append( wxID_ABOUT, "&About...\tCtrl-A", "About " & ProgName )
+
+' create a menubar for the menus
+Dim menuBar = New wxMenuBar()
+    menuBar.Append(mGame,   "&Game")
+    menuBar.Append(mHelp,   "&Help")
+
+' attach the menubar to the frame
+frame.SetMenuBar(menuBar)
+
+' create a bitmap for double buffering
+Dim bmp = wxEmptyBitmap( WinCX, WinCY )
+
+' create a store for the graphic
+Dim bmpDC = wxMemoryDC()
+    bmpDC.SelectObject( bmp )
+    bmpDC.SetBackground( GreenBrush )
+    bmpDC.Clear()
+
+' load the bitmap, return device context
+Function loadGraphics( name )
+    Dim myXPM = New wxEmptyBitmap( 0, 0 )
+    If !myXPM.LoadFile( name, wxBITMAP_TYPE_PNG ) Then
+        wxMessageBox( "Can't find file " & name, "Missing File", wxOK + wxICON_INFORMATION, frame )
+        frame.Close()
+    End If
+    ' create a store for the graphic
+    Dim myDC = new wxMemoryDC()
+    myDC.SelectObject( myXPM )
+    Return myDC
+End Function
+
+Dim CardsBmp = loadGraphics( "cards.png" )
+
+Sub drawFace( newFace )
+
+    ' change face?
+    if newFace <> -1 then
+        face = newFace
+    end if
+
+    ' the faces are in the cards bitmap
+    bmpDC.Blit( FaceX, FaceY, FaceCX, FaceCY, CardsBmp,
+        CardCX*13, (CardCY*3)+(face*FaceCY) )
+
+    ' update
+    Dim dc = wxClientDC( frame )
+    dc.BeginDrawing()
+        dc.Blit( FaceX, FaceY, FaceCX, FaceCY, bmpDC, FaceX, FaceY )
+    dc.EndDrawing()
+
+End Sub
+
+Sub drawCard( x, y, theCard )
+    if theCard = Empty then
+        // card holder
+        bmpDC.Blit( x, y, CardCX, CardCY, CardsBmp, Holder*CardCX, 0 )
+    else
+        // card
+        bmpDC.Blit( x, y, CardCX, CardCY, CardsBmp,
+            rank( theCard ) * CardCX, suit( theCard ) * CardCY )
+    end if
+End Sub
+
+Sub invertCard( x, y, theCard )
+    // should change invert color based on suit
+    bmpDC.Blit( x, y, CardCX, CardCY, CardsBmp,
+        rank( theCard ) * CardCX, suit( theCard ) * CardCY, wxINVERT )
+
+        
+End Sub
+
+
+sub drawPileCard( thePile, invert )
+
+    ' position in the pile
+    Dim i = deep[thePile]
+
+    ' destination in bitmap
+    Dim dstX = pileAt[thePile,1]
+    Dim dstY = pileAt[thePile,2] + ((i-1)*SpaceCY)
+
+    ' invert the card
+    if invert then
+        invertCard( dstX, dstY, pile[thePile,i] )
+    else
+        drawCard( dstX, dstY, pile[thePile,i] )
+    end if
+
+    ' update that part of the window
+    Dim dc = wxClientDC( frame )
+    dc.BeginDrawing()
+    dc.Blit( dstX, dstY, CardCX, CardCY, bmpDC, dstX, dstY )
+    dc.EndDrawing()
+
+End Sub
+
+sub drawCellCard( theCell, invert )
+
+    ' destination in bitmap
+    Dim dstX = cellAt[theCell,1]
+    Dim dstY = cellAt[theCell,2]
+
+    ' invert the card
+    if invert then
+        invertCard( dstX, dstY, cell[theCell] )
+    else
+        drawCard( dstX, dstY, cell[theCell] )
+    end if
+
+    ' update that part of the window
+    Dim dc = wxClientDC( frame )
+    dc.BeginDrawing()
+    dc.Blit( dstX, dstY, CardCX, CardCY, bmpDC, dstX, dstY )
+    dc.EndDrawing()
+
+End Sub
+
+
+sub drawGoalCard( theGoal )
+
+    ' destination in bitmap
+    Dim dstX = goalAt[theGoal,1]
+    Dim dstY = goalAt[theGoal,2]
+
+    drawCard( dstX, dstY, goal[theGoal] )
+
+    ' update
+    Dim dc = wxClientDC( frame )
+    dc.BeginDrawing()
+    dc.Blit( dstX, dstY, CardCX, CardCY, bmpDC, dstX, dstY )
+    dc.EndDrawing()
+
+
+End Sub
+
+
+Sub drawBoard()
+
+    Dim i, j
+
+    ' erase the bitmap
+    bmpDC.Clear()
+
+    ' cells and goals
+    for i = 1 to 4
+        drawCellCard( i, False )
+        drawGoalCard( i )
+    end for
+
+    ' draw columns of cards
+    for i = 1 to 8
+        for j = 1 to deep[i]
+            drawCard( pileAt[i,1], pileAt[i,2] + (j-1)*SpaceCY, pile[i,j] )
+        end for
+    end for
+
+    ' draw the face
+    drawFace(-1)
+
+End Sub
+
+
+Sub onPaint( event ) Handles frame.paint
+    ' get the DC of the frame
+    Dim dc = wxPaintDC( frame )
+    dc.BeginDrawing()
+
+    dc.SetBrush( GreenBrush )
+    dc.DrawRectangle( 0, 0, 1000, 1000 )
+
+    ' blit the bitmap
+    dc.Blit( 0, 0, WinCX, WinCY, bmpDC, 0, 0 )
+
+    dc.EndDrawing()
+End Sub
+
+
+function maxMoveableColumn( target )
+    ' return the maximum size of a movable column
+    ' equation is: (freeCells+1) * (emptyPiles+1)
+
+    dim i, freeCells, emptyPiles
+
+    ' count free cells
+    freeCells = 0
+    for i = 1 to 4
+        if cell[i] = Empty then
+            freeCells += 1
+        end if
+    end for
+
+    ' count empty piles
+    emptyPiles = 0
+    for i = 1 to 8
+        if deep[i] = 0 and i <> target then
+            emptyPiles += 1
+        end if
+    end for
+
+    return (freeCells+1)*(emptyPiles+1)
+
+end function
+
+
+function goodMove( cheat, src, dst )
+
+    if cheat then
+        return True
+    end if
+
+    if  rank(src) != rank(dst)-1 or
+        suit(src) = suit(dst) or
+        color(src) = color( dst ) then
+        return False
+    end if
+
+    return True
+
+end function
+
+
+
+
+Function isWorthlessMove( src, dst, n )
+    ' Return true if move places card of same suit onto
+    ' another card of the same suit
+
+    Dim     at, i
+
+    ' entire column/single card?
+    If n = 1 Then
+        Return False
+    End if
+
+    ' not part of a column?
+    If !goodMove(False, pile[src,n], pile[src,n-1] ) Then
+        Return False
+    End If
+
+    ' same color?
+    If color(pile[src,n-1]) = color(pile[dst, deep[dst]]) Then
+        ' check out the goals
+        For i = 1 To 4
+            ' uncovers card going to goal?
+            If suit(pile[src,n-1]) = suit(goal[i]) And
+               rank(pile[src,n-1]) = rank(goal[i])-1 Then
+                Return False
+            End If
+        End For
+
+        ' pointless move
+        Return True
+
+    End If
+
+    Return False
+
+End Function
+
+
+Function getHint()
+    ' get hint, and set face based on hint
+    Dim     src, dst, i, j, k, l, maxColumn
+
+    If remaining = 0 Then
+        return "Game Over"
+    End If
+
+    ' can any cards in freecells can be moved to the goals?
+    For i = 1 To 4
+        If cell[i] <> Empty Then
+            ' examine each goal
+            For j = 1 To 4
+                If ( rank(cell[i]) = Ace And goal[j] = Empty ) Or
+                   ( suit(cell[i]) = suit(goal[j]) And
+                     rank(cell[i]) = rank(goal[j])+1 ) Then
+                    Return "Card in freecell " & i & " can move to goal"
+                End If
+            End For
+        End If
+    End For
+
+
+    ' can any cards in piles can be moved usefully?
+    For i = 1 To 8
+        ' look at each pile
+        src = deep[i]
+
+        ' any cards in the pile?
+        If src <> 0 Then
+            ' examine each goal
+            For j = 1 To 4
+                If ( rank(pile[i,src]) = Ace And goal[j] = Empty ) Or
+                   ( suit(pile[i,src]) = suit(goal[j]) And
+                     rank(pile[i,src]) = rank(goal[j])+1 ) Then
+                    Return "Card on pile " & i & " can move to goal"
+                End If
+            End For
+
+            ' examine each pile
+            For j = 1 To 8
+                ' number of cards in pile
+                dst = deep[j]
+
+                ' maximum size column that can be moved
+                ' subtract 1, since we start in 1 deep
+                maxColumn = maxMoveableColumn( i ) - 1
+
+                ' look for a pile that can be moved
+                For k = dst-1 To 1 Step -1
+
+                    ' column too deep?
+                    maxColumn = maxColumn - 1
+                    If maxColumn < 0 Then
+                        Exit For
+                    End If
+
+                    ' not part of pile?
+                    If !goodMove( False, pile[j,k+1], pile[j,k] ) Then
+                        Exit For
+                    End If
+
+                    ' look for a pile to place it on
+                    For l = 1 to 8
+                        ' can it move to the top of this pile?
+                        If l <> j and deep[l] And
+                            goodMove(False, pile[j,k], pile[l,deep[l]] ) And
+                            !isWorthlessMove( j, l, k ) Then
+                                Return "Column on pile " & j &
+                                    " can move to pile " & l
+                        End If
+                    End For
+
+                End For
+
+                ' good move? 
+                If dst <> 0 And i <> j And
+                    goodMove( False, pile[i,src], pile[j,dst] ) And
+                    !isWorthlessMove( i, j, src ) Then
+                        Return "Card on pile " & i & " can move to pile " & j
+                End If
+            End For
+        End If
+    End For
+
+    ' can any cards in freecells to pile?
+    For i = 1 To 4
+        ' not empty?
+        If cell[i] <> Empty Then
+            ' examine each pile
+            For j = 1 To 8
+                ' not empty?
+                If deep[j] And
+                goodMove( False, cell[i], pile[j,deep[j]] ) Then
+                    Return "Card in freecell " & i & " can move to pile " & j
+                End If
+            End For
+        End If
+    End For
+
+    ' any free piles?
+    For i = 1 To 8
+        If deep[i] = 0 Then
+            ' any columns?
+            For j = 1 To 8
+                If deep[j] > 1 Then
+                    Return "Can move any card to pile " & i
+                End If
+            End For
+        End If
+    End For
+
+    ' any freecells?
+    For i = 1 To 4
+        If cell[i] = Empty Then
+            Return "Can move any card to freecell"
+        End If
+    End For
+
+    ' can't find a move
+    Return "Sorry, can't help"
+
+End Function
+
+Sub hint()
+    ' Update the hint and the face
+    Dim hintText = getHint()
+    If remaining = 0 Or hintFlag then
+        frame.SetStatusText( hintText, 0 )
+    Else
+        frame.SetStatusText( "Hints off", 0 )
+    End If
+End Sub
+
+Sub repaintWindow( fromScratch )
+
+    ' redraw
+    if fromScratch then
+        drawBoard()
+    end if
+
+    ' hint
+    hint()
+
+    ' update
+    Dim dc = wxClientDC( frame )
+    dc.BeginDrawing()
+    dc.Blit( 0, 0, WinCX, WinCY, bmpDC, 0, 0 )
+    dc.EndDrawing()
+
+End Sub
+
+
+Sub saveUndo()
+    Dim i, j
+
+    ' increment current position
+    if undoPtr = UndoMax then
+        undoPtr = 1
+    else
+        undoPtr += 1
+    end if
+
+    if undoDepth < UndoMax then
+        undoDepth += 1
+    end if
+
+    ' Save values to restore
+    for i = 1 to 8
+        undoDeep[undoPtr,i]     = deep[i]
+        undoCell[undoPtr,i]     = cell[i]
+        undoGoal[undoPtr,i]     = goal[i]
+        for j = 1 to deep[i]
+            undoPile[undoPtr,i, j] = pile[i,j]
+        end for
+    end for
+    mGame.Enable( wxID_UNDO, True )
+
+End Sub
+
+
+Sub undo()
+    Dim i, j
+
+    ' Restore save values
+    for i = 1 to 8
+        deep[i]     = undoDeep[undoPtr,i]
+        cell[i]     = undoCell[undoPtr,i]
+        goal[i]     = undoGoal[undoPtr,i]
+        for j = 1 to deep[i]
+            pile[i, j] = undoPile[undoPtr,i,j]
+        end for
+    end for
+
+    ' disarm piles
+    armedPile   = False
+    armedCell   = False
+
+    ' back up buffer
+    undoDepth -= 1
+    undoPtr -= 1
+    if undoPtr = 0 then
+        undoPtr = UndoMax
+    end if
+
+    ' disable menu?
+    if undoDepth = 0 then
+        mGame.Enable( wxID_UNDO, False )
+    end if
+
+    repaintWindow( True )
+
+End Sub
+
+
+
+
+Function testHitCard( mouseX, mouseY, cardX, cardY )
+    If mouseX >= cardX and
+       mouseY >= cardY and
+       mouseX <= cardX + CardCX and
+       mouseY <= cardY + CardCY then
+        return True
+    End If
+    Return False
+End Function
+
+sub hitTest( x, y )
+
+    Dim i, j, pileTop
+
+    ' clear variables
+    hitPile = 0
+    hitGoal = 0
+    hitCell = 0
+
+    ' top of window?
+    If y <= CardCY then
+        ' check cells and goals
+        For i = 1 to 4
+            If testHitCard( x, y, cellAt[i,1], cellAt[i,2] ) Then
+                hitCell = i
+                Exit Sub 
+
+            ElseIf testHitCard( x, y, goalAt[i,1], goalAt[i,2] ) Then
+                hitGoal = i
+                Exit Sub 
+            End If
+
+        End For
+    End If
+
+    ' hit top of pile?
+    for i = 1 to 8
+        if y >= pileAt[i,2] and
+           x >= pileAt[i,1] and
+           x <= pileAt[i,1] + CardCX then
+            pileTop = pileAt[i,2] + CardCY + ((deep[i]-1)*SpaceCY)
+            ' don't need to hit a card if no column
+            if deep[i] = 0 or y <= pileTop then
+                hitPile = i
+                Exit Sub
+            end if
+        end if
+    end for
+End Sub
+
+Function noLongerNeeded( theCard )
+    ' Returns true if there are no cards of opposite suit
+    ' and lower rank value in the freecells or piles
+
+    Dim i, j, suit1, suit2
+
+    Dim theRank = rank( theCard )
+    Dim theColor = color( theCard )
+
+    ' check the freecells
+    for i = 1 to 4
+        if cell[i] <> Empty and
+            rank( cell[i] ) < theRank and 
+            color( cell[i] ) != theColor then
+           Return False
+        end if
+    end for
+
+    ' check the piles
+    for i = 1 to 8
+        for j = 1 to deep[i]
+            if rank(pile[i,j]) < theRank and
+                color( pile[i,j] ) != theColor then
+                return False
+            end if
+        end for
+    end for
+
+    ' no cards found
+    return True
+
+End Function
+
+
+Sub decreaseRemaining()
+    remaining = remaining - 1
+    frame.SetStatusText("Cards Left: " & remaining, 1)
+End Sub
+
+Function autoMoveCell()
+    ' automatically move cards out of free cells
+    ' returns true if cards were moved
+    ' this can ignore aces, since the are automatically
+    ' moved by autoMovePile
+
+    Dim i, j
+
+    ' check each goal
+    For i = 1 to 4
+        ' is there a card in the goal?
+        if goal[i] != Empty then
+            ' look for follower in cell
+            for j = 1 to 4
+                If  cell[j] <> Empty And
+                    suit(cell[j]) = suit(goal[i]) And
+                    rank(cell[j]) = rank(goal[i])+1 And
+                    noLongerNeeded( cell[j] ) Then
+
+                    ' move it
+                    goal[i] = cell[j]
+                    cell[j] = Empty
+
+                    decreaseRemaining()
+                    return True
+                End If
+            End For
+        end if
+    End For
+    Return False
+End Function
+
+
+Function autoMovePile()
+    ' automatically move cards out of pile
+    ' returns true if cards were moved
+
+    Dim i, j, k
+
+    ' examine each pile
+    For i = 1 to 8
+        ' top card
+        j = deep[i]
+        If j then
+            ' examine each goal
+            For k = 1 to 4
+                ' Ace to blank spot or 2 to Ace?
+                If rank(pile[i,j]) = Ace and goal[k] = Empty Or
+                   ( suit(pile[i,j]) = suit(goal[k]) And
+                     rank(pile[i,j]) = Deuce and rank(goal[k]) = Ace ) Then
+                    ' move to goal
+                    goal[k] = pile[i,j]
+                    deep[i] -= 1
+                    decreaseRemaining()
+                    return True
+
+                ' next card in sequence?
+                ElseIf  pile[i,j] <> Empty And
+                        suit(pile[i,j]) = suit(goal[k]) And
+                        rank(pile[i,j]) = rank(goal[k])+1 And
+                        noLongerNeeded( pile[i,j] ) Then
+                    ' move it
+                    goal[k] = pile[i,j]
+                    deep[i] -= 1
+                    decreaseRemaining()
+
+                    return True
+
+                End If
+            Next
+        End if
+    End For
+    Return False
+End Function
+
+Sub autoMove()
+    ' auto move cards in cell and pile
+
+    Dim repaint = False
+
+    While autoMoveCell() or autoMovePile()
+        ' Window needs to be redrawn
+        repaintWindow( True )
+    End While
+
+End Sub
+
+
+function moveColumn( src, dst )
+    ' if source is a pile, move it
+
+    Dim     i, j, srcTop, dstTop, maxSize
+
+    ' position of cards
+    srcTop = deep[src]
+    dstTop = deep[dst]
+
+    ' can we rule it out?
+    if dstTop <> 0 and rank(pile[dst, dstTop]) <= rank(pile[src, srcTop]) then
+        return False
+
+    elsif srcTop = 1 then
+        return False
+    end if
+
+    ' get max size
+    maxSize = maxMoveableColumn( dst )
+    if maxSize < 2 then
+        Return False
+    end if
+
+    ' walk down the pile
+    for i = srcTop-1 to 1 step -1
+
+        maxSize -= 1
+
+        ' not part of a pile
+        if maxSize < 0 or
+           !goodMove( False, pile[src, i+1], pile[src, i] ) then
+
+            ' moving onto empty column?
+            if dstTop = 0 and i != srcTop-1 then
+                if wxMessageBox( "Move column to empty pile?", ProgName,
+                                 wxYES_NO | wxICON_QUESTION, frame ) != wxYES then
+                    ' cancelled
+                    return False
+                end if
+
+                ' save game state
+                saveUndo()
+
+                ' move column
+                for j = i+1 to srcTop
+                    dstTop = dstTop + 1
+                    pile[dst, dstTop] = pile[src, j]
+                end for
+
+                ' adjust depths
+                deep[src] = i
+                deep[dst] = dstTop
+    
+                ' exit
+                return True
+
+            end if
+
+            ' no longer in order
+            return False
+
+        end if
+
+        ' top of pile to move?
+        if srcTop <> 0 and
+            goodMove( False, pile[src, i], pile[dst, dstTop] ) then
+
+            ' prompt user before moving?
+            if warnFlag then
+                if wxMessageBox( "Move column?", ProgName,
+                                 wxYES_NO | wxICON_QUESTION, frame ) != wxYES then
+                    ' cancelled
+                    return False
+                end if
+            end if
+
+            ' save game state
+            saveUndo()
+
+            ' move the pile
+            for j = i to srcTop
+                dstTop = dstTop + 1
+                pile[dst, dstTop] = pile[src, j]
+            end for
+
+            ' adjust depths
+            deep[src] = i - 1
+            deep[dst] = dstTop
+
+            ' exit
+            return True
+
+        end if
+
+    end for
+
+    ' move whole pile?
+    if !goodMove( False, pile[src, 1], pile[dst, dstTop] ) then
+        return False
+    end if
+
+
+    ' entire column moving
+    if dstTop = 0 then
+        if wxMessageBox( "Move column to empty pile?", ProgName,
+                         wxYES_NO | wxICON_QUESTION, frame ) != wxYES then
+            ' cancelled
+            return False
+        end if
+    elsif warnFlag then
+        if wxMessageBox( "Move column?", ProgName,
+                         wxYES_NO | wxICON_QUESTION, frame ) != wxYES then
+            ' cancelled
+            return False
+        end if
+    end if
+
+    ' save game state
+    saveUndo()
+
+    ' move the pile
+    for j = 1 to srcTop
+        dstTop = dstTop + 1
+        pile[dst, dstTop] = pile[src, j]
+    end for
+
+    ' adjust depths
+    deep[src] = 0
+    deep[dst] = dstTop
+
+    return True
+
+end Function
+
+Sub onClick( event ) Handles frame.leftDown
+
+    dim i, j
+
+    ' do hit test
+    hitTest( event.GetX(), event.GetY() )
+
+    If hitCell then
+        If armedCell then
+            ' empty cell?
+            if cell[hitCell] = Empty then
+                ' save game state
+                saveUndo()
+
+                ' swap
+                cell[hitCell] = cell[armedCell]
+                drawCellCard( hitCell, False )
+
+                cell[armedCell] = Empty
+                drawCellCard( armedCell, False )
+
+                ' disarm and update 
+                armedCell = 0
+
+            else
+                ' disarm cell
+                drawCellCard( armedCell, False )            
+                armedCell = 0
+
+            end if
+
+        elseif armedPile then
+            ' already something in freecell?
+            if cell[hitCell] <> Empty then
+                ' disarm
+                drawPileCard( armedPile, False )            
+                armedPile = 0
+
+            else
+                ' save game state
+                saveUndo()
+
+                ' move card to cell
+                i = deep[armedPile]
+                cell[hitCell] = pile[armedPile,i]
+
+                ' removed from pile
+                pile[armedPile,i] = Empty
+                deep[armedPile] -= 1
+
+                ' disarm and updated
+                armedPile = 0
+                repaintWindow( True )
+            end if
+
+        else
+            ' is there a card there to arm?
+            if cell[hitCell] <> Empty then
+                drawCellCard( hitCell, True )
+                armedCell = hitCell
+            end if
+
+        end if
+
+    ElseIf hitGoal then
+        if armedCell then
+            if ( goal[hitGoal] = Empty and rank(cell[armedCell]) = Ace ) or
+               ( suit(cell[armedCell]) = suit(goal[hitGoal]) And
+                 rank(cell[armedCell]) = rank(goal[hitGoal])+1 ) Then
+
+                ' save game state
+                saveUndo()
+
+                ' move to goal
+                goal[hitGoal] = cell[armedCell]
+                drawGoalCard( hitGoal )
+
+                ' clear cell
+                cell[armedCell] = Empty
+                drawCellCard( armedCell, False )
+                armedCell = 0
+
+                ' update remaining
+                decreaseRemaining()
+
+            else
+                ' disarm cell
+                drawCellCard( armedCell, False )
+                armedCell = 0
+            end if
+
+        elseif armedPile then
+            i = deep[armedPile]
+            if ( goal[hitGoal] = Empty and rank(pile[armedPile,i]) = Ace ) or
+               ( suit(pile[armedPile,i]) = suit(goal[hitGoal]) And
+                 rank(pile[armedPile,i]) = rank(goal[hitGoal]) + 1 ) Then
+
+                ' save game state
+                saveUndo()
+
+                ' move to goal
+                goal[hitGoal] = pile[armedPile,i]
+
+                ' clear cell
+                deep[armedPile] -= 1
+                decreaseRemaining()
+                armedPile = 0
+
+                ' update window
+                repaintWindow( True )
+
+            else
+                ' disarm pile
+                drawPileCard( armedPile, False )
+                armedPile = 0
+            end if
+        end if
+
+    ElseIf hitPile then
+        if armedPile then
+            if armedPile = hitPile then
+                ' disarm
+                drawPileCard( armedPile, False )
+                armedPile = 0
+
+            ' move pile?
+            elsif moveColumn( armedPile, hitPile ) then
+                armedPile = 0
+                repaintWindow( True )
+
+            ' move card to pile?
+            elsif deep[hitPile] = 0 or
+                goodMove( cheatFlag, pile[armedPile,deep[armedPile]],
+                                     pile[hitPile,deep[hitPile]] ) then
+                ' save game state
+                saveUndo()
+
+                ' move to pile
+                deep[hitPile] += 1
+                i = deep[armedPile]
+                j = deep[hitPile]
+
+                ' move to pile
+                pile[hitPile,j] = pile[armedPile,i]
+                deep[armedPile] -= 1
+
+                ' disarm and redraw
+                armedPile = 0
+                repaintWindow( True )
+
+            else
+                ' deselect card
+                drawPileCard( armedPile, False )
+                armedPile = 0
+
+            end if
+
+        elsif armedCell then
+            if deep[hitPile] = 0 or
+               goodMove( cheatFlag, cell[armedCell],
+                                    pile[hitPile,deep[hitPile]] ) then
+
+                ' save game state
+                saveUndo()
+
+                ' index into pile
+                deep[hitPile] += 1
+                i = deep[hitPile]
+
+                ' move to pile
+                pile[hitPile,i] = cell[armedCell]
+
+                ' remove from cell
+                cell[armedCell] = Empty
+
+                ' disarm and redraw
+                armedCell = 0
+                repaintWindow( True )
+
+            else
+                ' deselect card
+                drawCellCard( armedCell, False )
+                armedCell = 0
+
+            end if
+
+        else
+            ' if the pile is empty, disarm
+	    if deep[hitPile] = 0 then
+		if armedPile then
+		    ' deselect the pile
+		    drawPileCard( armedPile, False )
+		    armedPile = False
+		elseif armedCell then
+		    ' deselect the cell
+		    drawCellCard( armedCell, False )
+		    armedCell = False
+		end if
+	    else
+		' arm the pile
+                drawPileCard( hitPile, True )
+	        armedPile = hitPile
+	    end if
+
+        end if    
+
+    ElseIf armedCell then
+    ElseIf armedPile then
+        drawPileCard( armedPile, False )
+        armedPile = 0
+
+    End If
+
+    ' nothing armed?
+    If !armedPile And !armedCell Then
+        ' check if there's anything to automatically move
+        autoMove()
+    End If
+
+    ' show hint
+    hint()
+
+End sub
+
+Sub onDoubleClick( event ) Handles frame.leftDClick
+
+    dim i, j
+
+    ' do hit test
+    hitTest( event.GetX(), event.GetY() )
+
+    ' this is a workaround, since doubleclick triggers a click and doubleclick
+    If hitPile then ' and armedPile and armedPile = hitPile then
+        ' hack...
+        armedPile = hitPile
+        ' look for free cell
+        for i = 1 to 4
+            if cell[i] = Empty then
+                ' save game state
+                saveUndo()
+
+                ' move to pile
+                cell[i] = pile[hitPile, deep[hitPile]]
+                deep[hitPile] -= 1
+                armedPile = 0
+
+                ' update window
+                repaintWindow( True )
+
+                exit for
+            end if
+        end for
+
+        ' check if there's anything to automatically move
+        autoMove()
+
+    End If
+
+    ' Disarm anything that's armed
+    If armedCell Then
+        ' deselect card
+        drawCellCard( armedCell, False )
+        armedCell = 0
+
+    Elsif armedPile then
+        drawPileCard( armedPile, False )
+        armedPile = 0
+
+    ElseIf armedCell then
+        drawCellCard( armedCell, False )
+        armedCell = 0
+
+    End If
+
+    hint()
+
+End sub
+
+
+Sub onMotion( event ) Handles frame.motion
+    ' face turns left and right
+
+    ' get the position of the mouse
+    Dim     x = event.GetX(),
+            y = event.GetY()
+
+    ' above pile?
+    if y <= CardCY then
+        if face = LeftFace and x > FaceX then
+            drawFace( RightFace )
+        elseif face = RightFace and x <= FaceX then
+            drawFace( LeftFace )
+        End If
+    End If
+
+End Sub
+
+
+Sub onRightDown( event ) Handles frame.rightDown
+
+    Dim     i, j, pileY
+
+    ' get the mouse position
+    Dim x = event.GetX()
+    Dim y = event.GetY()
+
+    ' top of window?
+    If y <= CardCY then
+        ' missed piles
+        Exit Sub
+        
+    End If
+
+    ' hit card in pile?
+    for i = 1 to 8
+        ' check each card in the pile, top first
+        for j = deep[i] to 1 step -1
+            ' calculate y position of card
+            pileY = pileAt[i,2] + ((j-1)*SpaceCY)
+
+            ' mouse in card?
+            If testHitCard( x, y, pileAt[i,1], pileY ) then
+
+                ' grab the mouse
+                frame.CaptureMouse()
+
+                ' draw the card
+                drawCard( pileAt[i,1], pileY, pile[i,j] )
+
+                ' update window, no redraw
+                repaintWindow( False )
+                
+                ' leave
+                exit sub
+            End If
+        end for
+    end for
+
+End Sub
+
+Sub onRightUp( event ) handles frame.rightUp
+    ' release the mouse
+    frame.ReleaseMouse()
+
+    ' redraw the entire board
+    repaintWindow( True )
+
+End Sub
+
+
+Sub calcAt()
+    ' calculate position of cells
+    Dim i
+
+    Dim x = 0,  y = 0
+    for i = 1 to 4
+        cellAt[i,1] = x
+        cellAt[i,2] = y
+        x = x + CardCX
+    end for
+
+    ' calculate position of goals
+    x = (CardCX*4) + MidGap
+    y = 0
+    for i = 1 to 4
+        goalAt[i,1] = x
+        goalAt[i,2] = y
+        x = x + CardCX
+    end for
+
+    ' calculate position of piles
+    x = SpaceCX+4
+    y = CardCY+10
+    for i = 1 to 8
+        pileAt[i,1] = x
+        pileAt[i,2] = y
+        x = x + CardCX + SpaceCX
+    end for
+
+End Sub
+
+
+Sub shuffle( newGame )
+
+    // This code is based mainly on the shuffle algorithm
+    // provided by Jim Horne
+
+    Dim i, j, k, l
+    Dim wLeft = 52              // cards left to be chosen in shuffle
+    Dim deck[52]                // deck of 52 unique cards
+
+    // clear the deck
+    for i = 1 to 52
+        deck[i] = i
+    end for
+
+    // game number is seed
+    If newGame Then
+        gameNumber = Rnd(32000)
+    End If
+    randomize( gameNumber )
+    frame.SetTitle( ProgName & " Game #" & gameNumber )
+
+    // shuffle
+    erase deep
+    erase pile
+
+    for i = 0 to 52-1
+        j = rnd() % wLeft
+        k = (i%8)+1
+        l = (i\8)+1
+        pile[k,l] = deck[j]
+        deep[k] = l
+        wLeft -= 1
+        deck[j] = deck[wLeft]
+    end for
+
+    ' set up the cells and goals
+    for i = 1 to 4
+        cell[i] = Empty
+        goal[i] = Empty
+    end for
+
+    ' remaining cards
+    remaining = 52
+    frame.SetStatusText("Cards Left: " & remaining, 1)
+
+End Sub
+
+
+Sub initGame( newGame )
+
+    ' calcuate position of cards
+    calcAt()
+
+    ' set flags
+    mGame.Check( ID_WARN, warnFlag )
+    mGame.Check( ID_HINT, hintFlag )
+    mGame.Check( ID_CHEAT, cheatFlag )
+
+    ' shuffle cards
+    shuffle( newGame )
+
+    ' move cards automatically
+    autoMove()
+
+    ' paint the windows
+    repaintWindow(True)
+
+    ' show hint
+    hint()
+
+    ' disable undo
+    mGame.Enable( wxID_UNDO, False )
+    undoPtr     = 0
+    undoDepth   = 0
+
+
+End Sub
+
+' callback for the New menu option
+Sub OnNew( event ) handles frame.menuSelected(wxID_NEW)
+    initGame(1)
+End Sub
+
+' callback for the Restart menu option
+Sub OnRestart( event ) Handles frame.menuSelected(ID_RESTART)
+    initGame(0)
+End Sub
+
+' callback for the Undo menu option
+Sub OnUndo( event ) Handles frame.menuSelected(wxID_UNDO)
+    undo()    
+End Sub
+
+
+' callback for the Warn Before Moving Piles menu option
+Sub OnWarn( event ) Handles frame.menuSelected(ID_WARN)
+    ' toggle cheat mode
+    warnFlag = !warnFlag
+    mGame.Check( ID_WARN, warnFlag )
+End Sub
+
+' callback for the Show Hints menu option
+Sub OnHint( event ) Handles frame.menuSelected(ID_HINT)
+    ' toggle hint mode
+    hintFlag = !hintFlag
+    mGame.Check( ID_HINT, hintFlag )
+    hint()
+End Sub
+
+
+' callback for the Cheat menu option
+Sub OnCheat( event ) Handles frame.menuSelected(ID_CHEAT)
+    ' toggle cheat mode
+    cheatFlag = !cheatFlag
+    mGame.Check( ID_CHEAT, cheatFlag )
+End Sub
+
+
+' callback for the Exit menu option
+Sub OnQuit( event ) Handles frame.menuSelected(wxID_EXIT)
+    end
+End Sub
+
+' callback for the About menu option
+Sub OnAbout( event ) Handles frame.menuSelected(wxID_ABOUT)
+
+    Dim msg = ProgName & " " & ProgVersion & "\n" &
+    "Freecell clone written in wxBasic\n" &
+    "(c) 2002 David Cuny\n" &
+    "Based on MS Freecell by Jim Horne"
+
+    wxMessageBox( msg, "About " & ProgName,
+        wxOK + wxICON_INFORMATION, frame )
+End Sub
+
+
+initGame(True)
+frame.Show(TRUE)

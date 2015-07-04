@@ -1,0 +1,8 @@
+frame = new wxMDIParentFrame(Nothing, -1, "Parent Frame", wxPoint(-1, -1),wxSize(800, 600))
+cFrame = new wxMDIChildFrame(frame, -1, "Child Frame", wxPoint(-1, -1), wxSize(788, 568))
+frame.Show(1)
+
+Sub onResize(event)
+   cFrame.SetSize(frame.GetSizeWidth() - 12, frame.GetSizeHeight() - 32)
+End Sub
+Connect(frame, wxEVT_SIZE,"onResize") 

@@ -1,0 +1,653 @@
+' FIXME: gotoError is commented out, because of a bug
+'        in Try/Catch
+
+' Simple IDE for wxBasic
+' (c) 2002 David Cuny
+'
+' TO DO:
+' Check arg names to allow dropping files onto executable
+' Add 'Cancel' to dialog options
+Option Explicit
+
+Dim     AppName         = "wxBasic Editor",     ' application name
+        ID_RUN          = wxID_HIGHEST + 1,     ' custom event
+        ID_FIND         = wxID_HIGHEST + 2,     ' search/find
+        ID_REPEAT       = wxID_HIGHEST + 3,     ' search/repeat
+        ID_REPLACE      = wxID_HIGHEST + 4,     ' search/replace
+        wxID_ED         = wxID_HIGHEST + 5,     ' editor event
+        fileName        = ""                    ' current file name
+
+' Main window
+Dim frame = new wxFrame( Nothing, -1, AppName & " - Untitled Document" )
+
+' Search controls
+Dim findDialog = -1
+Dim findData = new wxFindReplaceData( wxFR_REPLACEDIALOG )
+
+
+' Text edit control
+Dim ed = new wxStyledTextCtrl(frame, wxID_ED)
+
+' Default font
+  '  Dim font = new wxFont(10, wxMODERN, wxNORMAL, wxNORMAL)
+	dim font
+	if instr( lcase(wxGetOsDescription()), "linux" ) then
+		' linux
+		font = new wxFont(14, wxDEFAULT, wxNORMAL, wxNORMAL)
+	else
+		' windows
+		font = new wxFont(10, wxMODERN, wxNORMAL, wxNORMAL)
+	end if
+    ed.StyleSetFont(wxSTC_STYLE_DEFAULT, font)
+    ed.StyleClearAll()
+
+' Color scheme
+    'ed.StyleSetForeground(0,  wxColour(0x80, 0x80, 0x80))
+	ed.StyleSetForeground(0,  wxColour(0x00, 0x00, 0x00))
+
+	' comments are green
+    ed.StyleSetForeground(1,  wxColour(0x00, 0x7f, 0x00))
+	ed.StyleSetItalic(1,  True)
+
+    ' numbers
+	ed.StyleSetForeground(2,  wxColour(0x7f, 0x00, 0x00))
+
+	' keywords are blue
+    ed.StyleSetForeground(3,  wxColour(0x00, 0x00, 0x7f))
+	ed.StyleSetBold(3,  True)
+
+	' quotes are cyan
+    ed.StyleSetForeground(4,  wxColour(0x00, 0x7f, 0x7f))
+
+	' preprocessor
+    ed.StyleSetForeground(5,  wxColour(0x00, 0x00, 0x7f))
+
+	' operator
+    ed.StyleSetForeground(6,  wxColour(0x7f, 0x00, 0x7f))
+
+	' identifier
+    'ed.StyleSetForeground(7,  wxColour(0x7f, 0x00, 0x7f))
+
+	' date
+    'ed.StyleSetForeground(8,  wxColour(0x00, 0x7f, 0x7f))
+
+
+    ' Font
+'    ed.StyleSetSpec(2, "fore:#007f00,bold,face:Arial,size:9")
+'    ed.StyleSetSpec(2, "fore:#007f00,bold,face:Helvetica,size:9")
+
+    ' Tab Size
+    ed.SetTabWidth(4)
+
+ed.SetLexer(wxSTC_LEX_VB)
+ed.SetKeyWords(0,
+    "and append as case close const continue common declare delete dim " &
+    "do each elsif else elseif end erase exit explict for function global if " &
+    "in include input inv is line mod new next noconsole not open option or " &
+    "output print qbasic redim return select shared shl shr static step sub then " &
+    "to until wend while xor" &
+    "abs acos andbits argc argv asc asin atan chdir chr chr$ command " &
+    "command$ connect convbase convbase$ cos date date$ hasdir hasdir$ " &
+    "direxists fix floor fopen format format$ fputs frac freefile " &
+    "getwxapp hex hex$ indexes insert insert$ instr int kill lcase lcase$ " &
+    "left left$ len length loc lof log lbound ltrim ltrim$ mainloop mid " &
+    "mid$ mkdir notbits orbits quicksort randomize readbyte rename replace " &
+    "replace$ reverse reverse$ right right$ rinstr rmdir rnd round rtrim " &
+    "rtrim$ run seek sgn shell sin space space$ sqr str str$ strf strf$ " &
+    "string string$ tally tan ticks time time$ typeof typeof$ ubound ucase " &
+    "ucase$ val writebyte xorbits" )
+
+' Fairly useless status bar
+    Dim status = frame.CreateStatusBar( 1 )
+    frame.SetStatusText("Ready")
+
+' Dialog used for Open/Save/Save As
+    Dim fileDialog = new wxFileDialog( frame )
+
+' add menubar to the frame
+    Dim mBar = new wxMenuBar()
+    frame.SetMenuBar(mBar)
+
+' build the "File" dropdown menu
+    Dim mFile = new wxMenu()
+    mBar.Append(mFile, "&File")
+
+' populate it
+    mFile.Append( wxID_NEW, "&New", "Creates a new file" )
+    mFile.Append( wxID_OPEN, "&Open...", "Loads an existing file from disk" )
+    mFile.Append( wxID_SAVE, "&Save", "Saves current file" )
+    mFile.Append( wxID_SAVEAS, "Save &As...", "Saves current file with new name" )
+    mFile.AppendSeparator()
+    mFile.Append( wxID_EXIT, "E&xit\tAlt-X", "Exit Application" )
+
+Sub saveFile()
+    ' This should probably write line by line...
+    dim file = fOpen( fileName, "w" )
+    fPuts( file, ed.GetText() )
+    fClose( file )
+End Sub
+
+' Common routine
+Sub saveFileAs()
+    dim result, theFile
+    fileDialog.SetMessage("Save File As")
+    fileDialog.SetFilename( fileName )
+    fileDialog.SetStyle( wxSAVE )
+
+	' Cancelled?
+    If fileDialog.ShowModal() != wxID_OK Then
+        Return
+	End If
+
+	' FIX! Use path
+	theFile = fileDialog.GetFilename()
+
+	' don't accidentally overwrite
+	If fileExists( theFile ) then
+		result = wxMessageBox( "File already exists. Overwrite?", 
+			"Warning", wxOK | wxCANCEL | wxCENTER )
+		If result != wxOK then			
+            Return
+		End If
+	End If
+
+	' Save the file
+	fileName = theFile
+	saveFile()
+	frame.SetTitle( AppName & " - " & fileName )
+
+End Sub
+
+Sub saveChanges()
+    If ed.GetModify() Then
+        Dim dialog = new wxMessageDialog( frame, "Save changes first?",
+            "Save Changes?", wxYES_NO + wxCENTRE + wxICON_QUESTION )
+        Dim result = dialog.ShowModal()
+        // FIXME!
+        // delete dialog
+        Dialog.Finalize()
+    
+        If result = wxID_YES Then
+            If fileName = "" Then
+                saveFileAs()
+            Else
+                saveFile()
+            End If
+        End If
+    End If
+End Sub
+
+Sub onFileNew( event )
+    saveChanges()
+    ed.EmptyUndoBuffer()
+    ed.SetText("")
+    fileName = ""
+    frame.SetTitle( AppName & " - Untitled Document" )
+End Sub
+Connect( frame, wxID_NEW, wxEVT_COMMAND_MENU_SELECTED, "onFileNew" )
+
+Sub gotoError()
+
+    ' kill the marker(s)
+    ed.MarkerDeleteAll(1)
+
+    ' check for errors
+    if fileExists( "wx.err" ) then
+        ' read it
+        dim errFile = fOpen( "wx.err", "r" )
+        dim errMsg = fGets( errFile )
+        dim errText = fGets( errFile )
+
+        ' extract the line number
+        dim errLine = 0 + wordAfter( errMsg, "line number" )
+
+        if errLine > 0 then
+
+            ' extract the file name
+            dim errFileName = wordAfter( errMsg, "of" )
+    
+            ' FIX! Handle long file names?
+            if errFileName = fileName then
+    
+                ' set the status line
+                frame.SetStatusText( errText )
+            
+                ' go to line
+                ed.GotoLine( errLine-1 )
+    
+                ' mark it
+                ed.MarkerDefine(1, wxSTC_MARK_SHORTARROW, wxColor( 0x00, 0x00, 0x00 ), wxColor( 0x80, 0x00, 0x00 ) )
+                ed.MarkerSetForeground( 1, wxColor( 0x00, 0x00, 0x00 ) )
+                ed.MarkerSetBackground( 1, wxColor( 0x80, 0x00, 0x00 ) )
+                
+                ed.MarkerAdd( errLine-1, 1 )
+    
+            end if
+
+        else
+            ' zap the markers
+            ed.MarkerDeleteAll(1)
+        
+            ' set the status text
+            frame.SetStatusText( "Can't goto error line" )
+
+        
+        end if
+
+       fClose( errFile )
+
+    end if
+
+End Sub
+
+Sub loadFile( name )
+
+    Dim buffer = ""
+
+    ' is there a file?
+    if name <> "" then
+    
+		' does it exist?
+		if fileExists( name ) then
+			' read the file
+			dim handle = fOpen( name, "r" )
+			while not eof( handle )
+                // FIME: replaced &=
+                buffer.append( fGets( handle ) & "\n" )
+			end while
+			fClose( handle )
+		end if
+    end if
+
+    ' clear the current file
+    ed.SetText("")
+
+    ' insert into the buffer
+    ed.InsertText(0, buffer)
+    ed.EmptyUndoBuffer()
+
+    ' set name
+    fileName = name
+
+    ' set the title
+    if fileName <> "" then
+        frame.SetTitle( AppName & " - " & fileName )
+    else
+        frame.SetTitle( AppName & " - Untitled Document" )
+    end if
+
+    ' goto error
+    ' gotoError()
+
+End Sub
+
+Sub onFileOpen( event )
+    saveChanges()
+    fileDialog.SetMessage("Open File")
+    fileDialog.SetStyle( wxOPEN )
+    If fileDialog.ShowModal() = wxID_OK Then
+        ' FIX! Problem with long file names...
+        'fileName = fileDialog.GetPath()        
+        loadFile( fileDialog.GetFilename() )
+    End If
+End Sub
+Connect( frame, wxID_OPEN, wxEVT_COMMAND_MENU_SELECTED, "onFileOpen" )
+
+Sub onFileSaveAs( event )
+    saveFileAs()
+End Sub
+Connect( frame, wxID_SAVEAS, wxEVT_COMMAND_MENU_SELECTED, "onFileSaveAs" )
+
+Sub onFileSave( event )
+    if fileName = "" Then
+        onFileSaveAs( event )
+    Else
+        saveFile()
+    End If
+End Sub
+Connect( frame, wxID_SAVE, wxEVT_COMMAND_MENU_SELECTED, "onFileSave" )
+
+
+Sub onFileExit( event )
+    saveChanges()
+    End
+End Sub
+Connect( frame, wxID_EXIT, wxEVT_COMMAND_MENU_SELECTED, "onFileExit" )
+Connect( frame, wxEVT_CLOSE_WINDOW, "onFileExit" )
+
+' build the "Edit" dropdown menu
+Dim mEdit = new wxMenu()
+mBar.Append(mEdit, "&Edit")
+mEdit.Append( wxID_CUT, "Cu&t\tCtrl-X", "Deletes selected text and copies it to buffer" )
+mEdit.Append( wxID_COPY, "&Copy\tCtrl-C", "Copies selected text to buffer" )
+mEdit.Append( wxID_PASTE, "&Paste\tCtrl-V", "Inserts buffer contents at current location" )
+mEdit.Append( wxID_CLEAR, "Cl&ear", "Deletes selected text without copying to buffer" )
+
+Sub onEditCut( event )
+    ed.Cut()
+End Sub
+Connect( frame, wxID_CUT, wxEVT_COMMAND_MENU_SELECTED, "onEditCut" )
+
+Sub onEditCopy( event )
+    ed.Copy()
+End Sub
+Connect( frame, wxID_COPY, wxEVT_COMMAND_MENU_SELECTED, "onEditCopy" )
+
+Sub onEditPaste( event )
+    ed.Paste()
+End Sub
+Connect( frame, wxID_PASTE, wxEVT_COMMAND_MENU_SELECTED, "onEditPaste" )
+
+
+' build the "Search" dropdown menu
+Dim mSearch = new wxMenu()
+mBar.Append(mSearch, "&Search")
+mSearch.Append( ID_FIND, "&Find\tCtrl+F", "Find the specified text" )
+mSearch.Append( ID_REPEAT, "Repeat &Last Find\tF3", "Repeat the last find" )
+mSearch.Append( ID_REPLACE, "&Replace\tCtrl+H", "Replaces specific text with different text" )
+
+sub searchFind( first )
+
+    dim startSearch, endSearch
+
+    ' get settings
+    dim flags = findData.GetFlags()
+    dim findString = findData.GetFindString()
+
+    ' direction
+    startSearch = ed.GetCurrentPos()
+    if andBits( flags, wxFR_DOWN ) then
+	' down
+        if not first then
+            startSearch = startSearch + 1
+        end if
+        endSearch = ed.GetLength()
+    else
+    ' up
+        if not first then
+            startSearch = startSearch - len( findString ) + 1
+        end if
+        endSearch  = 0
+    end if
+
+    ' search
+    dim foundAt = ed.FindText( startSearch, endSearch, findString, flags )		
+
+    ' failed?
+    if foundAt = -1 then
+        ' should probably ask about starting again from the top...
+        if findDialog <> -1 then
+            findDialog.Show(False)
+            findDialog.Finalize()
+            findDialog = -1
+        end if
+    else
+        ed.SetSelection(foundAt, foundAt+length(findString))
+        ed.EnsureVisible( ed.LineFromPosition(foundAt))
+    end if
+
+End Sub
+
+
+sub doFindReplace( eventType )
+
+    dim startSearch, endSearch, findString, replaceString
+
+    ' close the dialog
+    if eventType = wxEVT_COMMAND_FIND_CLOSE then
+        ' destroy the dialog
+        findDialog.Finalize()
+        findDialog = -1
+        return
+    end if
+
+    ' get settings
+    dim flags = findData.GetFlags()
+    findString = findData.GetFindString()    
+
+    ' direction
+    startSearch = ed.GetCurrentPos()
+    if andBits( flags, wxFR_DOWN ) then
+	' down
+        if eventType = wxEVT_COMMAND_FIND_NEXT then
+            startSearch = startSearch + 1
+        end if
+        endSearch = ed.GetLength()
+    else
+    ' up
+        if eventType = wxEVT_COMMAND_FIND_NEXT then
+            startSearch = startSearch - (len( findString ) + 1)
+        end if
+        endSearch  = 0
+    end if
+
+    select case eventType
+    case wxEVT_COMMAND_FIND, wxEVT_COMMAND_FIND_NEXT
+        ' search
+        dim foundAt = ed.FindText( startSearch, endSearch, findString, flags )
+    
+        ' failed?
+        if foundAt = -1 then
+            ' should probably ask about starting again from the top...
+            if findDialog <> -1 then
+                findDialog.Show(False)
+                findDialog.Finalize()
+                findDialog = -1
+            end if
+        else
+            ed.SetSelection(foundAt, foundAt+length(findString))
+            ed.EnsureVisible( ed.LineFromPosition(foundAt))
+        end if
+
+    Case wxEVT_COMMAND_FIND_REPLACE
+        ' make sure correct text is selected
+        if ucase(ed.GetSelectedText()) <> ucase(findData.GetFindString()) then
+            return            
+        end if
+
+        ' remember marker
+        foundAt = ed.GetSelectionStart()
+
+        replaceString = findData.GetReplaceString()
+        ed.ReplaceSelection(replaceString)
+
+        ' new selection
+        ed.SetSelection(foundAt, foundAt+length(replaceString))
+
+    Case wxEVT_COMMAND_FIND_REPLACE_ALL
+        dim theCount = 1
+        ' replace selection
+        doFindReplace( wxEVT_COMMAND_FIND_REPLACE )
+
+        ' find and replace remaining
+        while True
+            ' look for another to replace
+            doFindReplace( wxEVT_COMMAND_FIND_NEXT )
+            if findDialog = -1 then
+                ' no more, exit loop
+                exit while
+            end if
+            doFindReplace( wxEVT_COMMAND_FIND_REPLACE )
+            theCount = theCount + 1
+        end while
+        ' status
+        wxMessageBox( "Replaced " & theCount & " occurance(s)",
+                        AppName, wxOK + wxICON_INFORMATION, frame )
+    End Select
+
+End Sub
+
+
+Sub onRepeatFind( event )
+    ' repeat find
+    doFindReplace( wxEVT_COMMAND_FIND_NEXT )
+End Sub
+Connect( frame, ID_REPEAT, wxEVT_COMMAND_MENU_SELECTED, "onRepeatFind" )
+
+
+Sub onFindReplaceDialog( event )
+    doFindReplace( event.GetEventType() )
+End Sub
+
+Sub onSearchFind( event )
+
+    ' does the dialog exist?
+    if findDialog <> -1 then
+        return
+    end if
+
+    ' create the dialog
+    findDialog = new wxFindReplaceDialog( frame, findData, "Find" )
+
+    ' set callbacks
+    Connect( findDialog, wxEVT_COMMAND_FIND, "onFindReplaceDialog" )
+    Connect( findDialog, wxEVT_COMMAND_FIND_NEXT, "onFindReplaceDialog" )
+    Connect( findDialog, wxEVT_COMMAND_FIND_CLOSE, "onFindReplaceDialog" )
+
+    ' display it
+    findDialog.Show(True)
+
+End Sub
+Connect( frame, ID_FIND, wxEVT_COMMAND_MENU_SELECTED, "onSearchFind" )
+
+
+
+
+Sub onSearchReplace( event )
+
+    ' does the dialog exist?
+    if findDialog <> -1 then
+        return
+    end if
+
+    ' create the dialog
+    findDialog = new wxFindReplaceDialog( frame, findData, "Replace", wxFR_REPLACEDIALOG )
+
+    ' set callbacks
+    Connect( findDialog, wxEVT_COMMAND_FIND, "onFindReplaceDialog" )
+    Connect( findDialog, wxEVT_COMMAND_FIND_NEXT, "onFindReplaceDialog" )
+    Connect( findDialog, wxEVT_COMMAND_FIND_REPLACE, "onFindReplaceDialog" )
+    Connect( findDialog, wxEVT_COMMAND_FIND_REPLACE_ALL, "onFindReplaceDialog" )
+    Connect( findDialog, wxEVT_COMMAND_FIND_CLOSE, "onFindReplaceDialog" )
+
+    ' display it
+    findDialog.Show(True)
+
+End Sub
+Connect( frame, ID_REPLACE, wxEVT_COMMAND_MENU_SELECTED, "onSearchReplace" )
+
+
+
+' build the "Run" dropdown menu
+Dim mRun = new wxMenu()
+mBar.Append(mRun, "&Run")
+mRun.Append( ID_RUN, "Run\tF5", "Run wxBasic program" )
+
+Sub onRunRun( event )
+    ' delete the old error file
+
+	dim cmd
+
+    if fileExists("wx.err") then
+        Kill("wx.err")
+    end if
+
+    ' save the file
+    saveChanges()
+
+    ' run the file, if it has a name
+    If Len( fileName ) Then
+		' what's the operating system?
+        if instr( wxGetOsDescription(), "Linux" ) then
+			' for linux, use the . to get the version in the current directory
+			cmd = "./wxbasic "
+		else
+            cmd = ".\\wxbasic "
+		end if
+
+        wxExecute( cmd & fileName, -1 )
+        ' goto error, if any
+        ' gotoError()
+    End If
+
+End Sub
+Connect( frame, ID_RUN, wxEVT_COMMAND_MENU_SELECTED, "onRunRun" )
+
+
+' build the "Help" dropdown menu
+Dim mHelp = new wxMenu()
+mBar.Append(mHelp, "&Help")
+mHelp.Append( wxID_HELP, "&About\tF1", "About this program" )
+
+Sub onHelpAbout( event )
+    Dim msg = "Simple Editor written in wxBasic.\n" &
+            "(c) 2002 David Cuny"
+    wxMessageBox( msg, "About wxBasic Editor", wxOK + wxICON_INFORMATION, frame )
+End Sub
+Connect( frame, wxID_HELP, wxEVT_COMMAND_MENU_SELECTED, "onHelpAbout" )
+
+
+Function wordAfter( text, follows )
+
+    ' find position of word in front
+    dim at = instr( text, follows )
+    if at = 0 then
+        return ""
+    end if
+
+
+    ' include the word, plus a space
+    at = at + length( follows ) + 1
+    dim result = Mid( text, at )
+
+    ' space is a delimiter to the right
+    at = instr( result, " " )
+    if at then
+        result = mid( result, 1, at-1 )
+    end if
+
+    return result
+
+End Function
+
+sub setup()
+
+	Dim name
+
+    ' Passed a file name?
+    if length( command(3) ) then
+        ' use the file from the command line
+        name = command(3)
+
+    ' is there an error file?
+    elseif fileExists("wx.err") then
+        try
+            ' use the file from the error message
+            dim errFile = fOpen( "wx.err", "r" )
+            dim errMsg = fGets( errFile )
+            fClose( errFile )
+    
+            ' extract the file name
+            name = wordAfter( errMsg, "of" )
+        catch
+            name = ""
+        end try
+
+    else
+        name = ""
+
+    end if
+
+    ' load the file
+    loadFile( name )
+
+End Sub
+
+setup()
+
+frame.Show(True)
+
+' hints
+'Dim tipProvider = wxCreateFileTipProvider("tips.txt", 0)
+'wxShowTip(Nothing, tipProvider)
+'tipProvider.Finalize()

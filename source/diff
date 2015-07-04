@@ -1,0 +1,18 @@
+Comparing files old.txt and NEW.TXT
+***** old.txt
+%if(win) %alias SetBackgroundColor void SetBackgroundColour(const wxColour& colour) const
+%if(win) void SetBitmaps(const wxBitmap& checked, const wxBitmap& unchecked = wxNullBitmap) const
+***** NEW.TXT
+%if(win) %alias SetBackgroundColor void SetBackgroundColour(const wxColour& colour) const
+void SetBitmap(const wxBitmap& bitmap) const
+%if(win) void SetBitmaps(const wxBitmap& checked, const wxBitmap& unchecked = wxNullBitmap) const
+*****
+
+***** old.txt
+
+///////////////////////////////////////////////////////////////////////////////
+***** NEW.TXT
+
+/////////////////////////////////////////////////////////////////////////////// 
+*****
+

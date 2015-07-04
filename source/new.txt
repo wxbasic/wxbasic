@@ -1,0 +1,80 @@
+/* open the main file, use PATH if needed */
+FILE *wMainOpen(char *fileName)
+{
+    int i;
+    int n;
+    int at;
+    char *path;
+    char *finish="\0";
+    char *fullFileName;
+
+    FILE *file;
+
+    /* try opening using given name */
+    file = fopen( fileName, "r" );
+    if (file) {
+        /* return the file, full path was given */
+        return file;
+    }
+
+    /* if there is a delimiter, don't bother looking in the path */
+    if (strchr(fileName, DELIMITER)) {
+        return NULL;
+    }
+
+    /* get the path from the environment variable */
+    path = getenv("PATH");
+    if (path == NULL) {
+        return NULL;
+    }
+
+    /* allocate space for the fully qualified name */
+    fullFileName = wCharMalloc( W_INBUFFER_MAX );
+
+    /* read the names out of the path */
+    at = 0;
+    for ( i = 0; path[i] != '\0'; i++ ) {
+        /* end or seperator? */
+        if (path[i] == ';' ||path[i] == ':' || path[i] == '\0') {
+            /* accumulated path? */
+                fullFileName[at] = DELIMITER;
+                //printf(".%d\n",at);
+                /* append filename */
+                //printf("---%s\n" , fullFileName);
+                //    strcat( fullFileName, fileName );
+
+               for ( n = 0; fileName[n] != '\0'; n++ ) {
+                   fullFileName[at+1+n] =     fileName[n];
+                }
+               fullFileName[at+1+n] = finish[0]; //---force string to end
+                at=0;
+                /* try to open the file */
+
+                file = fopen( fullFileName, "r" );
+
+                //printf("+++%s\n" , fullFileName);
+
+                if (file) {
+                    /* free the buffer */
+                    wFree( fullFileName );
+                    /* return the pointer */
+                    return file;
+                } else {
+                    /* didn't open, reset position */
+                    at = 0;
+                }
+
+        } else {
+
+            /* accumulate */
+            fullFileName[at] = path[i];
+            at++;
+        }
+   }
+
+    /* release buffer */
+    wFree( fullFileName );
+   
+    return NULL;
+
+}

@@ -1,0 +1,39 @@
+Internal error: Illegal instruction (SIGILL)
+setcodepage() in file "ide.wxb", line 41:
+> ed.SetCodePage(wxSTC_CP_UTF8)
+In file "ide.wxb", line 41:
+> ed.SetCodePage(wxSTC_CP_UTF8)
+ appname = "wxBasic Editor"
+ id_run = 6000
+ id_trace = 6001
+ id_find = 6002
+ id_repeat = 6003
+ id_replace = 6004
+ wxid_ed = 6005
+ filename = ""
+ frame = [wxframe @00E3A758]
+ finddialog = -1
+ finddata = [wxfindreplacedata @00E27F50]
+ ed = [wxstyledtextctrl @00E3A9B8]
+ font = Nothing
+ status = Nothing
+ filedialog = Nothing
+ mbar = Nothing
+ mfile = Nothing
+ medit = Nothing
+ msearch = Nothing
+ mrun = Nothing
+ mhelp = Nothing
+ builtinroutines = Nothing
+ superlist = Nothing
+ methodlist = Nothing
+ varlist = Nothing
+ routinelist = Nothing
+ parmtipat = Nothing
+ parmtipline = Nothing
+ parmtiptext = Nothing
+ tipyellow = Nothing
+ showingtip = Nothing
+ showingmethodtip = Nothing
+ ineditevent = Nothing
+

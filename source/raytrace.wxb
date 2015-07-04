@@ -1,0 +1,270 @@
+' http://www.ccs.neu.edu/home/fell/CSU540/programs/RayTracingFormulas.htm
+' Raytrace.wxb
+' Simple raycaster
+' (c) 2005 David Cuny
+
+' BUGS:
+' can't create objects in list: dim a = [ sphere( ... ) ]
+' conflicts in routines names in classes and outside of classes
+'	ie:  sub foo( a, b ) in class and dim a in sub foo outside class
+
+option explicit
+
+Dim progName = "Raytracer Demo",
+    bmpX        = 400,
+    bmpY        = 400
+
+' event ids
+Const   wxID_RUN          = wxID_HIGHEST + 1
+
+' create the frame
+dim frame as wxFrame = New wxFrame( Nothing, -1, progName )
+frame.SetSize(400, 400)
+
+' the objects in the scene
+
+class Sphere
+
+	dim x, y, z
+	dim radius
+	dim red, green, blue
+
+	sub new( theX, theY, theZ, theRadius, theRed, theGreen, theBlue )
+		x, y, z = theX, theY, theZ
+		radius = theRadius
+		red, green, blue = theRed, theGreen, theBlue
+	end sub
+
+	function distanceTo( x0, y0, z0, x1, y1, z1 )
+
+		' Start of ray is x0, y0, z0
+		' Ray passes through point x1, y1, z1
+	
+		' if ray misses sphere, returns negative value
+	
+		' distance from p0 to p1
+		dim dx = x1 - x0
+		dim dy = y1 - y0
+		dim dz = z1 - z0
+	
+		dim a = dx*dx + dy*dy + dz*dz
+		dim b = 2*dx*(x0-me.x) +  2*dy*(y0-me.y) +  2*dz*(z0-me.z)
+		dim c = me.x*me.x + me.y*me.y + me.z*me.z + x0*x0 + y0*y0 + z0*z0 +	
+			-2*(me.x*x0 + me.y*y0 + me.z*z0) - (me.radius * me.radius)
+	
+		' calculate the discriminant
+		dim d = (b*b) - (4*a*c)
+		if d <= 0 then
+			return -1
+		end if
+	
+		' two intersections, solve for T
+		dim t1 = (-b - sqrt(d)) / (2 * a)
+		dim t2 = (-b + sqrt(d)) / (2 * a)
+	
+		' choose closer value of t
+		dim t = t1
+		if t2 < t1 and t2 > 0 then
+			return t2
+		else
+			return t1		
+		end if
+	end function
+
+	function calcColor( hitX, hitY, hitZ, lx, ly, lz )
+
+		' return color of point on sphere
+		' Point on sphere is x, y, z
+		' Position of light is lx, ly, lz
+					
+		' calculate unit normal vector to the sphere
+		dim nx = (hitX - me.x)/me.radius
+		dim ny = (hitY - me.y)/me.radius
+		dim nz = (hitZ - me.z)/me.radius
+	
+		' unit vector to light
+		dim nlx, nly, nlz
+		nlx, nly, nlz = normalize( lx - hitX, ly - hitY, lz - hitZ )
+	
+		' dot product between vector to the light and surface normal
+		dim intensity = dot( nlx, nly, nlz, nx, ny, nz )
+	
+		' use the color of the object scaled by the light
+		dim r = min(me.red * intensity, 255)
+		dim g = min(me.green * intensity, 255)
+		dim b = min(me.blue * intensity, 255)
+	
+		' create the color
+		return wxColor( r, g, b )
+
+	end function
+
+end class
+
+' FIXME: can't just place objects into list!
+dim theObjectList = []
+theObjectList.append( sphere( 0, 0, 600, 80, 0, 100, 0 ) )
+theObjectList.append( sphere( 0, 40, 800, 80, 100, 0, 0 ) )
+
+dim skyColor = new wxColor( 60, 100, 255 )
+dim eyeX = 0
+dim eyeY = 0
+dim eyeZ = -100
+
+' create a bitmap for double buffering
+dim bmp as wxEmptyBitmap = wxEmptyBitmap( bmpX, bmpY )
+
+' create a "File" menu
+dim mFile as wxMenu = New wxMenu()
+mFile.Append( wxID_RUN, "&Run\tF5", "Run the program")
+mFile.AppendSeparator()
+mFile.Append( wxID_EXIT, "E&xit\tAlt-X", "Quit this program")
+
+' create an "About" menu and append an item
+dim mHelp as wxMenu = New wxMenu()
+mHelp.Append( wxID_ABOUT, "&About...\tCtrl-A", "Show about dialog")
+
+' create a menubar for the menus
+dim menuBar as wxMenuBar = New wxMenuBar()
+menuBar.Append(mFile, "&File")
+menuBar.Append(mHelp, "&Help")
+
+' attach the menubar to the frame
+frame.SetMenuBar(menuBar)
+
+' create a store for the graphic
+dim bmpDC as wxMemoryDC = wxMemoryDC()
+bmpDC.SelectObject( bmp )
+bmpDC.Clear()
+
+Sub onPaint( event )
+
+    ' get the DC of the frame
+    dim dc as wxPaintDC= wxPaintDC( frame )
+    dc.BeginDrawing()
+
+    ' blit the bitmap
+    dc.Blit( 0, 0, bmpX, bmpY, bmpDC, 0, 0 )
+
+    dc.EndDrawing()
+
+End Sub
+Connect( frame, -1, wxEVT_PAINT, "onPaint" )
+
+function dot( x1, y1, z1, x2, y2, z2 )
+	' return the dot product between two points
+	return x1 * x2 + y1 * y2 + z1 * z2
+end function
+
+function distance( x1, y1, z1, x2, y2, z2 )
+	' return the distance between two points
+
+	' calculate distance of each axis
+	dim x = x2 - x1
+	dim y = y2 - y1
+	dim z = z2 - z1
+
+	' use pythagorean theorem
+	return sqrt((x * x) + (y * y) + (z * z))
+
+end function
+
+function normalize( x, y, z )
+	' return normalized vector
+	dim l = distance( 0, 0, 0, x, y, z )
+	return x/l, y/l, z/l
+end function
+
+function min( x, y )
+	if x < y then
+		return x
+	else
+		return y
+	end if
+end function
+
+
+
+function calcPoint( x0, y0, z0, dx, dy, dz, t )
+	' return intersection point
+	' start position is x0, y0, z0
+	' normalized direction vector is dx, dy, dz
+	' distance is t
+
+	' calculate intersection point
+	return x0 + (t * dx), y0 + (t * dy), z0 + (t * dz)
+
+end function
+
+
+
+function calcColor( x0, y0, z0, x1, y1, z1 )
+	dim theSphere
+	dim hitObject = Nothing
+	dim hitDistance = -1
+	for each theSphere in theObjectList
+		dim t = theSphere.distanceTo( x0, y0, z0, x1, y1, z1 )
+		if t > 0 and (t < hitDistance or hitObject = nothing) then
+			hitObject = theSphere
+			hitDistance = t
+		end if
+	end for
+		
+	if hitObject = nothing then
+		return skyColor
+	else
+		dim x, y, z
+		x, y, z = calcPoint( x0, y0, z0, x1, y1, z1, t )
+		return hitObject.calcColor( x, y, z, 800, 800, -800)
+	end if
+
+end function
+
+' callback for the New menu option
+Sub OnRun( event )
+	Dim halfX = int( bmpX / 2 )
+	Dim halfY = int( bmpX / 2 )
+    bmpDC.Clear()
+	Dim pen as wxPen = new wxPen()
+	Dim color as wxColor = new wxColor( 0, 0, 0 )	
+    dim dc as wxClientDC = wxClientDC( frame )
+
+	' pixel z is at 0
+	dim pixelZ = 0
+
+	for y = 0 to bmpY-1
+		' position of y pixel
+		dim pixelY = -(y - halfY)
+
+		for x = 0 to bmpX-1
+			' position of x pixel
+			dim pixelX = x - halfX
+trace(1)
+			' calculate the color of the pixel
+			pen.setColor( calcColor( eyeX, eyeY, eyeZ, pixelX, pixelY, pixelZ ) )
+			bmpDC.SetPen( pen )
+			bmpDC.DrawPoint( x, y )
+		next
+		' draw the line
+		dc.Blit( 0, 0, bmpX, bmpY, bmpDC, 0, 0 )
+	next
+End Sub
+Connect( frame, wxID_RUN, wxEVT_COMMAND_MENU_SELECTED, "OnRun" )
+
+' callback for the Exit menu option
+Sub OnQuit( event )
+    frame.Close(True)
+End Sub
+Connect( frame, wxID_EXIT, wxEVT_COMMAND_MENU_SELECTED, "OnQuit" )
+
+
+' callback for the About menu option
+Sub OnAbout( event )
+    dim msg as String =   "Simple Raytracer program.\n" &
+            "Simple raytracer in wxBasic.\n" &            
+			"At this point, it's just a raycaster."
+    wxMessageBox( msg, "About Raytracer", wxOK + wxICON_INFORMATION, frame )
+End Sub
+Connect( frame, wxID_ABOUT, wxEVT_COMMAND_MENU_SELECTED, "OnAbout" )
+
+frame.Show(True)

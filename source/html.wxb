@@ -1,0 +1,4 @@
+dim frame = new wxFrame( Nothing, -1, "wxHtmlDemo" )
+dim html = wxHtmlWindow(frame)
+html.LoadPage("http://wxbasic.sourceforge.net/index.php")
+frame.show(1)
